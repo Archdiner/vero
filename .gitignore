@@ -1,0 +1,18 @@
+# Flutter/Dart
+**/build/
+**/.dart_tool/
+**/.idea/
+**/.vscode/
+**/.gradle/
+**/*.lock
+**/pubspec.lock
+**/android/.cxx/
+**/android/app/debug.keystore
+
+# IDE & Editor Configurations
+**/.DS_Store
+**/.env
+**/.packages
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/test/**.g.dart
