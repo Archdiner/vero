@@ -1,18 +1,36 @@
-# Flutter/Dart
-**/build/
-**/.dart_tool/
-**/.idea/
-**/.vscode/
-**/.gradle/
-**/*.lock
-**/pubspec.lock
-**/android/.cxx/
-**/android/app/debug.keystore
+# Flutter/Dart build files
+.dart_tool/
+.packages
+build/
+pubspec.lock
 
 # IDE & Editor Configurations
-**/.DS_Store
-**/.env
-**/.packages
-**/.flutter-plugins
-**/.flutter-plugins-dependencies
-**/test/**.g.dart
+.vscode/
+.idea/
+.DS_Store
+.env
+
+# Flutter Plugin & Dependencies
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Generated Dart files
+test/**.g.dart
+
+# Platform folders (These are generated when running `flutter create .`)
+android/
+ios/
+linux/
+macos/
+windows/
+web/
+
+# Android-specific files
+android/.cxx/
+android/app/debug.keystore
+
+# Gradle
+.gradle/
+
+# Lock files (Not needed for libraries, but okay for apps)
+*.lock
