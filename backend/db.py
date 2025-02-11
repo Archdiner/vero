@@ -2,7 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 #database url using my creds
-DATABASE_URL = "postgresql://postgres:sixofwhales1@localhost:5432/tinder_restaurants"
+# DATABASE_URL = "postgresql://postgres:sixofwhales1@localhost:5432/tinder_restaurants"
+DATABASE_URL = "postgresql://postgres:Rahman_Gamwe11@34.18.72.194:5432/tinder_restaurants"
+
 
 #make SQLAlchemy database engine
 engine = create_engine(DATABASE_URL)
