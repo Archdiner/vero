@@ -1,4 +1,43 @@
 import 'package:flutter/material.dart';
+import 'screens/splash_screen.dart';
+import 'screens/auth_screen.dart';
+import 'screens/preferences_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/swipe_screen.dart';
+import 'screens/favourites_screen.dart';
+import 'screens/restaurant_details_screen.dart';
+
+void main() {
+  runApp(TinderForRestaurants());
+}
+
+class TinderForRestaurants extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Tinder for Restaurants',
+      theme: ThemeData(
+        primarySwatch: Colors.red,
+      ),
+      initialRoute: '/splash',
+      routes: {
+        '/splash': (context) => SplashScreen(),
+        '/auth': (context) => AuthScreen(),
+        '/preferences': (context) => PreferencesScreen(),
+        '/home': (context) => HomeScreen(),
+        '/swipe': (context) => SwipeScreen(),
+        '/favourites': (context) => FavouritesScreen(),
+        '/details': (context) => RestaurantDetailsScreen(),
+      },
+    );
+  }
+}
+
+
+/*
+
+import 'package:flutter/material.dart';
 import 'package:tcard/tcard.dart';
 
 void main() {
@@ -186,3 +225,5 @@ class _RestaurantSwipeScreenState extends State<RestaurantSwipeScreen> {
     );
   }
 }
+
+*/
