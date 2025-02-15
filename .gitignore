@@ -35,4 +35,8 @@ android/app/debug.keystore
 # Lock files (Not needed for libraries, but okay for apps)
 *.lock
 
+
+#venv stuff
 venv/
+__pycache__/
+*.pyc
