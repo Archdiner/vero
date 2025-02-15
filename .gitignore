@@ -35,4 +35,4 @@ android/app/debug.keystore
 # Lock files (Not needed for libraries, but okay for apps)
 *.lock
 
-backend/venv/
+venv/
