@@ -6,6 +6,8 @@ import 'screens/home_screen.dart';
 import 'screens/swipe_screen.dart';
 import 'screens/favourites_screen.dart';
 import 'screens/restaurant_details_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
 
 void main() {
   runApp(TinderForRestaurants());
@@ -29,6 +31,8 @@ class TinderForRestaurants extends StatelessWidget {
         '/swipe': (context) => SwipeScreen(),
         '/favourites': (context) => FavouritesScreen(),
         '/details': (context) => RestaurantDetailsScreen(),
+        '/login': (context) => LoginScreen(),
+        '/register': (context) => RegisterScreen()
       },
     );
   }
