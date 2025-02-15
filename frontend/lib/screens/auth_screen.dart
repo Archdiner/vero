@@ -4,26 +4,24 @@ class AuthScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: Text("Auth Screen")),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'Welcome!',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+            Text("This is the Auth Screen"),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.pushReplacementNamed(context, '/preferences');
+                Navigator.pushNamed(context, '/preferences');
               },
-              child: Text('Sign Up'),
+              child: Text("Go to Preferences"),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
-                Navigator.pushReplacementNamed(context, '/home');
+                Navigator.pushNamed(context, '/home');
               },
-              child: Text('Login'),
+              child: Text("Skip to Home"),
             ),
           ],
         ),
