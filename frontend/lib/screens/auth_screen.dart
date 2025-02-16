@@ -13,9 +13,9 @@ class AuthScreen extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.pushReplacementNamed(context, '/preferences');
+                Navigator.pushReplacementNamed(context, '/register');
               },
-              child: Text("Go to Preferences"),
+              child: Text("Register"),
             ),
             ElevatedButton(
               onPressed: () {
