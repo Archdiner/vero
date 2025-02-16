@@ -1,0 +1,252 @@
+
+
+/*
+import 'package:flutter/material.dart';
+import 'package:tcard/tcard.dart';
+import '../services/api_service.dart';
+import '../models/restaurant.dart';
+
+class SwipeScreen extends StatefulWidget {
+  @override
+  _SwipeScreenState createState() => _SwipeScreenState();
+}
+
+class _SwipeScreenState extends State<SwipeScreen> {
+  final TCardController _controller = TCardController();
+  final ApiService _apiService = ApiService();
+
+  // The currently displayed deck.
+  List<Restaurant> _currentDeck = [];
+  // Prefetched next deck.
+  List<Restaurant> _prefetchedDeck = [];
+
+  int _offset = 0;
+  final int _limit = 10;
+  bool _isPrefetching = false;
+  bool _isLoading = false;
+  // When swiped index reaches or exceeds this threshold, swap decks.
+  final int _swapThreshold = 7; // (For a 10-card deck, when index >=7, 3 cards remain)
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialDeck();
+  }
+
+  // Fetch the initial deck and prefetch the next.
+  Future<void> _loadInitialDeck() async {
+    List<Restaurant> deck = await _apiService.fetchRestaurants(
+      offset: _offset,
+      limit: _limit,
+    );
+    setState(() {
+      _currentDeck = deck;
+      _offset += _limit;
+    });
+    _prefetchDeck();
+  }
+
+  // Prefetch the next deck.
+  Future<void> _prefetchDeck() async {
+    if (_isPrefetching) return;
+    setState(() {
+      _isPrefetching = true;
+    });
+    try {
+      List<Restaurant> deck = await _apiService.fetchRestaurants(
+        offset: _offset,
+        limit: _limit,
+      );
+      setState(() {
+        _prefetchedDeck = deck;
+        _offset += _limit;
+      });
+    } catch (e) {
+      print("Error prefetching deck: $e");
+    } finally {
+      setState(() {
+        _isPrefetching = false;
+      });
+    }
+  }
+
+  // Called when a card is swiped forward.
+  void _onForward(int index, dynamic info) {
+    // If the current index reaches or exceeds the threshold and we have prefetched data:
+    if (index >= _swapThreshold && _prefetchedDeck.isNotEmpty) {
+      // Take the remaining cards from the current deck.
+      List<Restaurant> remaining =
+          _currentDeck.sublist(index + 1, _currentDeck.length);
+      // Combine remaining cards with the prefetched deck.
+      List<Restaurant> newDeck = [...remaining, ..._prefetchedDeck];
+      // Reset the TCard with the new combined deck.
+      _controller.reset(
+        cards: newDeck.map(_buildRestaurantCard).toList(),
+      );
+      setState(() {
+        _currentDeck = newDeck;
+        _prefetchedDeck = [];
+      });
+      // Prefetch the next deck.
+      _prefetchDeck();
+    }
+  }
+
+  // Called when the deck finishes.
+  void _onEnd() {
+    // If, for any reason, the deck ended without a swap,
+    // and if there is prefetched data available, then swap.
+    if (_prefetchedDeck.isNotEmpty) {
+      List<Restaurant> newDeck = List.from(_prefetchedDeck);
+      _controller.reset(
+        cards: newDeck.map(_buildRestaurantCard).toList(),
+      );
+      setState(() {
+        _currentDeck = newDeck;
+        _prefetchedDeck = [];
+      });
+      _prefetchDeck();
+    } else {
+      // If no prefetched deck is available, reload the initial deck.
+      _loadInitialDeck();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.person, color: Colors.black),
+          onPressed: () => Navigator.pushNamed(context, '/profile'),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.favorite, color: Colors.red),
+            onPressed: () => Navigator.pushNamed(context, '/favorites'),
+          ),
+        ],
+      ),
+      body: _currentDeck.isEmpty
+          ? Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                Positioned.fill(
+                  child: TCard(
+                    controller: _controller,
+                    size: Size(
+                      MediaQuery.of(context).size.width,
+                      MediaQuery.of(context).size.height * 0.8,
+                    ),
+                    cards:
+                        _currentDeck.map(_buildRestaurantCard).toList(),
+                    onForward: (index, info) {
+                      bool isLiked = info.direction == SwipDirection.Right;
+                      print("Swiped card $index: ${isLiked ? 'liked' : 'disliked'}");
+                      _onForward(index, info);
+                    },
+                    onEnd: _onEnd,
+                  ),
+                ),
+                Positioned(
+                  bottom: 30,
+                  left: 20,
+                  right: 20,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildActionButton(Icons.close, Colors.red, () {
+                        _controller.forward(direction: SwipDirection.Left);
+                      }),
+                      _buildActionButton(Icons.arrow_back, Colors.yellow, () {
+                        _controller.back();
+                      }),
+                      _buildActionButton(Icons.favorite, Colors.green, () {
+                        _controller.forward(direction: SwipDirection.Right);
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildRestaurantCard(Restaurant restaurant) {
+    return Container(
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: NetworkImage('https://your-image-url.com'),
+          fit: BoxFit.cover,
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              Colors.black.withOpacity(0.7),
+              Colors.transparent,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        padding: EdgeInsets.only(bottom: 100, left: 20, right: 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              restaurant.name,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (restaurant.avgRating != null)
+              Row(
+                children: [
+                  Icon(Icons.star, color: Colors.yellow, size: 20),
+                  SizedBox(width: 5),
+                  Text(
+                    restaurant.avgRating!.toStringAsFixed(1),
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                ],
+              ),
+            SizedBox(height: 5),
+            if (restaurant.cuisine1 != null)
+              Text(
+                restaurant.cuisine1!,
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+      IconData icon, Color color, VoidCallback onPressed) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 2),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: color, size: 30),
+        onPressed: onPressed,
+      ),
+    );
+  }
+}
+*/

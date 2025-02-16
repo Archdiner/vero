@@ -31,7 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
   tcard: ^1.3.5  # Ensure this package is added
-  http: ^0.13.5
+  http: ^1.3.0
+  swipable_stack: ^0.2.0
 
 
 dev_dependencies:
