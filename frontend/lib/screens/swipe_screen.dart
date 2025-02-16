@@ -182,3 +182,4 @@ class _SwipeScreenState extends State<SwipeScreen> {
     );
   }
 }
+ 

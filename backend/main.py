@@ -14,18 +14,21 @@ def home():
     return {"message": "Welcome to Tinder for Restaurants!"}
 
 @app.get("/restaurants")
-def get_restaurants(db: Session = Depends(get_db)):
-    restaurants = db.query(Restaurant.chain_id, Restaurant.name, Restaurant.cuisine1, Restaurant.avg_rating).limit(10).all()
-    print("Fetched Restaurants:", restaurants)  # Add this for debugging
-
-    # Convert list of tuples to list of dictionaries
+def get_restaurants(offset: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    restaurants = db.query(
+        Restaurant.chain_id,
+        Restaurant.name,
+        Restaurant.cuisine1,
+        Restaurant.avg_rating
+    ).order_by(func.random()).offset(offset).limit(limit).all()
     return [
         {
             "chain_id": r[0],
             "name": r[1],
             "cuisine1": r[2],
             "avg_rating": r[3]
-        } for r in restaurants ]
+        } for r in restaurants
+    ]
 
 
 @app.post("/register", response_model=UserResponse)
