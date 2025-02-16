@@ -1,13 +1,35 @@
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from db import get_db
 from models import User, Restaurant
 from schemas import UserCreate, UserLogin, UserResponse
 from fastapi import FastAPI, Depends, HTTPException, status
-
 from auth_utils import hash_password, verify_password, create_access_token
 
+
+# List of allowed origins (adjust as needed for your dev environment)
+origins = [
+    "http://localhost:3000",  # Example: React, Vue, or Flutter web on port 3000
+    "http://127.0.0.1:8000",  # Adjust or add additional origins if necessary
+    "http://10.0.2.2:8000",
+    # "https://your-production-domain.com"
+]
+
 app = FastAPI()
+
+# Add CORS middleware to allow cross-origin requests from specified origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,         # You can set ["*"] to allow all, but be careful in production
+    allow_credentials=True,
+    allow_methods=["*"],           # e.g. ["GET", "POST"] to be more restrictive
+    allow_headers=["*"],
+)
+
+
+
 
 @app.get("/")
 def home():
