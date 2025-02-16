@@ -1,8 +1,10 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db import get_db
 from models import User, Restaurant
 from schemas import UserCreate, UserLogin, UserResponse
+from fastapi import FastAPI, Depends, HTTPException, status
+
 from auth_utils import hash_password, verify_password, create_access_token
 
 app = FastAPI()

@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    final url = 'http://127.0.0.1:8000/login'; // REPLACE THIS WITH THE LOCALHOST BACKEND URL WHEN UVICORN
+    final url = 'http://10.0.2.2:8000/login'; // REPLACE THIS WITH THE LOCALHOST BACKEND URL WHEN UVICORN
 
     try {
       final response = await http.post(
@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         // Optionally parse the returned token or user data:
         // final data = json.decode(response.body);
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/swipe');
       } else {
         final responseBody = json.decode(response.body);
         String errorMsg = responseBody['detail'] ?? 'Login failed';
@@ -43,9 +43,10 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("An error occurred. Please try again.")),
-      );
+  print("Login error: $e");
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text("An error occurred. Please try again.")),
+  );
     } finally {
       setState(() {
         _isLoading = false;

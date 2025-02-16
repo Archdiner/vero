@@ -28,7 +28,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = true;
     });
 
-    final url = 'http://127.0.0.1:8000/register'; // REPLACE THIS WITH THE LOCALHOST BACKEND URL WHEN UVICORN
+    final url = 'http://10.0.2.2:8000/register'; // REPLACE THIS WITH THE LOCALHOST BACKEND URL WHEN UVICORN
 
     try {
       final response = await http.post(
@@ -44,7 +44,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (response.statusCode == 200) {
         // You could parse the returned user data if needed:
         // final userData = json.decode(response.body);
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/swipe');
       } else {
         // Handle errors - parse error message from response if available
         final responseBody = json.decode(response.body);
@@ -54,10 +54,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       }
     } catch (e) {
-      // Handle connection errors
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("An error occurred. Please try again.")),
-      );
+  print("registration error: $e");
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text("An error occurred. Please try again.")),
+  );
     } finally {
       setState(() {
         _isLoading = false;
