@@ -9,9 +9,11 @@ class SwipeScreen extends StatefulWidget {
 }
 
 class _SwipeScreenState extends State<SwipeScreen> {
+  // Use the documented TCardController.
   final TCardController _controller = TCardController();
   final ApiService _apiService = ApiService();
 
+  // This deck represents the current set of cards (restaurants) to swipe.
   List<Restaurant> _restaurants = [];
   int _offset = 0;
   final int _limit = 10;
@@ -20,39 +22,36 @@ class _SwipeScreenState extends State<SwipeScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchRestaurants();
+    _fetchRestaurants(); // Fetch the initial deck
   }
 
+  /// Fetch a new batch of restaurants from the API.
+  /// When the deck finishes (onEnd), we call this to replace the deck.
   Future<void> _fetchRestaurants() async {
-  if (_isLoading) return; // Prevent duplicate calls
-  setState(() => _isLoading = true);
-
-  try {
-    final newRestaurants = await _apiService.fetchRestaurants(
-      offset: _offset, // Offset increases every fetch
-      limit: _limit,
-    );
-
-    if (newRestaurants.isNotEmpty) {
-      setState(() {
-        _restaurants.addAll(newRestaurants);
-        _offset += _limit; // Increase offset for the next batch
-      });
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      final newRestaurants = await _apiService.fetchRestaurants(
+        offset: _offset,
+        limit: _limit,
+      );
+      if (newRestaurants.isNotEmpty) {
+        setState(() {
+          // Replace the current deck with the newly fetched restaurants.
+          _restaurants = newRestaurants;
+          _offset += _limit;
+        });
+        // Update the TCard deck without rebuilding the whole widget.
+        _controller.reset(cards: _restaurants.map(_buildRestaurantCard).toList());
+      } else {
+        print("No more restaurants available");
+      }
+    } catch (e) {
+      print('Error fetching restaurants: $e');
+    } finally {
+      setState(() => _isLoading = false);
     }
-  } catch (e) {
-    print('Error fetching restaurants: $e');
-  } finally {
-    setState(() => _isLoading = false);
   }
-}
-
-
-  void _onSwipe(int index, bool isLiked) {
-  if (index >= _restaurants.length - 3) { // When 3 cards left, fetch more
-    _fetchRestaurants();
-  }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +71,8 @@ class _SwipeScreenState extends State<SwipeScreen> {
           ),
         ],
       ),
-      body: _restaurants.isEmpty
+      // Show a loading spinner if we haven't fetched any cards yet.
+      body: _restaurants.isEmpty && _isLoading
           ? Center(child: CircularProgressIndicator())
           : Stack(
               children: [
@@ -83,14 +83,19 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       MediaQuery.of(context).size.width,
                       MediaQuery.of(context).size.height * 0.8,
                     ),
+                    // Provide the deck of cards.
                     cards: _restaurants.map(_buildRestaurantCard).toList(),
                     onForward: (index, info) {
                       bool isLiked = info.direction == SwipDirection.Right;
-                      _onSwipe(index, isLiked);
+                      print("Card $index swiped ${isLiked ? "right" : "left"}");
                     },
-                    onEnd: () => _fetchRestaurants(),
+                    onEnd: () {
+                      // When the user has swiped through all cards, fetch a new deck.
+                      _fetchRestaurants();
+                    },
                   ),
                 ),
+                // Action buttons below the card deck.
                 Positioned(
                   bottom: 30,
                   left: 20,
@@ -115,11 +120,12 @@ class _SwipeScreenState extends State<SwipeScreen> {
     );
   }
 
+  // Build a card for each restaurant.
   Widget _buildRestaurantCard(Restaurant restaurant) {
     return Container(
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: NetworkImage('https://your-image-url.com'), // Replace with real images later
+          image: NetworkImage('https://your-image-url.com'), // Replace with your image URL or a field from restaurant data.
           fit: BoxFit.cover,
         ),
         borderRadius: BorderRadius.circular(20),
@@ -143,7 +149,11 @@ class _SwipeScreenState extends State<SwipeScreen> {
           children: [
             Text(
               restaurant.name,
-              style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             if (restaurant.avgRating != null)
               Row(
@@ -168,12 +178,15 @@ class _SwipeScreenState extends State<SwipeScreen> {
     );
   }
 
+  // Build an action button.
   Widget _buildActionButton(IconData icon, Color color, VoidCallback onPressed) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 2)],
+        boxShadow: [
+          BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 2),
+        ],
       ),
       child: IconButton(
         icon: Icon(icon, color: color, size: 30),
