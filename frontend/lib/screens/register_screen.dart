@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../utils/config.dart' as utils;
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -28,7 +29,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = true;
     });
 
-    final url = 'http://10.0.2.2:8000/register'; // REPLACE THIS WITH THE LOCALHOST BACKEND URL WHEN UVICORN
+    final url = '${utils.BASE_URL}/register'; // REPLACE THIS WITH THE LOCALHOST BACKEND URL WHEN UVICORN
 
     try {
       final response = await http.post(

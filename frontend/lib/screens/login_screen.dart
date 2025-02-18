@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../utils/config.dart' as utils;
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -19,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    final url = 'http://10.0.2.2:8000/login'; // REPLACE THIS WITH THE LOCALHOST BACKEND URL WHEN UVICORN
+    final url = '${utils.BASE_URL}/login'; // REPLACE THIS WITH THE LOCALHOST BACKEND URL WHEN UVICORN
 
     try {
       final response = await http.post(
