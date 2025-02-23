@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../utils/config.dart' as utils;
 
@@ -20,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    final url = '${utils.BASE_URL}/login'; // REPLACE THIS WITH THE LOCALHOST BACKEND URL WHEN UVICORN
+    final url = '${utils.BASE_URL}/login'; // REPLACE WITH LOCALHOST BACKEND URL
 
     try {
       final response = await http.post(
@@ -33,8 +34,23 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (response.statusCode == 200) {
-        // Optionally parse the returned token or user data:
-        // final data = json.decode(response.body);
+        final data = json.decode(response.body);
+
+        // Debug: print the entire response
+        print("Login response: $data");
+
+        // Save only the access token in SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        if (data['access_token'] == null) {
+          throw Exception("No access_token in response");
+        }
+
+        await prefs.setString('access_token', data['access_token']);
+
+        // Optional debug prints
+        print('Access Token stored: ${data['access_token']}');
+
+        // Navigate to swipe screen after successful login
         Navigator.pushReplacementNamed(context, '/swipe');
       } else {
         final responseBody = json.decode(response.body);
@@ -44,10 +60,10 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
-  print("Login error: $e");
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text("An error occurred. Please try again.")),
-  );
+      print("Login error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("An error occurred. Please try again.")),
+      );
     } finally {
       setState(() {
         _isLoading = false;
