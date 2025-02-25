@@ -38,3 +38,10 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+
+class Favorite(Base):
+    __tablename__ = "favorites"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    chain_id = Column(Integer, ForeignKey("restaurants.chain_id", ondelete="CASCADE"), primary_key=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
