@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -10,44 +9,55 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+  late AnimationController _bubbleController;
+  late AnimationController _pulseController;
 
-  // 6 total particles with BOTH x and y offsets
-  // arranged around the logo in a rough arc
+  // 6 particles with positions, colors, radii, delay, and pulsePhase.
   final List<_Particle> _particles = [
-    // Left side
+    // Left side (orange)
     _Particle(
-      initialOffset: Offset(-120, -30),
+      offset: Offset(-120, -30),
       color: Colors.orange,
       radius: 4,
+      delay: 0.0,
+      pulsePhase: 0.0,
     ),
     _Particle(
-      initialOffset: Offset(-100, 0),
+      offset: Offset(-100, 0),
       color: Colors.orangeAccent,
       radius: 5,
+      delay: 0.15,
+      pulsePhase: 0.2,
     ),
     _Particle(
-      initialOffset: Offset(-125, 30),
+      offset: Offset(-125, 30),
       color: Colors.orange,
       radius: 3,
+      delay: 0.3,
+      pulsePhase: 0.4,
     ),
-    // Right side
+    // Right side (white)
     _Particle(
-      initialOffset: Offset(125, 30),
+      offset: Offset(125, 30),
       color: Colors.white70,
       radius: 4,
+      delay: 0.0,
+      pulsePhase: 0.6,
     ),
     _Particle(
-      initialOffset: Offset(100, 0),
+      offset: Offset(100, 0),
       color: Colors.white70,
       radius: 5,
+      delay: 0.15,
+      pulsePhase: 0.8,
     ),
     _Particle(
-      initialOffset: Offset(120, -30),
+      offset: Offset(120, -30),
       color: Colors.white70,
       radius: 3,
+      delay: 0.3,
+      pulsePhase: 0.5,
     ),
   ];
 
@@ -55,16 +65,22 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Controls the bobbing animation
-    _controller = AnimationController(
+    // 2s bubble-up animation
+    _bubbleController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 2),
+    )..forward();
+
+    // Continuous pulse animation (e.g., 2s cycle)
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
 
-    // Navigate after 2 seconds
+    // Navigate after 2.5 seconds
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Timer(const Duration(seconds: 2), () {
-        bool isLoggedIn = false; // Replace with actual auth check
+      Timer(const Duration(milliseconds: 2500), () {
+        bool isLoggedIn = false; // Replace with your actual auth check.
         if (isLoggedIn) {
           Navigator.pushReplacementNamed(context, '/home');
         } else {
@@ -76,115 +92,162 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _controller.dispose();
+    _bubbleController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // pure black
-      body: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Stack(
-            children: [
-              // -- 1) Particles --
-              ..._particles.map((p) => _buildAnimatedParticle(p)),
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // Particles
+          for (final p in _particles)
+            _AnimatedParticle(
+              particle: p,
+              bubbleController: _bubbleController,
+              pulseController: _pulseController,
+            ),
 
-              // -- 2) Centered Logo + "Vero" --
-              Align(
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Overlapping Icon + "V"
-                    SizedBox(
-                      width: 80,
-                      height: 80,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            size: 80,
-                            color: const Color(0xFFFF6F40), // Orange
-                          ),
-                          const Text(
-                            'V',
-                            style: TextStyle(
-                              fontSize: 28,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+          // Centered Logo + "Vero"
+          Align(
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        size: 80,
+                        color: const Color(0xFFFF6F40), // Orange pin
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Vero',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-
-              // -- 3) Loading Spinner (Lower) --
-              Align(
-                alignment: const Alignment(0, 0.9),
-                // 0.8 is quite low on the screen. 
-                // Increase to 0.85 or 0.9 if you want it even lower.
-                child: SpinKitRing(
-                  color: const Color(0xFFFF6F40),
-                  size: 70.0,     // Increase diameter
-                  lineWidth: 6.0, // Increase thickness
+                const SizedBox(height: 8),
+                const Text(
+                  'Vero',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildAnimatedParticle(_Particle particle) {
-    final progress = _controller.value; // 0 -> 1
-    // Simple bobbing effect using sin/cos
-    final dx = particle.initialOffset.dx + sin(progress * 2 * pi) * 10;
-    final dy = particle.initialOffset.dy + cos(progress * 2 * pi) * 10;
-
-    // Convert from pixel offsets to alignment
-    final halfWidth = MediaQuery.of(context).size.width / 2;
-    final halfHeight = MediaQuery.of(context).size.height / 2;
-
-    return Align(
-      alignment: Alignment(dx / halfWidth, dy / halfHeight),
-      child: Container(
-        width: particle.radius * 2,
-        height: particle.radius * 2,
-        decoration: BoxDecoration(
-          color: particle.color,
-          shape: BoxShape.circle,
-        ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// Particle data class
+/// Particle data: final offset, color, radius, bubble delay, pulse phase offset.
 class _Particle {
-  final Offset initialOffset;
+  final Offset offset;
   final Color color;
   final double radius;
+  final double delay;      // 0..1 => when the bubble starts in the 2s timeline
+  final double pulsePhase; // 0..1 => shifts the pulsing wave
 
   _Particle({
-    required this.initialOffset,
+    required this.offset,
     required this.color,
     required this.radius,
+    required this.delay,
+    required this.pulsePhase,
   });
+}
+
+/// A widget that:
+/// 1) Staggers bubble-up from below based on 'delay'
+/// 2) Fades in
+/// 3) Continuously changes size (pulses) using a second controller
+class _AnimatedParticle extends StatelessWidget {
+  final _Particle particle;
+  final AnimationController bubbleController;
+  final AnimationController pulseController;
+
+  const _AnimatedParticle({
+    Key? key,
+    required this.particle,
+    required this.bubbleController,
+    required this.pulseController,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Listen to both controllers
+    return AnimatedBuilder(
+      animation: Listenable.merge([bubbleController, pulseController]),
+      builder: (context, child) {
+        // 1) Compute bubble progress with delay
+        double effectiveProgress;
+        if (bubbleController.value < particle.delay) {
+          effectiveProgress = 0.0;
+        } else {
+          effectiveProgress =
+              (bubbleController.value - particle.delay) / (1 - particle.delay);
+        }
+        effectiveProgress = effectiveProgress.clamp(0.0, 1.0);
+
+        // Start offset: 150px below final
+        final startOffset = Offset(
+          particle.offset.dx,
+          particle.offset.dy + 150,
+        );
+
+        // Current bubble offset
+        final currentOffset = Offset(
+          startOffset.dx +
+              (particle.offset.dx - startOffset.dx) * effectiveProgress,
+          startOffset.dy +
+              (particle.offset.dy - startOffset.dy) * effectiveProgress,
+        );
+
+        // Fade in
+        final opacity = effectiveProgress;
+
+        // Convert offset from center -> alignment
+        final halfWidth = MediaQuery.of(context).size.width / 2;
+        final halfHeight = MediaQuery.of(context).size.height / 2;
+        final alignment = Alignment(
+          currentOffset.dx / halfWidth,
+          currentOffset.dy / halfHeight,
+        );
+
+        // 2) Pulse scale
+        // We only want to start pulsing once the bubble is fully visible,
+        // so multiply amplitude by effectiveProgress.
+        final pulseValue = (pulseController.value + particle.pulsePhase) % 1.0;
+        // sin wave => -1..1, so scale => 1 +/- 0.2
+        double scaleFactor = 1.0 + (sin(pulseValue * 2 * pi) * 0.2 * effectiveProgress);
+
+        // Final size
+        final bubbleSize = (particle.radius * 2) * scaleFactor;
+
+        return Align(
+          alignment: alignment,
+          child: Opacity(
+            opacity: opacity,
+            child: Container(
+              width: bubbleSize,
+              height: bubbleSize,
+              decoration: BoxDecoration(
+                color: particle.color,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
