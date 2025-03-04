@@ -96,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Big welcome text
                 Text(
-                  "Welcome Back !",
+                  "Welcome Back!",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 28,

@@ -86,6 +86,7 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
         )
     # Create a single access_token
     access_token = create_access_token(data={"user_id": user.id})
+    print(f"Access Token stored: {access_token}")
     return {
         "access_token": access_token, 
         "token_type": "bearer"
@@ -102,6 +103,7 @@ def get_profile(Authorization: str = Header(None), db: Session = Depends(get_db)
 
     # 2) Extract the token
     token = Authorization.split("Bearer ")[1]
+    print(f"Access Token stored: {token}")
 
     # 3) Decode the token
     try:

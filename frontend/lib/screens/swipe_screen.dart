@@ -200,7 +200,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   IconButton(
                     icon: const Icon(Icons.person_outline, color: Colors.white54),
                     onPressed: () {
-                      // go to profile
+                      Navigator.pushReplacementNamed(context, '/profile');
                     },
                   ),
                 ],
