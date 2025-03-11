@@ -135,4 +135,4 @@ def get_profile(Authorization: str = Header(None), db: Session = Depends(get_db)
         )
 
     # 5) Return user info
-    return {"id": user.id, "email": user.email}
+    return {"id": user.id, "email": user.email, "firstname": user.firstname, "lastname": user.lastname}
