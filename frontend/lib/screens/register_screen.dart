@@ -108,7 +108,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // Big welcome text
                 Text(
-                  "We are happy that you are here !",
+                  "Welcome to Vero!",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -119,7 +119,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // Subtitle
                 Text(
-                  "Find the most suitable restaurants with just a few clicks :",
+                  "Find the most suitable restaurants with just a few clicks:",
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 14,
