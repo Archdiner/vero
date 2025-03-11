@@ -61,7 +61,9 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     # Create new user
     new_user = User(
         email=user_data.email,
-        hashed_password=hash_password(user_data.password)
+        hashed_password=hash_password(user_data.password),
+        fullname = user_data.fullname,
+        username = user_data.username
     )
     db.add(new_user)
     db.commit()
@@ -135,4 +137,4 @@ def get_profile(Authorization: str = Header(None), db: Session = Depends(get_db)
         )
 
     # 5) Return user info
-    return {"id": user.id, "email": user.email, "firstname": user.firstname, "lastname": user.lastname}
+    return {"id": user.id, "email": user.email, "fullname": user.fullname, "username": user.username}

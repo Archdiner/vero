@@ -38,8 +38,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    firstname = Column(String, nullable=True) 
-    lastname = Column(String, nullable=True) 
+    fullname = Column(String, nullable=True) 
+    username = Column(String, unique=True, nullable=True) 
 
 class Favorite(Base):
     __tablename__ = "favorites"
