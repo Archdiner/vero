@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../utils/config.dart' as utils;
 
@@ -50,7 +51,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       if (response.statusCode == 200) {
-        // Registration successful, navigate to the swipe screen
+
+        final data = json.decode(response.body);
+        // Save only the access token in SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+
+        if (data['access_token'] == null) {
+          throw Exception("No access_token in response");
+        }
+        await prefs.setString('access_token', data['access_token']);
+
+        // Navigate to swipe screen
         Navigator.pushReplacementNamed(context, '/swipe');
       } else {
         // Handle errors - parse error message from response if available
@@ -115,53 +126,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
-
-                // Subtitle
-                Text(
-                  "Find the most suitable restaurants with just a few clicks:",
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
-                ),
                 const SizedBox(height: 32),
 
-                // Full Name
-                TextField(
-                  controller: fullNameController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Full Name',
-                    labelStyle: const TextStyle(color: Colors.white70),
-                    hintText: 'Write here',
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    filled: true,
-                    fillColor: Colors.grey[900],
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                      borderRadius: BorderRadius.circular(12),
+                // Row for Full Name and User Name
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: fullNameController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: 'Full Name',
+                          labelStyle: const TextStyle(color: Colors.white70),
+                          hintText: 'Write here',
+                          hintStyle: const TextStyle(color: Colors.grey),
+                          filled: true,
+                          fillColor: Colors.grey[900],
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // User Name
-                TextField(
-                  controller: userNameController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'User Name',
-                    labelStyle: const TextStyle(color: Colors.white70),
-                    hintText: 'Write here',
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    filled: true,
-                    fillColor: Colors.grey[900],
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                      borderRadius: BorderRadius.circular(12),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextField(
+                        controller: userNameController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: 'User Name',
+                          labelStyle: const TextStyle(color: Colors.white70),
+                          hintText: 'Write here',
+                          hintStyle: const TextStyle(color: Colors.grey),
+                          filled: true,
+                          fillColor: Colors.grey[900],
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
                 const SizedBox(height: 16),
 

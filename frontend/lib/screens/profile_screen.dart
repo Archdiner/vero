@@ -14,6 +14,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String? _email;
+  String? _username;
   bool _isLoading = false;
 
   @override
@@ -48,6 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final data = json.decode(response.body);
         setState(() {
           _email = data['email'];
+          _username = data['username'];
         });
       } else {
         // Handle errors, e.g. token invalid, user not found, etc.
@@ -88,6 +90,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        Text('Signed in as $_username'),
+                        const SizedBox(height: 16),
                         Text('Email: $_email'),
                         const SizedBox(height: 16),
                         ElevatedButton(
