@@ -20,3 +20,7 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class FavoriteToggle(BaseModel):
+    restaurant_id: int
+    current_state: bool
