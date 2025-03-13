@@ -21,6 +21,8 @@ class Restaurant(Base):
     veg_vegan = Column(Boolean, nullable=True)
     avg_rating = Column(Float, nullable=True)
 
+    favorited_by = relationship("User", secondary="favorites", back_populates="favorites")
+
 class Location(Base):
     __tablename__ = "locations"
 
@@ -40,6 +42,8 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     fullname = Column(String, nullable=True) 
     username = Column(String, unique=True, nullable=True) 
+
+    favorites = relationship("Restaurant", secondary="favorites", back_populates="favorited_by")
 
 class Favorite(Base):
     __tablename__ = "favorites"
