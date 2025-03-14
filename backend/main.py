@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from db import get_db
 from models import User, Restaurant, Favorite
-from schemas import UserCreate, UserLogin, UserResponse, Token, FavoriteCreate, FavoriteToggle
+from schemas import UserCreate, UserLogin, UserResponse, Token, FavoriteToggleRequest, FavoriteToggleResponse
 from fastapi import FastAPI, Depends, HTTPException, status
 from auth_utils import hash_password, verify_password, create_access_token, decode_access_token
 import jwt
@@ -148,8 +148,8 @@ def get_profile(Authorization: str = Header(None), db: Session = Depends(get_db)
 
     return {"id": user.id, "email": user.email, "fullname": user.fullname, "username": user.username}
 
-@app.post("/toggle_favorite", response_model=FavoriteToggle)
-def toggle_favorite(favorite: FavoriteToggle, Authorization: str = Header(None), db: Session = Depends(get_db)):
+@app.post("/toggle_favorite", response_model=FavoriteToggleResponse)
+def toggle_favorite(favorite: FavoriteToggleRequest, Authorization: str = Header(None), db: Session = Depends(get_db)):
     if not Authorization or not Authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -173,20 +173,23 @@ def toggle_favorite(favorite: FavoriteToggle, Authorization: str = Header(None),
         )
 
     # Check if the restaurant is already favorited by the user
-    existing_fav = favorite.current_state
+    existing_fav = db.query(Favorite).filter(
+        Favorite.user_id == user_id,
+        Favorite.chain_id == favorite.chain_id
+    ).first()
 
     if existing_fav:
         # Unfavorite: delete the existing record
         db.delete(existing_fav)
         db.commit()
-        return {"restaurant_id": favorite.restaurant_id, "current_state": False}
+        return {"chain_id": favorite.chain_id, "current_state": False}
     else:
         # Favorite: create a new record
         new_fav = Favorite(
             user_id=user_id,
-            restaurant_id=favorite.restaurant_id
+            chain_id=favorite.chain_id
         )
         db.add(new_fav)
         db.commit()
         db.refresh(new_fav)
-        return {"restaurant_id": favorite.restaurant_id, "current_state": True}
+        return {"chain_id": favorite.chain_id, "current_state": True}

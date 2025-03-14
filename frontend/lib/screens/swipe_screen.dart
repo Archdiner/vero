@@ -59,6 +59,20 @@ class _SwipeScreenState extends State<SwipeScreen> {
     }
   }
 
+  // New method to toggle favorite status for a restaurant
+  Future<void> _toggleFavorite(Restaurant restaurant) async {
+    try {
+      final bool updatedFavoriteState = await _apiService.toggleFavorite(
+        restaurant.chainId
+      );
+      setState(() {
+        restaurant.isFavorited = updatedFavoriteState;
+      });
+    } catch (e) {
+      print("Error toggling favorite: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,7 +89,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   CircleAvatar(
                     radius: 22,
                     backgroundImage: NetworkImage(
-                      'https://via.placeholder.com/150?text=Avatar',
+                      'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg',
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -215,7 +229,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
   Widget _buildRestaurantCard(
     BuildContext context,
     BoxConstraints constraints,
-    Restaurant r,
+    Restaurant restaurant,
   ) {
     // Slightly smaller so it doesn't get chopped
     final cardWidth = constraints.maxWidth * 0.9;
@@ -283,7 +297,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
 
                         // Name
                         Text(
-                          r.name,
+                          restaurant.name,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
@@ -292,14 +306,14 @@ class _SwipeScreenState extends State<SwipeScreen> {
                         ),
 
                         // Rating
-                        if (r.avgRating != null) ...[
+                        if (restaurant.avgRating != null) ...[
                           const SizedBox(height: 4),
                           Row(
                             children: [
                               const Icon(Icons.star, color: Colors.yellow, size: 20),
                               const SizedBox(width: 5),
                               Text(
-                                r.avgRating!.toStringAsFixed(1),
+                                restaurant.avgRating!.toStringAsFixed(1),
                                 style: const TextStyle(color: Colors.white, fontSize: 16),
                               ),
                             ],
@@ -323,20 +337,25 @@ class _SwipeScreenState extends State<SwipeScreen> {
             ),
           ),
 
-          // Positioned save icon at top right of the card
+          // Responsive Bookmark/Save Icon
           Positioned(
             top: 10,
             right: 10,
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(
-                Icons.bookmark_border,
-                color: Colors.black,
-                size: 30,
+            child: InkWell(
+              onTap: () {
+                _toggleFavorite(restaurant);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  restaurant.isFavorited ? Icons.bookmark : Icons.bookmark_border,
+                  color: restaurant.isFavorited ? const Color(0xFFFF6F40) : Colors.white,
+                  size: 30,
+                ),
               ),
             ),
           ),
@@ -355,7 +374,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     _controller.next(swipeDirection: SwipeDirection.left);
                   },
                   child: Container(
-                    width: 130,  // tweak width
+                    width: 130, // tweak width
                     height: 50, // tweak height
                     decoration: BoxDecoration(
                       color: const Color(0xFF2C2C2C), // dark gray
