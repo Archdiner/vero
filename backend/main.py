@@ -32,21 +32,43 @@ def home():
     return {"message": "Welcome to Tinder for Restaurants!"}
 
 @app.get("/restaurants")
-def get_restaurants(offset: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    restaurants = db.query(
-        Restaurant.chain_id,
-        Restaurant.name,
-        Restaurant.cuisine1,
-        Restaurant.avg_rating
-    ).order_by(func.random()).offset(offset).limit(limit).all()
-    return [
-        {
-            "chain_id": r[0],
-            "name": r[1],
-            "cuisine1": r[2],
-            "avg_rating": r[3]
-        } for r in restaurants
-    ]
+def get_restaurants(
+    offset: int = 0,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    Authorization: str = Header(None)
+):
+    user_id = None
+    if Authorization and Authorization.startswith("Bearer "):
+        token = Authorization.split("Bearer ")[1]
+        try:
+            payload = decode_access_token(token)
+            user_id = payload.get("user_id")
+        except Exception:
+            pass  # If token fails, user_id stays None
+
+    # Fetch restaurants from the database
+    restaurants = db.query(Restaurant).order_by(func.random()).offset(offset).limit(limit).all()
+
+    favorite_chain_ids = set()
+    if user_id:
+        # Get a set of chain_ids that the user has favorited
+        favorite_chain_ids = {
+            fav.chain_id for fav in db.query(Favorite).filter(Favorite.user_id == user_id).all()
+        }
+
+    # Build the response including the isFavorited flag
+    response = []
+    for r in restaurants:
+        response.append({
+            "chain_id": r.chain_id,
+            "name": r.name,
+            "cuisine1": r.cuisine1,
+            "avg_rating": r.avg_rating,
+            "isFavorited": r.chain_id in favorite_chain_ids
+        })
+
+    return response
 
 @app.post("/register", response_model=Token)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
