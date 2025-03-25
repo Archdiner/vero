@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../utils/config.dart' as utils;
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -14,6 +15,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
 
   Future<void> login() async {
@@ -21,45 +23,35 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    final url = '${utils.BASE_URL}/login'; // Replace with your actual backend URL
-
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          "email": emailController.text.trim(),
-          "password": passwordController.text,
-        }),
+      final success = await _authService.login(
+        emailController.text.trim(),
+        passwordController.text,
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // Save only the access token in SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-
-        if (data['access_token'] == null) {
-          throw Exception("No access_token in response");
+      if (success) {
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/swipe');
         }
-        await prefs.setString('access_token', data['access_token']);
-
-        // Navigate to swipe screen
-        Navigator.pushReplacementNamed(context, '/swipe');
       } else {
-        final responseBody = json.decode(response.body);
-        String errorMsg = responseBody['detail'] ?? 'Login failed';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg)),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Login failed. Please check your credentials.')),
+          );
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("An error occurred. Please try again.")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('An error occurred. Please try again.')),
+        );
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

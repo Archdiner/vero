@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 class AuthScreen extends StatelessWidget {
-  const AuthScreen({Key? key}) : super(key: key);
+  const AuthScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +111,7 @@ class AuthScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32.0),
                   child: const Text(
-                    'Discover the best restaurants near you in just a few taps! Whether you’re craving a quick bite, a cozy café, or a fine dining experience.',
+                    'Discover the best restaurants near you in just a few taps! Whether you\'re craving a quick bite, a cozy café, or a fine dining experience.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white70,

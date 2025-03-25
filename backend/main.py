@@ -215,3 +215,56 @@ def toggle_favorite(favorite: FavoriteToggleRequest, Authorization: str = Header
         db.commit()
         db.refresh(new_fav)
         return {"chain_id": favorite.chain_id, "current_state": True}
+
+@app.get("/verify_token")
+def verify_token(Authorization: str = Header(None)):
+    if not Authorization or not Authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid token"
+        )
+
+    token = Authorization.split("Bearer ")[1]
+    try:
+        payload = decode_access_token(token)
+        return {"valid": True, "user_id": payload.get("user_id")}
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+
+@app.get("/get_user_name")
+def get_user_name(Authorization: str = Header(None), db: Session = Depends(get_db)):
+    if not Authorization or not Authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid token"
+        )
+
+    token = Authorization.split("Bearer ")[1]
+    try:
+        payload = decode_access_token(token)
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload"
+            )
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+
+        # Split the fullname and get the first name
+        first_name = user.fullname.split()[0] if user.fullname else user.username
+        return {"first_name": first_name}
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )

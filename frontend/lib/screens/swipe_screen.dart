@@ -21,11 +21,13 @@ class _SwipeScreenState extends State<SwipeScreen> {
   int _offset = 0;
   final int _limit = 10;
   bool _isFetching = false;
+  String _userName = '';
 
   @override
   void initState() {
     super.initState();
     _fetchRestaurants();
+    _fetchUserName();
   }
 
   Future<void> _fetchRestaurants() async {
@@ -47,6 +49,19 @@ class _SwipeScreenState extends State<SwipeScreen> {
       print("Error fetching restaurants: $e");
     } finally {
       setState(() => _isFetching = false);
+    }
+  }
+
+  Future<void> _fetchUserName() async {
+    try {
+      final name = await _apiService.getUserName();
+      if (mounted) {
+        setState(() {
+          _userName = name;
+        });
+      }
+    } catch (e) {
+      print('Error fetching user name: $e');
     }
   }
 
@@ -80,7 +95,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ===== TOP BAR (Avatar, "Hello Sab!", location, bell) =====
+            // ===== TOP BAR (Avatar, "Hello [name]!", location, bell) =====
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
@@ -97,17 +112,17 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          "Hello Sab !",
-                          style: TextStyle(
+                          "Hello ${_userName} !",
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 2),
-                        Text(
+                        const SizedBox(height: 2),
+                        const Text(
                           "Your location",
                           style: TextStyle(
                             color: Colors.white54,

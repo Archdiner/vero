@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -12,6 +13,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late AnimationController _bubbleController;
   late AnimationController _pulseController;
+  final AuthService _authService = AuthService();
 
   // 6 particles with positions, colors, radii, delay, and pulsePhase.
   final List<_Particle> _particles = [
@@ -77,17 +79,33 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
 
-    // Navigate after 2.5 seconds
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Timer(const Duration(milliseconds: 2500), () {
-        bool isLoggedIn = false; // Replace with your actual auth check.
-        if (isLoggedIn) {
-          Navigator.pushReplacementNamed(context, '/home');
-        } else {
-          Navigator.pushReplacementNamed(context, '/auth');
-        }
-      });
-    });
+    // Check login status and navigate
+    _checkLoginAndNavigate();
+  }
+
+  Future<void> _checkLoginAndNavigate() async {
+    try {
+      // Wait for the splash animation
+      await Future.delayed(const Duration(milliseconds: 2500));
+      
+      if (!mounted) return;
+
+      final isLoggedIn = await _authService.isLoggedIn();
+      print('Splash screen: Login status checked, isLoggedIn: $isLoggedIn');
+      
+      if (!mounted) return;
+
+      if (isLoggedIn) {
+        Navigator.pushReplacementNamed(context, '/swipe');
+      } else {
+        Navigator.pushReplacementNamed(context, '/auth');
+      }
+    } catch (e) {
+      print('Error checking login status in splash screen: $e');
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/auth');
+      }
+    }
   }
 
   @override
