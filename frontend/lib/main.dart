@@ -9,21 +9,62 @@ import 'screens/restaurant_details_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
+import 'services/auth_service.dart';
 
 void main() {
   runApp(TinderForRestaurants());
 }
 
-class TinderForRestaurants extends StatelessWidget {
+class TinderForRestaurants extends StatefulWidget {
+  const TinderForRestaurants({super.key});
+
+  @override
+  _TinderForRestaurantsState createState() => _TinderForRestaurantsState();
+}
+
+class _TinderForRestaurantsState extends State<TinderForRestaurants> {
+  final AuthService _authService = AuthService();
+  bool _isLoading = true;
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    print('App started, checking login status...');
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    try {
+      final isLoggedIn = await _authService.isLoggedIn();
+      print('Login check completed. User logged in: $isLoggedIn');
+      if (mounted) {
+        setState(() {
+          _isLoggedIn = isLoggedIn;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error checking login status: $e');
+      if (mounted) {
+        setState(() {
+          _isLoggedIn = false;
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    print('Building app with loading: $_isLoading, logged in: $_isLoggedIn');
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Tinder for Restaurants',
       theme: ThemeData(
         primarySwatch: Colors.red,
       ),
-      initialRoute: '/splash',
+      initialRoute: _isLoading ? '/splash' : (_isLoggedIn ? '/home' : '/auth'),
       routes: {
         '/splash': (context) => SplashScreen(),
         '/auth': (context) => AuthScreen(),
@@ -73,7 +114,7 @@ class _RestaurantSwipeScreenState extends State<RestaurantSwipeScreen> {
 
   final List<Map<String, String>> restaurants = [
     {
-      'name': 'McDonald’s',
+      'name': 'McDonald's',
       'rating': '3.8',
       'cuisine': 'American • Fast Food',
       'location': 'Saar',
