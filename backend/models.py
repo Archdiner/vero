@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, func 
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Time, func 
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.orm import declarative_base
@@ -42,6 +42,24 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     fullname = Column(String, nullable=True) 
     username = Column(String, unique=True, nullable=True) 
+    instagram = Column(String, nullable=True)  # now nullable
+    profile_picture = Column(String, nullable=False)
+    age = Column(Integer, nullable=False)
+    gender = Column(String, nullable=False)
+    university = Column(String, nullable=False)
+    major = Column(String, nullable=False)
+    year_of_study = Column(Integer, nullable=False)
+    budget_range = Column(Integer, nullable=False)
+    move_in_date = Column(DateTime, nullable=True)  # now nullable
+    smoking_preference = Column(Boolean, nullable=False)
+    drinking_preference = Column(Boolean, nullable=False)
+    pet_preference = Column(Boolean, nullable=False)
+    cleanliness_level = Column(Integer, nullable=False)
+    meal_schedule = Column(String, nullable=False)
+    social_preference = Column(String, nullable=False)
+    snapchat = Column(String, nullable=True)
+    bedtime = Column(Time, nullable=False)
+    phone_number = Column(String, nullable=True)
 
     favorites = relationship("Restaurant", secondary="favorites", back_populates="favorited_by")
 
