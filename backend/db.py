@@ -3,7 +3,10 @@ from sqlalchemy.orm import sessionmaker
 
 #database url using my creds
 # DATABASE_URL = "postgresql://postgres:sixofwhales1@localhost:5432/tinder_restaurants"
-DATABASE_URL = "postgresql://postgres:Rahman_Gamwe11@34.18.72.194:5432/tinder_restaurants"
+
+DATABASE_URL = "postgresql://postgres.jxbvzbsakvnscdhllkcq:Rahman_Gamwe11@aws-0-us-west-1.pooler.supabase.com:5432/postgres"
+
+
 
 
 #make SQLAlchemy database engine
