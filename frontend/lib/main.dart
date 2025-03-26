@@ -9,7 +9,7 @@ import 'screens/restaurant_details_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
-import 'services/onboarding_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'services/auth_service.dart';
 
 void main() {

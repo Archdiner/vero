@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from db import get_db
 from models import User, Restaurant, Favorite
-from schemas import UserCreate, UserLogin, UserResponse, Token, FavoriteToggleRequest, FavoriteToggleResponse
+from schemas import UserCreate, UserLogin, UserResponse, Token, FavoriteToggleRequest, FavoriteToggleResponse, UserOnboarding
 from fastapi import FastAPI, Depends, HTTPException, status
 from auth_utils import hash_password, verify_password, create_access_token, decode_access_token
 import jwt
@@ -268,3 +268,53 @@ def get_user_name(Authorization: str = Header(None), db: Session = Depends(get_d
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token"
         )
+    
+@app.post("/onboarding")
+def update_onboarding(
+    onboarding_data: UserOnboarding,
+    Authorization: str = Header(None),
+    db: Session = Depends(get_db)
+):
+    # Validate and decode the access token
+    if not Authorization or not Authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid token"
+        )
+    token = Authorization.split("Bearer ")[1]
+    try:
+        payload = decode_access_token(token)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired"
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload"
+        )
+
+    # Retrieve the current user
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Update user with provided onboarding data
+    update_data = onboarding_data.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(user, key, value)
+
+    db.commit()
+    db.refresh(user)
+    return {"message": "Onboarding data updated successfully"}
