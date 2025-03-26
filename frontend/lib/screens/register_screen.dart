@@ -32,6 +32,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    // Basic validation
+    if (emailController.text.isEmpty || 
+        passwordController.text.isEmpty || 
+        fullNameController.text.isEmpty || 
+        userNameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in all fields")),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -39,41 +50,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final url = '${utils.BASE_URL}/register';
 
     try {
+      final requestBody = {
+        "email": emailController.text.trim(),
+        "password": passwordController.text,
+        "fullname": fullNameController.text.trim(),
+        "username": userNameController.text.trim(),
+      };
+
       final response = await http.post(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          "email": emailController.text.trim(),
-          "password": passwordController.text,
-          "fullname": fullNameController.text.trim(),
-          "username": userNameController.text.trim(),
-        }),
+        body: json.encode(requestBody),
       );
 
       if (response.statusCode == 200) {
-
         final data = json.decode(response.body);
-        // Save only the access token in SharedPreferences
         final prefs = await SharedPreferences.getInstance();
 
         if (data['access_token'] == null) {
-          throw Exception("No access_token in response");
+          throw Exception("No access token received");
         }
+        
         await prefs.setString('access_token', data['access_token']);
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Registration successful!")),
+        );
 
-        // Navigate to swipe screen
+        // Navigate to onboarding screen
         Navigator.pushReplacementNamed(context, '/onboarding');
       } else {
-        // Handle errors - parse error message from response if available
         final responseBody = json.decode(response.body);
         String errorMsg = responseBody['detail'] ?? 'Registration failed';
+        
+        // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg)),
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
+      // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("An error occurred. Please try again.")),
+        SnackBar(
+          content: Text("Error: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() {

@@ -8,6 +8,7 @@ class AuthService {
   static const String _tokenKey = 'access_token';
   static const String _lastLoginKey = 'last_login';
   static const String _userEmailKey = 'user_email';
+  static const String _onboardingCompletedKey = 'onboarding_completed';
 
   // Login user and store token
   Future<bool> login(String email, String password) async {
@@ -161,6 +162,56 @@ class AuthService {
     } catch (e) {
       print('Error getting user email: $e');
       return null;
+    }
+  }
+
+  // Check if user has completed onboarding
+  Future<bool> hasCompletedOnboarding() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = await _getToken();
+      
+      if (token == null) return false;
+
+      // Check if onboarding is marked as completed in local storage
+      final isCompleted = prefs.getBool(_onboardingCompletedKey) ?? false;
+      if (isCompleted) return true;
+
+      // Verify with backend by checking if user has required fields
+      final response = await http.get(
+        Uri.parse('$baseUrl/profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final userData = jsonDecode(response.body);
+        // Check if user has completed required onboarding fields
+        final hasCompleted = userData['university'] != null && 
+                           userData['budget_range'] != null &&
+                           userData['cleanliness_level'] != null;
+        
+        // Save the result to local storage
+        await prefs.setBool(_onboardingCompletedKey, hasCompleted);
+        return hasCompleted;
+      }
+      
+      return false;
+    } catch (e) {
+      print('Error checking onboarding status: $e');
+      return false;
+    }
+  }
+
+  // Mark onboarding as completed
+  Future<void> markOnboardingCompleted() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_onboardingCompletedKey, true);
+      print('Onboarding marked as completed');
+    } catch (e) {
+      print('Error marking onboarding as completed: $e');
     }
   }
 } 
