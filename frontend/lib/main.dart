@@ -9,6 +9,7 @@ import 'screens/restaurant_details_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
+import 'services/onboarding_screen.dart';
 import 'services/auth_service.dart';
 
 void main() {
@@ -75,7 +76,8 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
         '/details': (context) => RestaurantDetailsScreen(),
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
-        '/profile': (context) => ProfileScreen()
+        '/profile': (context) => ProfileScreen(),
+        '/onboarding': (context) => OnboardingScreen()
       },
     );
   }
