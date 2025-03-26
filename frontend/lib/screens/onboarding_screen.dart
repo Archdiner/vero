@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../utils/config.dart' as utils;
+import '../services/auth_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -46,34 +47,49 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('access_token') ?? '';
 
-    // NOTE: Adjust your endpoint if needed
     final url = '${utils.BASE_URL}/onboarding';
+
+    // Helper function to parse int from string
+    int? parseIntOrNull(String value) {
+      value = value.trim();
+      return value.isEmpty ? null : int.tryParse(value);
+    }
+
+    // Process text values
+    final instagramValue = instagramController.text.trim();
+    final profilePictureValue = profilePictureController.text.trim();
+    final universityValue = universityController.text.trim();
+    final majorValue = majorController.text.trim();
+    final mealScheduleValue = mealScheduleController.text.trim();
+    final socialPreferenceValue = socialPreferenceController.text.trim();
+    final snapchatValue = snapchatController.text.trim();
+    final bedtimeValue = bedtimeController.text.trim();
+    final phoneNumberValue = phoneNumberController.text.trim();
+    final moveInDateValue = moveInDateController.text.trim();
 
     // Build the request body
     final body = json.encode({
-      "instagram": instagramController.text.trim(),
-      "profile_picture": profilePictureController.text.trim(),
-      "age": int.tryParse(ageController.text.trim()),
-      "gender": selectedGender,
-      "university": universityController.text.trim(),
-      "major": majorController.text.trim(),
-      "year_of_study": int.tryParse(yearOfStudyController.text.trim()),
-      "budget_range": int.tryParse(budgetRangeController.text.trim()),
-      "move_in_date": moveInDateController.text.trim(), // ISO8601 format
+      "instagram": instagramValue.isEmpty ? null : instagramValue,
+      "profile_picture": profilePictureValue.isEmpty ? null : profilePictureValue,
+      "age": parseIntOrNull(ageController.text),
+      "gender": selectedGender,  // Already null if not selected
+      "university": universityValue.isEmpty ? null : universityValue,
+      "major": majorValue.isEmpty ? null : majorValue,
+      "year_of_study": parseIntOrNull(yearOfStudyController.text),
+      "budget_range": parseIntOrNull(budgetRangeController.text),
+      "move_in_date": moveInDateValue.isEmpty ? null : moveInDateValue,
       "smoking_preference": smokingPreference,
       "drinking_preference": drinkingPreference,
       "pet_preference": petPreference,
-      "cleanliness_level":
-          int.tryParse(cleanlinessLevelController.text.trim()),
-      "meal_schedule": mealScheduleController.text.trim(),
-      "social_preference": socialPreferenceController.text.trim(),
-      "snapchat": snapchatController.text.trim(),
-      "bedtime": bedtimeController.text.trim(), // e.g. HH:mm
-      "phone_number": phoneNumberController.text.trim(),
+      "cleanliness_level": parseIntOrNull(cleanlinessLevelController.text),
+      "meal_schedule": mealScheduleValue.isEmpty ? null : mealScheduleValue,
+      "social_preference": socialPreferenceValue.isEmpty ? null : socialPreferenceValue,
+      "snapchat": snapchatValue.isEmpty ? null : snapchatValue,
+      "bedtime": bedtimeValue.isEmpty ? null : bedtimeValue,
+      "phone_number": phoneNumberValue.isEmpty ? null : phoneNumberValue,
     });
 
     try {
-      // Using POST or PUT is up to your API design. Adjust if needed.
       final response = await http.post(
         Uri.parse(url),
         headers: {
@@ -84,19 +100,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       );
 
       if (response.statusCode == 200) {
-        // On successful update, navigate to home (or next screen)
+        // Mark onboarding as completed
+        final authService = AuthService();
+        await authService.markOnboardingCompleted();
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Onboarding completed successfully!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Navigate to swipe screen
         Navigator.pushReplacementNamed(context, '/swipe');
       } else {
         final responseBody = json.decode(response.body);
-        final errorMsg =
-            responseBody['detail'] ?? 'Failed to update onboarding data';
+        final errorMsg = responseBody['detail'] ?? 'Failed to update onboarding data';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg)),
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("An error occurred. Please try again.")),
+        SnackBar(
+          content: Text("Error: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() {
@@ -459,8 +492,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     initialTime: TimeOfDay.now(),
                   );
                   if (pickedTime != null) {
-                    // Format the time in 24-hour or AM/PM format
-                    bedtimeController.text = pickedTime.format(context);
+                    // Format time as HH:mm for Pydantic parsing
+                    final hours = pickedTime.hour.toString().padLeft(2, '0');
+                    final minutes = pickedTime.minute.toString().padLeft(2, '0');
+                    bedtimeController.text = "$hours:$minutes";
                   }
                 },
               ),

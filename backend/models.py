@@ -51,7 +51,7 @@ class User(Base):
     snapchat = Column(String, nullable=True)
     bedtime = Column(Time, nullable=True)
     phone_number = Column(String, nullable=True)
-    bio = Column(String, unique=False, nullable=False)
+    bio = Column(String, unique=False, nullable=True)
 
     # Add composite indexes for common query patterns
     __table_args__ = (
