@@ -55,7 +55,6 @@ class User(Base):
     drinking_preference = Column(Boolean, nullable=True)
     pet_preference = Column(Boolean, nullable=True)
     cleanliness_level = Column(Integer, nullable=True)
-    meal_schedule = Column(String, nullable=True)
     social_preference = Column(String, nullable=True)
     snapchat = Column(String, nullable=True)
     bedtime = Column(Time, nullable=True)

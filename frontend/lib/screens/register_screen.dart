@@ -62,7 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         await prefs.setString('access_token', data['access_token']);
 
         // Navigate to swipe screen
-        Navigator.pushReplacementNamed(context, '/swipe');
+        Navigator.pushReplacementNamed(context, '/onboarding');
       } else {
         // Handle errors - parse error message from response if available
         final responseBody = json.decode(response.body);
