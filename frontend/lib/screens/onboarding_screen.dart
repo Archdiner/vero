@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -13,32 +14,89 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  // Controllers for onboarding fields
-  final TextEditingController instagramController = TextEditingController();
-  final TextEditingController profilePictureController = TextEditingController();
-  final TextEditingController ageController = TextEditingController();
-  final TextEditingController universityController = TextEditingController();
-  final TextEditingController majorController = TextEditingController();
-  final TextEditingController yearOfStudyController = TextEditingController();
-  final TextEditingController budgetRangeController = TextEditingController();
-  final TextEditingController moveInDateController = TextEditingController();
-  final TextEditingController cleanlinessLevelController =
-      TextEditingController();
-  final TextEditingController mealScheduleController = TextEditingController();
-  final TextEditingController socialPreferenceController =
-      TextEditingController();
-  final TextEditingController snapchatController = TextEditingController();
-  final TextEditingController bedtimeController = TextEditingController();
-  final TextEditingController phoneNumberController = TextEditingController();
-
-  String? selectedGender;
-  bool smokingPreference = false;
-  bool drinkingPreference = false;
-  bool petPreference = false;
-
+  // Page controller for multi-stage onboarding
+  final PageController _pageController = PageController(initialPage: 0);
+  int _currentPage = 0;
   bool _isLoading = false;
+  
+  // Progress indicators
+  final int _totalPages = 4;
+  final List<String> _pageHeaders = [
+    'Basic Information',
+    'Education Details',
+    'Living Preferences',
+    'Contact Information'
+  ];
 
-  Future<void> updateOnboarding() async {
+  // Form keys for validation
+  final _formKeys = List.generate(4, (_) => GlobalKey<FormState>());
+
+  // Controllers for onboarding fields
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _instagramController = TextEditingController();
+  final TextEditingController _profilePictureController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _majorController = TextEditingController();
+  final TextEditingController _budgetRangeController = TextEditingController();
+  final TextEditingController _moveInDateController = TextEditingController();
+  final TextEditingController _cleanlinessLevelController = TextEditingController();
+  final TextEditingController _snapchatController = TextEditingController();
+  final TextEditingController _bedtimeController = TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController();
+  final TextEditingController _bioController = TextEditingController();
+
+  // Drop-down values
+  String? _selectedGender;
+  String? _selectedUniversity;
+  String? _selectedYearOfStudy;
+  String? _selectedSocialPreference;
+  
+  // Slider value for budget
+  double _budgetValue = 1500.0;
+
+  // Preference booleans
+  bool _smokingPreference = false;
+  bool _drinkingPreference = false;
+  bool _petPreference = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _budgetRangeController.text = _budgetValue.toInt().toString();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _emailController.dispose();
+    _nameController.dispose();
+    _instagramController.dispose();
+    _profilePictureController.dispose();
+    _ageController.dispose();
+    _majorController.dispose();
+    _budgetRangeController.dispose();
+    _moveInDateController.dispose();
+    _cleanlinessLevelController.dispose();
+    _snapchatController.dispose();
+    _bedtimeController.dispose();
+    _phoneNumberController.dispose();
+    _bioController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _updateOnboarding() async {
+    // Check if all required fields are filled
+    if (!_validateRequiredFields()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please fill in all required fields"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -46,8 +104,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     // Retrieve the access token from SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('access_token') ?? '';
+    print('Onboarding: Using token: ${token.isEmpty ? "EMPTY" : token.substring(0, 10) + "..."}');
 
     final url = '${utils.BASE_URL}/onboarding';
+    print('Onboarding: Making request to: $url');
 
     // Helper function to parse int from string
     int? parseIntOrNull(String value) {
@@ -56,40 +116,64 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
 
     // Process text values
-    final instagramValue = instagramController.text.trim();
-    final profilePictureValue = profilePictureController.text.trim();
-    final universityValue = universityController.text.trim();
-    final majorValue = majorController.text.trim();
-    final mealScheduleValue = mealScheduleController.text.trim();
-    final socialPreferenceValue = socialPreferenceController.text.trim();
-    final snapchatValue = snapchatController.text.trim();
-    final bedtimeValue = bedtimeController.text.trim();
-    final phoneNumberValue = phoneNumberController.text.trim();
-    final moveInDateValue = moveInDateController.text.trim();
+    final emailValue = _emailController.text.trim();
+    final nameValue = _nameController.text.trim();
+    final instagramValue = _instagramController.text.trim();
+    final profilePictureValue = _profilePictureController.text.trim();
+    final moveInDateValue = _moveInDateController.text.trim();
+    final snapchatValue = _snapchatController.text.trim();
+    final bedtimeValue = _bedtimeController.text.trim();
+    final phoneNumberValue = _phoneNumberController.text.trim();
+    final bioValue = _bioController.text.trim();
+
+    // Map social preference from UI to backend enum
+    String? socialPreferenceBackendValue;
+    if (_selectedSocialPreference == 'Introvert') {
+      socialPreferenceBackendValue = 'introvert';
+    } else if (_selectedSocialPreference == 'Extrovert') {
+      socialPreferenceBackendValue = 'extrovert';
+    } else if (_selectedSocialPreference == 'Ambivert') {
+      socialPreferenceBackendValue = 'ambivert';
+    }
+
+    // Map gender from UI to backend enum
+    String? genderBackendValue;
+    if (_selectedGender == 'Male') {
+      genderBackendValue = 'male';
+    } else if (_selectedGender == 'Female') {
+      genderBackendValue = 'female';
+    } else if (_selectedGender == 'Other') {
+      genderBackendValue = 'other';
+    }
 
     // Build the request body
     final body = json.encode({
-      "instagram": instagramValue.isEmpty ? null : instagramValue,
-      "profile_picture": profilePictureValue.isEmpty ? null : profilePictureValue,
-      "age": parseIntOrNull(ageController.text),
-      "gender": selectedGender,  // Already null if not selected
-      "university": universityValue.isEmpty ? null : universityValue,
-      "major": majorValue.isEmpty ? null : majorValue,
-      "year_of_study": parseIntOrNull(yearOfStudyController.text),
-      "budget_range": parseIntOrNull(budgetRangeController.text),
+      "email": emailValue,
+      "fullname": nameValue,
+      "instagram": instagramValue,
+      "profile_picture": profilePictureValue,
+      "age": parseIntOrNull(_ageController.text),
+      "gender": genderBackendValue,
+      "university": _selectedUniversity,
+      "major": _majorController.text.isEmpty ? null : _majorController.text,
+      "year_of_study": _selectedYearOfStudy != null ? int.parse(_selectedYearOfStudy!) : null,
+      "budget_range": _budgetValue.toInt(),
       "move_in_date": moveInDateValue.isEmpty ? null : moveInDateValue,
-      "smoking_preference": smokingPreference,
-      "drinking_preference": drinkingPreference,
-      "pet_preference": petPreference,
-      "cleanliness_level": parseIntOrNull(cleanlinessLevelController.text),
-      "meal_schedule": mealScheduleValue.isEmpty ? null : mealScheduleValue,
-      "social_preference": socialPreferenceValue.isEmpty ? null : socialPreferenceValue,
+      "smoking_preference": _smokingPreference,
+      "drinking_preference": _drinkingPreference,
+      "pet_preference": _petPreference,
+      "cleanliness_level": parseIntOrNull(_cleanlinessLevelController.text),
+      "social_preference": socialPreferenceBackendValue,
       "snapchat": snapchatValue.isEmpty ? null : snapchatValue,
       "bedtime": bedtimeValue.isEmpty ? null : bedtimeValue,
       "phone_number": phoneNumberValue.isEmpty ? null : phoneNumberValue,
+      "bio": bioValue.isEmpty ? null : bioValue,
     });
+    
+    print('Onboarding: Request body: ${body.substring(0, min(100, body.length))}...');
 
     try {
+      print('Onboarding: Sending request...');
       final response = await http.post(
         Uri.parse(url),
         headers: {
@@ -99,7 +183,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         body: body,
       );
 
+      print('Onboarding: Received response with status code: ${response.statusCode}');
       if (response.statusCode == 200) {
+        print('Onboarding: Success response body: ${response.body}');
         // Mark onboarding as completed
         final authService = AuthService();
         await authService.markOnboardingCompleted();
@@ -107,7 +193,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Onboarding completed successfully!"),
+            content: Text("Welcome! Your profile has been set up successfully."),
             backgroundColor: Colors.green,
           ),
         );
@@ -117,6 +203,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       } else {
         final responseBody = json.decode(response.body);
         final errorMsg = responseBody['detail'] ?? 'Failed to update onboarding data';
+        print('Onboarding: Error response body: ${response.body}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMsg),
@@ -125,6 +212,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         );
       }
     } catch (e) {
+      print('Onboarding: Exception during request: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error: ${e.toString()}"),
@@ -138,23 +226,44 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    instagramController.dispose();
-    profilePictureController.dispose();
-    ageController.dispose();
-    universityController.dispose();
-    majorController.dispose();
-    yearOfStudyController.dispose();
-    budgetRangeController.dispose();
-    moveInDateController.dispose();
-    cleanlinessLevelController.dispose();
-    mealScheduleController.dispose();
-    socialPreferenceController.dispose();
-    snapchatController.dispose();
-    bedtimeController.dispose();
-    phoneNumberController.dispose();
-    super.dispose();
+  bool _validateRequiredFields() {
+    // Check required fields based on the user's requirements
+    return _emailController.text.isNotEmpty &&
+           _nameController.text.isNotEmpty &&
+           _instagramController.text.isNotEmpty &&
+           _profilePictureController.text.isNotEmpty &&
+           _ageController.text.isNotEmpty &&
+           _selectedGender != null &&
+           _selectedUniversity != null &&
+           _selectedYearOfStudy != null &&
+           _cleanlinessLevelController.text.isNotEmpty &&
+           _selectedSocialPreference != null;
+  }
+
+  void _nextPage() {
+    if (_currentPage < _totalPages - 1) {
+      // Validate current form before proceeding
+      if (_formKeys[_currentPage].currentState?.validate() ?? false) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    } else {
+      // On last page, submit the form
+      if (_formKeys[_currentPage].currentState?.validate() ?? false) {
+        _updateOnboarding();
+      }
+    }
+  }
+
+  void _previousPage() {
+    if (_currentPage > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
@@ -164,385 +273,765 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: const Text(
-          'Onboarding',
-          style: TextStyle(color: Colors.white),
+          'Create Your Profile',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
+        elevation: 0,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          // Add some extra padding so the fields are not clipped at the bottom
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title
-              Text(
-                "Welcome!",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24, // H5-ish
-                  fontWeight: FontWeight.bold,
+      body: Column(
+        children: [
+          // Progress indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _pageHeaders[_currentPage],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Step ${_currentPage + 1}/$_totalPages',
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Just a few more questions to help personalize your experience",
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 18, // H3-ish (though typically H3 is larger than H5)
+                const SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: (_currentPage + 1) / _totalPages,
+                  backgroundColor: Colors.grey[800],
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF6F40)),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ),
-              const SizedBox(height: 32),
-
-              // Instagram field
-              TextField(
-                controller: instagramController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Instagram',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Profile Picture URL
-              TextField(
-                controller: profilePictureController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Profile Picture URL',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Age field
-              TextField(
-                controller: ageController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Age',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Gender Dropdown
-              DropdownButtonFormField<String>(
-                value: selectedGender,
-                items: const [
-                  DropdownMenuItem(value: 'Male', child: Text('Male')),
-                  DropdownMenuItem(value: 'Female', child: Text('Female')),
-                  DropdownMenuItem(value: 'Other', child: Text('Other')),
-                ],
-                decoration: InputDecoration(
-                  labelText: 'Gender',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                dropdownColor: Colors.grey[900],
-                style: const TextStyle(color: Colors.white),
-                onChanged: (value) {
-                  setState(() {
-                    selectedGender = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // University field
-              TextField(
-                controller: universityController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'University',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Major field
-              TextField(
-                controller: majorController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Major',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Year of Study field
-              TextField(
-                controller: yearOfStudyController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Year of Study',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Budget Range field
-              TextField(
-                controller: budgetRangeController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Budget Range',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Move In Date with DatePicker
-              TextField(
-                controller: moveInDateController,
-                readOnly: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Move In Date',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onTap: () async {
-                  DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                  );
-                  if (pickedDate != null) {
-                    moveInDateController.text = pickedDate.toIso8601String();
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Smoking Preference switch
-              SwitchListTile(
-                title: const Text(
-                  'Smoking Preference',
-                  style: TextStyle(color: Colors.white),
-                ),
-                value: smokingPreference,
-                onChanged: (val) {
-                  setState(() {
-                    smokingPreference = val;
-                  });
-                },
-              ),
-
-              // Drinking Preference switch
-              SwitchListTile(
-                title: const Text(
-                  'Drinking Preference',
-                  style: TextStyle(color: Colors.white),
-                ),
-                value: drinkingPreference,
-                onChanged: (val) {
-                  setState(() {
-                    drinkingPreference = val;
-                  });
-                },
-              ),
-
-              // Pet Preference switch
-              SwitchListTile(
-                title: const Text(
-                  'Pet Preference',
-                  style: TextStyle(color: Colors.white),
-                ),
-                value: petPreference,
-                onChanged: (val) {
-                  setState(() {
-                    petPreference = val;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Cleanliness Level field
-              TextField(
-                controller: cleanlinessLevelController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Cleanliness Level (1-10)',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Meal Schedule field
-              TextField(
-                controller: mealScheduleController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Meal Schedule',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Social Preference field
-              TextField(
-                controller: socialPreferenceController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Social Preference',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Snapchat field
-              TextField(
-                controller: snapchatController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Snapchat',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Bedtime with TimePicker
-              TextField(
-                controller: bedtimeController,
-                readOnly: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Bedtime',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onTap: () async {
-                  TimeOfDay? pickedTime = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay.now(),
-                  );
-                  if (pickedTime != null) {
-                    // Format time as HH:mm for Pydantic parsing
-                    final hours = pickedTime.hour.toString().padLeft(2, '0');
-                    final minutes = pickedTime.minute.toString().padLeft(2, '0');
-                    bedtimeController.text = "$hours:$minutes";
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Phone Number field
-              TextField(
-                controller: phoneNumberController,
-                keyboardType: TextInputType.phone,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Phone Number',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : updateOnboarding,
+              ],
+            ),
+          ),
+          // Page content
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              children: [
+                _buildBasicInfoPage(),
+                _buildEducationPage(),
+                _buildLivingPreferencesPage(),
+                _buildContactInfoPage(),
+              ],
+            ),
+          ),
+          // Navigation buttons
+          Container(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Back button (hidden on first page)
+                _currentPage > 0
+                    ? TextButton(
+                        onPressed: _previousPage,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Back'),
+                      )
+                    : const SizedBox(width: 80),
+                // Next/Submit button
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _nextPage,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF6F40),
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'Finish Onboarding',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
                           ),
+                        )
+                      : Text(
+                          _currentPage == _totalPages - 1 ? 'Submit' : 'Next',
+                          style: const TextStyle(fontSize: 16),
                         ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // Page 1: Basic Information
+  Widget _buildBasicInfoPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Form(
+        key: _formKeys[0],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Let\'s get to know you',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'This information helps us create your profile',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            
+            // Email field
+            _buildRequiredTextField(
+              controller: _emailController,
+              label: 'Email',
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Email is required';
+                }
+                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                  return 'Enter a valid email address';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Full Name field
+            _buildRequiredTextField(
+              controller: _nameController,
+              label: 'Full Name',
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Full name is required';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Age field
+            _buildRequiredTextField(
+              controller: _ageController,
+              label: 'Age',
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Age is required';
+                }
+                final age = int.tryParse(value);
+                if (age == null || age < 18 || age > 100) {
+                  return 'Please enter a valid age (18-100)';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Gender dropdown
+            _buildRequiredDropdown(
+              label: 'Gender',
+              value: _selectedGender,
+              items: const ['Male', 'Female', 'Other'],
+              onChanged: (value) {
+                setState(() {
+                  _selectedGender = value;
+                });
+              },
+              validator: (value) {
+                if (value == null) {
+                  return 'Please select your gender';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Bio field
+            _buildTextField(
+              controller: _bioController,
+              label: 'Bio (Optional)',
+              maxLines: 3,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Page 2: Education Details
+  Widget _buildEducationPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Form(
+        key: _formKeys[1],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Your Education',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Tell us about your academic background',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            
+            // University dropdown
+            _buildRequiredDropdown(
+              label: 'University',
+              value: _selectedUniversity,
+              items: const ['Columbia University', 'Cornell University'],
+              onChanged: (value) {
+                setState(() {
+                  _selectedUniversity = value;
+                });
+              },
+              validator: (value) {
+                if (value == null) {
+                  return 'Please select your university';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Major field
+            _buildTextField(
+              controller: _majorController,
+              label: 'Major (Optional)',
+            ),
+            const SizedBox(height: 16),
+            
+            // Year of Study dropdown
+            _buildRequiredDropdown(
+              label: 'Year of Study',
+              value: _selectedYearOfStudy,
+              items: const ['1', '2', '3', '4', '5'],
+              onChanged: (value) {
+                setState(() {
+                  _selectedYearOfStudy = value;
+                });
+              },
+              validator: (value) {
+                if (value == null) {
+                  return 'Please select your year of study';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Instagram field
+            _buildRequiredTextField(
+              controller: _instagramController,
+              label: 'Instagram Username',
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Instagram username is required';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Profile Picture URL
+            _buildRequiredTextField(
+              controller: _profilePictureController,
+              label: 'Profile Picture URL',
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Profile picture URL is required';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Page 3: Living Preferences
+  Widget _buildLivingPreferencesPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Form(
+        key: _formKeys[2],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Living Preferences',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Help us find your perfect roommate match',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            
+            // Budget Range slider
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Budget Range',
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '\$${_budgetValue.toInt()}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Up to \$3000',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: _budgetValue,
+                  min: 0,
+                  max: 3000,
+                  divisions: 30,
+                  activeColor: const Color(0xFFFF6F40),
+                  inactiveColor: Colors.grey[800],
+                  onChanged: (value) {
+                    setState(() {
+                      _budgetValue = value;
+                      _budgetRangeController.text = value.toInt().toString();
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Move In Date with DatePicker
+            _buildTextField(
+              controller: _moveInDateController,
+              label: 'Move In Date (Optional)',
+              readOnly: true,
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2023),
+                  lastDate: DateTime(2025),
+                  builder: (context, child) {
+                    return Theme(
+                      data: ThemeData.dark().copyWith(
+                        colorScheme: const ColorScheme.dark(
+                          primary: Color(0xFFFF6F40),
+                          onPrimary: Colors.white,
+                          surface: Colors.grey,
+                          onSurface: Colors.white,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (pickedDate != null) {
+                  setState(() {
+                    _moveInDateController.text = pickedDate.toIso8601String().split('T')[0];
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 20),
+            
+            // Cleanliness Level
+            _buildRequiredDropdown(
+              label: 'Cleanliness Level',
+              value: _cleanlinessLevelController.text.isEmpty 
+                  ? null 
+                  : _cleanlinessLevelController.text,
+              items: const ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+              onChanged: (value) {
+                setState(() {
+                  _cleanlinessLevelController.text = value ?? '';
+                });
+              },
+              validator: (value) {
+                if (value == null) {
+                  return 'Please select your cleanliness level';
+                }
+                return null;
+              },
+              hint: '1 (Very Messy) to 10 (Very Clean)',
+            ),
+            const SizedBox(height: 16),
+            
+            // Social Preference dropdown
+            _buildRequiredDropdown(
+              label: 'Social Preference',
+              value: _selectedSocialPreference,
+              items: const ['Introvert', 'Extrovert', 'Ambivert'],
+              onChanged: (value) {
+                setState(() {
+                  _selectedSocialPreference = value;
+                });
+              },
+              validator: (value) {
+                if (value == null) {
+                  return 'Please select your social preference';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 20),
+            
+            // Preference toggles
+            const Text(
+              'Lifestyle Preferences',
+              style: TextStyle(color: Colors.white70, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            _buildToggleSwitch(
+              title: 'Smoking Friendly',
+              value: _smokingPreference,
+              onChanged: (value) {
+                setState(() {
+                  _smokingPreference = value;
+                });
+              },
+            ),
+            _buildToggleSwitch(
+              title: 'Drinking Friendly',
+              value: _drinkingPreference,
+              onChanged: (value) {
+                setState(() {
+                  _drinkingPreference = value;
+                });
+              },
+            ),
+            _buildToggleSwitch(
+              title: 'Pet Friendly',
+              value: _petPreference,
+              onChanged: (value) {
+                setState(() {
+                  _petPreference = value;
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Page 4: Contact Information
+  Widget _buildContactInfoPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Form(
+        key: _formKeys[3],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Contact Information',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'How potential roommates can reach you',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            
+            // Snapchat field
+            _buildTextField(
+              controller: _snapchatController,
+              label: 'Snapchat (Optional)',
+            ),
+            const SizedBox(height: 16),
+            
+            // Phone Number field
+            _buildTextField(
+              controller: _phoneNumberController,
+              label: 'Phone Number (Optional)',
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 16),
+            
+            // Bedtime with TimePicker
+            _buildTextField(
+              controller: _bedtimeController,
+              label: 'Typical Bedtime (Optional)',
+              readOnly: true,
+              onTap: () async {
+                TimeOfDay? pickedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: ThemeData.dark().copyWith(
+                        colorScheme: const ColorScheme.dark(
+                          primary: Color(0xFFFF6F40),
+                          onPrimary: Colors.white,
+                          surface: Colors.grey,
+                          onSurface: Colors.white,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (pickedTime != null) {
+                  final hours = pickedTime.hour.toString().padLeft(2, '0');
+                  final minutes = pickedTime.minute.toString().padLeft(2, '0');
+                  setState(() {
+                    _bedtimeController.text = "$hours:$minutes";
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 24),
+            
+            // Final message
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[800]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Color(0xFFFF6F40), size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Almost done!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Click Submit to complete your profile setup and start finding your perfect roommate match.',
+                    style: TextStyle(color: Colors.grey[400]),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper methods for building UI components
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    TextInputType keyboardType = TextInputType.text,
+    bool readOnly = false,
+    int maxLines = 1,
+    VoidCallback? onTap,
+  }) {
+    return TextField(
+      controller: controller,
+      style: const TextStyle(color: Colors.white),
+      keyboardType: keyboardType,
+      readOnly: readOnly,
+      maxLines: maxLines,
+      onTap: onTap,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.grey[900],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[800]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Color(0xFFFF6F40)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRequiredTextField({
+    required TextEditingController controller,
+    required String label,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      style: const TextStyle(color: Colors.white),
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: '$label *',
+        labelStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.grey[900],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[800]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFFF6F40)),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red),
+        ),
+        errorStyle: const TextStyle(color: Colors.red),
+      ),
+    );
+  }
+
+  Widget _buildRequiredDropdown({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required void Function(String?) onChanged,
+    String? Function(String?)? validator,
+    String? hint,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      validator: validator,
+      items: items.map((String item) {
+        return DropdownMenuItem<String>(
+          value: item,
+          child: Text(item),
+        );
+      }).toList(),
+      decoration: InputDecoration(
+        labelText: '$label *',
+        labelStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.grey[900],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[800]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFFF6F40)),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red),
+        ),
+        errorStyle: const TextStyle(color: Colors.red),
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey[600]),
+      ),
+      dropdownColor: Colors.grey[900],
+      style: const TextStyle(color: Colors.white),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildToggleSwitch({
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[800]!),
+      ),
+      child: SwitchListTile(
+        title: Text(
+          title,
+          style: const TextStyle(color: Colors.white, fontSize: 15),
+        ),
+        value: value,
+        activeColor: const Color(0xFFFF6F40),
+        onChanged: onChanged,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        dense: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );
