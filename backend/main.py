@@ -478,6 +478,8 @@ def update_onboarding(
     # Update user with provided onboarding data
     update_data = onboarding_data.dict(exclude_unset=True)
     for key, value in update_data.items():
+        if key == "gender" or key == "social_preference":
+            value = value[0].lower() + value[1::]
         setattr(user, key, value)
 
     db.commit()

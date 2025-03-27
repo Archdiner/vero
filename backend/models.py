@@ -11,20 +11,20 @@ import enum
 Base = declarative_base()
 
 class Gender(enum.Enum):
-    MALE = "male"
-    FEMALE = "female"
-    OTHER = "other"
+    male = "male"
+    female = "female"
+    other = "other"
 
 class SocialPreference(enum.Enum):
-    INTROVERT = "introvert"
-    EXTROVERT = "extrovert"
-    AMBIVERT = "ambivert"
+    introvert = "introvert"
+    extrovert = "extrovert"
+    ambivert = "ambivert"
 
 class MatchStatus(enum.Enum):
-    PENDING = "pending"  # Initial state when one user likes another
-    MATCHED = "matched"  # When both users have liked each other
-    REJECTED = "rejected"  # When one user rejects the other
-    BLOCKED = "blocked"  # When one user blocks the other
+    pending = "pending"  # Initial state when one user likes another
+    matched = "matched"  # When both users have liked each other
+    rejected = "rejected"  # When one user rejects the other
+    blocked = "blocked"  # When one user blocks the other
 
 class User(Base):
     __tablename__ = "users"
@@ -70,7 +70,7 @@ class RoommateMatch(Base):
     user1_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     user2_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     compatibility_score = Column(Float, nullable=False, index=True)
-    match_status = Column(Enum(MatchStatus), nullable=False, default=MatchStatus.PENDING, index=True)
+    match_status = Column(Enum(MatchStatus), nullable=False, default=MatchStatus.pending, index=True)
     
     # Track only essential user interactions
     user1_liked = Column(Boolean, default=False)
