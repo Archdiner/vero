@@ -54,6 +54,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   
   // Slider value for budget
   double _budgetValue = 1500.0;
+  double _cleanlinessValue = 5.0;
 
   // Preference booleans
   bool _smokingPreference = false;
@@ -650,7 +651,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Budget Range',
+                  'Maximum Monthly Budget',
                   style: TextStyle(color: Colors.white70, fontSize: 16),
                 ),
                 const SizedBox(height: 8),
@@ -666,7 +667,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                     Text(
-                      'Up to \$3000',
+                      'Up to \$5000',
                       style: TextStyle(color: Colors.grey),
                     ),
                   ],
@@ -674,8 +675,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Slider(
                   value: _budgetValue,
                   min: 0,
-                  max: 3000,
-                  divisions: 30,
+                  max: 5000,
+                  divisions: 50,
                   activeColor: const Color(0xFFFF6F40),
                   inactiveColor: Colors.grey[800],
                   onChanged: (value) {
@@ -723,26 +724,49 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 20),
             
-            // Cleanliness Level
-            _buildRequiredDropdown(
-              label: 'Cleanliness Level',
-              value: _cleanlinessLevelController.text.isEmpty 
-                  ? null 
-                  : _cleanlinessLevelController.text,
-              items: const ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
-              onChanged: (value) {
-                setState(() {
-                  _cleanlinessLevelController.text = value ?? '';
-                });
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select your cleanliness level';
-                }
-                return null;
-              },
-              hint: '1 (Very Messy) to 10 (Very Clean)',
-            ),
+            // Cleanliness Level slider
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Cleanliness Level',
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${_cleanlinessValue.toInt()}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      '1 (Very Messy) - 10 (Very Clean)',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: _cleanlinessValue,
+                  min: 1,
+                  max: 10,
+                  divisions: 9,
+                  activeColor: const Color(0xFFFF6F40),
+                  inactiveColor: Colors.grey[800],
+                  onChanged: (value) {
+                    setState(() {
+                      _cleanlinessValue = value;
+                      // Optionally update your controller if needed for the request body
+                      _cleanlinessLevelController.text = value.toInt().toString();
+                    });
+                  },
+                ),
+              ],
+),
             const SizedBox(height: 16),
             
             // Social Preference dropdown
