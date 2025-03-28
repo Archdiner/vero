@@ -52,7 +52,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   String? _selectedYearOfStudy;
   String? _selectedSocialPreference;
   
-  // Slider value for budget
+  // Slider value for budget and cleanliness
   double _budgetValue = 1500.0;
   double _cleanlinessValue = 5.0;
 
@@ -65,6 +65,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void initState() {
     super.initState();
     _budgetRangeController.text = _budgetValue.toInt().toString();
+    _cleanlinessLevelController.text = _cleanlinessValue.toInt().toString();
     // Set empty strings for email and name controllers since they'll be fetched from the profile API
     _emailController.text = '';
     _nameController.text = '';
@@ -94,7 +95,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       List<String> missingFields = [];
       
       if (_instagramController.text.isEmpty) missingFields.add('Instagram Username');
-      if (_profilePictureController.text.isEmpty) missingFields.add('Profile Picture URL');
+      // Removed requirement for Profile Picture URL
       if (_ageController.text.isEmpty) missingFields.add('Age');
       if (_selectedGender == null) missingFields.add('Gender');
       if (_selectedUniversity == null) missingFields.add('University');
@@ -277,7 +278,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _validateRequiredFields() {
     // Debug logging to identify which field fails validation
     final instagramValid = _instagramController.text.isNotEmpty;
-    final profilePicValid = _profilePictureController.text.isNotEmpty;
+    // Removed profile picture URL from required checks
     final ageValid = _ageController.text.isNotEmpty;
     final genderValid = _selectedGender != null;
     final universityValid = _selectedUniversity != null;
@@ -287,7 +288,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     
     print('Validation results:');
     print('- Instagram: $instagramValid (${_instagramController.text})');
-    print('- Profile Picture: $profilePicValid (${_profilePictureController.text})');
+    // Removed profile picture URL print statement
     print('- Age: $ageValid (${_ageController.text})');
     print('- Gender: $genderValid ($_selectedGender)');
     print('- University: $universityValid ($_selectedUniversity)');
@@ -297,7 +298,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     
     // Check required fields based on the user's requirements
     return instagramValid &&
-           profilePicValid &&
            ageValid &&
            genderValid &&
            universityValid &&
@@ -524,16 +524,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 16),
             
-            // Profile Picture URL (moved from education page)
-            _buildRequiredTextField(
+            // Profile Picture URL (Optional now)
+            _buildTextField(
               controller: _profilePictureController,
-              label: 'Profile Picture URL',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Profile picture URL is required';
-                }
-                return null;
-              },
+              label: 'Profile Picture URL (Optional)',
             ),
             const SizedBox(height: 16),
             
@@ -766,7 +760,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   },
                 ),
               ],
-),
+            ),
             const SizedBox(height: 16),
             
             // Social Preference dropdown
