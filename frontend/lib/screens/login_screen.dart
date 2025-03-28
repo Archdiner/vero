@@ -30,8 +30,17 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (success) {
+        // Check if the user has completed onboarding
+        final hasCompletedOnboarding = await _authService.hasCompletedOnboarding();
+        
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/swipe');
+          if (hasCompletedOnboarding) {
+            // User has completed onboarding, go to the main app
+            Navigator.pushReplacementNamed(context, '/swipe');
+          } else {
+            // User hasn't completed onboarding, redirect to onboarding
+            Navigator.pushReplacementNamed(context, '/onboarding');
+          }
         }
       } else {
         if (mounted) {
@@ -43,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('An error occurred. Please try again.')),
+          SnackBar(content: Text('An error occurred: ${e.toString()}')),
         );
       }
     } finally {
