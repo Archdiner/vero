@@ -64,13 +64,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void initState() {
     super.initState();
     _budgetRangeController.text = _budgetValue.toInt().toString();
+    // Set empty strings for email and name controllers since they'll be fetched from the profile API
+    _emailController.text = '';
+    _nameController.text = '';
   }
 
   @override
   void dispose() {
     _pageController.dispose();
-    _emailController.dispose();
-    _nameController.dispose();
     _instagramController.dispose();
     _profilePictureController.dispose();
     _ageController.dispose();
@@ -88,10 +89,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _updateOnboarding() async {
     // Check if all required fields are filled
     if (!_validateRequiredFields()) {
+      // Create a more descriptive error message
+      List<String> missingFields = [];
+      
+      if (_instagramController.text.isEmpty) missingFields.add('Instagram Username');
+      if (_profilePictureController.text.isEmpty) missingFields.add('Profile Picture URL');
+      if (_ageController.text.isEmpty) missingFields.add('Age');
+      if (_selectedGender == null) missingFields.add('Gender');
+      if (_selectedUniversity == null) missingFields.add('University');
+      if (_selectedYearOfStudy == null) missingFields.add('Year of Study');
+      if (_cleanlinessLevelController.text.isEmpty) missingFields.add('Cleanliness Level');
+      if (_selectedSocialPreference == null) missingFields.add('Social Preference');
+      
+      String errorMessage = "Please fill in the following required fields: ${missingFields.join(', ')}";
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill in all required fields"),
+        SnackBar(
+          content: Text(errorMessage),
           backgroundColor: Colors.red,
+          duration: Duration(seconds: 5),
         ),
       );
       return;
@@ -106,6 +122,39 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final token = prefs.getString('access_token') ?? '';
     print('Onboarding: Using token: ${token.isEmpty ? "EMPTY" : token.substring(0, 10) + "..."}');
 
+    // Get user profile to retrieve email and fullname
+    String? emailValue;
+    String? nameValue;
+    
+    try {
+      final profileUrl = '${utils.BASE_URL}/profile';
+      print('Onboarding: Fetching user profile from: $profileUrl');
+      
+      final profileResponse = await http.get(
+        Uri.parse(profileUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+      
+      if (profileResponse.statusCode == 200) {
+        final profileData = json.decode(profileResponse.body);
+        emailValue = profileData['email'];
+        nameValue = profileData['fullname'];
+        print('Onboarding: Successfully fetched user profile. Email: $emailValue, Name: $nameValue');
+      } else {
+        print('Onboarding: Failed to fetch user profile. Status: ${profileResponse.statusCode}');
+        // Use empty values if profile fetch fails
+        emailValue = '';
+        nameValue = '';
+      }
+    } catch (e) {
+      print('Onboarding: Error fetching user profile: $e');
+      // Use empty values if profile fetch fails
+      emailValue = '';
+      nameValue = '';
+    }
+
     final url = '${utils.BASE_URL}/onboarding';
     print('Onboarding: Making request to: $url');
 
@@ -116,8 +165,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
 
     // Process text values
-    final emailValue = _emailController.text.trim();
-    final nameValue = _nameController.text.trim();
     final instagramValue = _instagramController.text.trim();
     final profilePictureValue = _profilePictureController.text.trim();
     final moveInDateValue = _moveInDateController.text.trim();
@@ -227,32 +274,65 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   bool _validateRequiredFields() {
+    // Debug logging to identify which field fails validation
+    final instagramValid = _instagramController.text.isNotEmpty;
+    final profilePicValid = _profilePictureController.text.isNotEmpty;
+    final ageValid = _ageController.text.isNotEmpty;
+    final genderValid = _selectedGender != null;
+    final universityValid = _selectedUniversity != null;
+    final yearOfStudyValid = _selectedYearOfStudy != null;
+    final cleanlinessValid = _cleanlinessLevelController.text.isNotEmpty;
+    final socialPrefValid = _selectedSocialPreference != null;
+    
+    print('Validation results:');
+    print('- Instagram: $instagramValid (${_instagramController.text})');
+    print('- Profile Picture: $profilePicValid (${_profilePictureController.text})');
+    print('- Age: $ageValid (${_ageController.text})');
+    print('- Gender: $genderValid ($_selectedGender)');
+    print('- University: $universityValid ($_selectedUniversity)');
+    print('- Year of Study: $yearOfStudyValid ($_selectedYearOfStudy)');
+    print('- Cleanliness: $cleanlinessValid (${_cleanlinessLevelController.text})');
+    print('- Social Preference: $socialPrefValid ($_selectedSocialPreference)');
+    
     // Check required fields based on the user's requirements
-    return _emailController.text.isNotEmpty &&
-           _nameController.text.isNotEmpty &&
-           _instagramController.text.isNotEmpty &&
-           _profilePictureController.text.isNotEmpty &&
-           _ageController.text.isNotEmpty &&
-           _selectedGender != null &&
-           _selectedUniversity != null &&
-           _selectedYearOfStudy != null &&
-           _cleanlinessLevelController.text.isNotEmpty &&
-           _selectedSocialPreference != null;
+    return instagramValid &&
+           profilePicValid &&
+           ageValid &&
+           genderValid &&
+           universityValid &&
+           yearOfStudyValid &&
+           cleanlinessValid &&
+           socialPrefValid;
   }
 
   void _nextPage() {
     if (_currentPage < _totalPages - 1) {
       // Validate current form before proceeding
       if (_formKeys[_currentPage].currentState?.validate() ?? false) {
+        print('Successfully validated page ${_currentPage + 1}');
         _pageController.nextPage(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
+      } else {
+        print('Failed to validate page ${_currentPage + 1}');
       }
     } else {
       // On last page, submit the form
-      if (_formKeys[_currentPage].currentState?.validate() ?? false) {
+      final isValid = _formKeys[_currentPage].currentState?.validate() ?? false;
+      print('Last page validation result: $isValid');
+      
+      if (isValid && _validateRequiredFields()) {
+        print('All validation passed, submitting form');
         _updateOnboarding();
+      } else {
+        print('Final validation failed, not submitting');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Please fill in all required fields"),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -406,36 +486,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 24),
             
-            // Email field
-            _buildRequiredTextField(
-              controller: _emailController,
-              label: 'Email',
-              keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Email is required';
-                }
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                  return 'Enter a valid email address';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            
-            // Full Name field
-            _buildRequiredTextField(
-              controller: _nameController,
-              label: 'Full Name',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Full name is required';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            
             // Age field
             _buildRequiredTextField(
               controller: _ageController,
@@ -467,6 +517,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               validator: (value) {
                 if (value == null) {
                   return 'Please select your gender';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Profile Picture URL (moved from education page)
+            _buildRequiredTextField(
+              controller: _profilePictureController,
+              label: 'Profile Picture URL',
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Profile picture URL is required';
                 }
                 return null;
               },
@@ -548,32 +611,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               validator: (value) {
                 if (value == null) {
                   return 'Please select your year of study';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            
-            // Instagram field
-            _buildRequiredTextField(
-              controller: _instagramController,
-              label: 'Instagram Username',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Instagram username is required';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            
-            // Profile Picture URL
-            _buildRequiredTextField(
-              controller: _profilePictureController,
-              label: 'Profile Picture URL',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Profile picture URL is required';
                 }
                 return null;
               },
@@ -725,6 +762,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 return null;
               },
             ),
+            const SizedBox(height: 16),
+            
+            // Bedtime with TimePicker (moved from contact info)
+            _buildTextField(
+              controller: _bedtimeController,
+              label: 'Typical Bedtime (Optional)',
+              readOnly: true,
+              onTap: () async {
+                TimeOfDay? pickedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: ThemeData.dark().copyWith(
+                        colorScheme: const ColorScheme.dark(
+                          primary: Color(0xFFFF6F40),
+                          onPrimary: Colors.white,
+                          surface: Colors.grey,
+                          onSurface: Colors.white,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (pickedTime != null) {
+                  final hours = pickedTime.hour.toString().padLeft(2, '0');
+                  final minutes = pickedTime.minute.toString().padLeft(2, '0');
+                  setState(() {
+                    _bedtimeController.text = "$hours:$minutes";
+                  });
+                }
+              },
+            ),
             const SizedBox(height: 20),
             
             // Preference toggles
@@ -790,6 +861,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 24),
             
+            // Instagram field (moved from education page)
+            _buildRequiredTextField(
+              controller: _instagramController,
+              label: 'Instagram Username',
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Instagram username is required';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
             // Snapchat field
             _buildTextField(
               controller: _snapchatController,
@@ -802,40 +886,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               controller: _phoneNumberController,
               label: 'Phone Number (Optional)',
               keyboardType: TextInputType.phone,
-            ),
-            const SizedBox(height: 16),
-            
-            // Bedtime with TimePicker
-            _buildTextField(
-              controller: _bedtimeController,
-              label: 'Typical Bedtime (Optional)',
-              readOnly: true,
-              onTap: () async {
-                TimeOfDay? pickedTime = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.now(),
-                  builder: (context, child) {
-                    return Theme(
-                      data: ThemeData.dark().copyWith(
-                        colorScheme: const ColorScheme.dark(
-                          primary: Color(0xFFFF6F40),
-                          onPrimary: Colors.white,
-                          surface: Colors.grey,
-                          onSurface: Colors.white,
-                        ),
-                      ),
-                      child: child!,
-                    );
-                  },
-                );
-                if (pickedTime != null) {
-                  final hours = pickedTime.hour.toString().padLeft(2, '0');
-                  final minutes = pickedTime.minute.toString().padLeft(2, '0');
-                  setState(() {
-                    _bedtimeController.text = "$hours:$minutes";
-                  });
-                }
-              },
             ),
             const SizedBox(height: 24),
             
@@ -921,11 +971,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
   }) {
+    // Ensure there's a default validator if none is provided
+    final finalValidator = validator ?? (value) {
+      if (value == null || value.isEmpty) {
+        return '$label is required';
+      }
+      return null;
+    };
+    
     return TextFormField(
       controller: controller,
       style: const TextStyle(color: Colors.white),
       keyboardType: keyboardType,
-      validator: validator,
+      validator: finalValidator,
       decoration: InputDecoration(
         labelText: '$label *',
         labelStyle: const TextStyle(color: Colors.white70),
@@ -964,9 +1022,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     String? Function(String?)? validator,
     String? hint,
   }) {
+    // Ensure there's a default validator if none is provided
+    final finalValidator = validator ?? (value) {
+      if (value == null || value.isEmpty) {
+        return '$label is required';
+      }
+      return null;
+    };
+    
     return DropdownButtonFormField<String>(
       value: value,
-      validator: validator,
+      validator: finalValidator,
       items: items.map((String item) {
         return DropdownMenuItem<String>(
           value: item,
