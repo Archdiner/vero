@@ -34,12 +34,12 @@ class FavoriteToggleResponse(BaseModel):
 class UserOnboarding(BaseModel):
     instagram: Optional[str] = None
     profile_picture: Optional[str] = None
-    age: Optional[int] = None
-    gender: Optional[str] = None
-    university: Optional[str] = None
+    age: Optional[int] = None #
+    gender: Optional[str] = None #
+    university: Optional[str] = None #
     major: Optional[str] = None
-    year_of_study: Optional[int] = None
-    budget_range: Optional[int] = None
+    year_of_study: Optional[int] = None #
+    budget_range: Optional[int] = None #
     move_in_date: Optional[datetime] = None
     smoking_preference: Optional[bool] = None
     drinking_preference: Optional[bool] = None
