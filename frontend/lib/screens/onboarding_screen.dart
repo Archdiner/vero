@@ -51,6 +51,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   String? _selectedUniversity;
   String? _selectedYearOfStudy;
   String? _selectedSocialPreference;
+  String? _selectedMusicPreference;
   
   // Slider value for budget and cleanliness
   double _budgetValue = 1500.0;
@@ -60,6 +61,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _smokingPreference = false;
   bool _drinkingPreference = false;
   bool _petPreference = false;
+  bool _musicPreference = false;
 
   @override
   void initState() {
@@ -211,6 +213,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       "smoking_preference": _smokingPreference,
       "drinking_preference": _drinkingPreference,
       "pet_preference": _petPreference,
+      "music_preference": _musicPreference,
       "cleanliness_level": parseIntOrNull(_cleanlinessLevelController.text),
       "social_preference": socialPreferenceBackendValue,
       "snapchat": snapchatValue.isEmpty ? null : snapchatValue,
@@ -781,7 +784,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               },
             ),
             const SizedBox(height: 16),
-            
+
+                        _buildRequiredDropdown(
+              label: 'Music Preference',
+              value: _selectedMusicPreference,
+              items: const ['Headphones', 'Speakers'],
+              onChanged: (value) {
+                setState(() {
+                  _selectedMusicPreference = value;
+                  // Map the selection to a boolean: 'Headphones' = false, 'Speakers' = true
+                  _musicPreference = (value == 'Speakers');
+                });
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please select your music preference';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
             // Bedtime with TimePicker (moved from contact info)
             _buildTextField(
               controller: _bedtimeController,

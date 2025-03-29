@@ -114,7 +114,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Hello ${_userName} !",
+                          "Hello ${_userName}!",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,

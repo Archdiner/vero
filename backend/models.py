@@ -52,6 +52,7 @@ class User(Base):
     bedtime = Column(Time, nullable=True)
     phone_number = Column(String, nullable=True)
     bio = Column(String, unique=False, nullable=True)
+    music_preference = Column(Boolean, nullable=True, index=True)
 
     # Add composite indexes for common query patterns
     __table_args__ = (
