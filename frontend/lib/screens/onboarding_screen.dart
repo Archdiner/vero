@@ -683,6 +683,51 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ],
             ),
             const SizedBox(height: 16),
+
+            // Cleanliness Level slider
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Room Tidiness Level',
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${_cleanlinessValue.toInt()}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      '1 (Messy) - 10 (Organized)',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: _cleanlinessValue,
+                  min: 1,
+                  max: 10,
+                  divisions: 9,
+                  activeColor: const Color(0xFFFF6F40),
+                  inactiveColor: Colors.grey[800],
+                  onChanged: (value) {
+                    setState(() {
+                      _cleanlinessValue = value;
+                      // Optionally update your controller if needed for the request body
+                      _cleanlinessLevelController.text = value.toInt().toString();
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             
             // Move In Date with DatePicker
             _buildTextField(
@@ -717,51 +762,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               },
             ),
             const SizedBox(height: 20),
-            
-            // Cleanliness Level slider
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Cleanliness Level',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${_cleanlinessValue.toInt()}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Text(
-                      '1 (Very Messy) - 10 (Very Clean)',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-                Slider(
-                  value: _cleanlinessValue,
-                  min: 1,
-                  max: 10,
-                  divisions: 9,
-                  activeColor: const Color(0xFFFF6F40),
-                  inactiveColor: Colors.grey[800],
-                  onChanged: (value) {
-                    setState(() {
-                      _cleanlinessValue = value;
-                      // Optionally update your controller if needed for the request body
-                      _cleanlinessLevelController.text = value.toInt().toString();
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
             
             // Social Preference dropdown
             _buildRequiredDropdown(
