@@ -30,6 +30,9 @@ class FavoriteToggleResponse(BaseModel):
     chain_id: int
     current_state: bool
 
+class HomePageCustomization(BaseModel):
+    profile_picture: Optional[str] = None
+    university: str
 
 class UserOnboarding(BaseModel):
     instagram: Optional[str] = None
@@ -44,6 +47,7 @@ class UserOnboarding(BaseModel):
     smoking_preference: Optional[bool] = None
     drinking_preference: Optional[bool] = None
     pet_preference: Optional[bool] = None
+    music_preference: Optional[bool] = None
     cleanliness_level: Optional[int] = None
     meal_schedule: Optional[str] = None
     social_preference: Optional[str] = None

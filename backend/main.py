@@ -97,7 +97,10 @@ def compute_compatibility_score(user1: User, user2: User) -> float:
 
     # Factor 4: Pet preference (boolean, weight 0.1)
     if user1.pet_preference is not None and user2.pet_preference is not None:
-        add_factor(user1.pet_preference == user2.pet_preference, weight=0.1)
+        add_factor(user1.pet_preference == user2.pet_preference, weight=0.05)
+
+    if user1.music_preference is not None and user2.music_preference is not None:
+        add_factor(user1.music_preference == user2.music_preference, weight=0.05)
 
     # Factor 5: Cleanliness level (scale 1-10, weight 0.15)
     if user1.cleanliness_level is not None and user2.cleanliness_level is not None:
