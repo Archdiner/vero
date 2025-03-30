@@ -464,4 +464,7 @@ def update_onboarding(
 
     db.commit()
     db.refresh(user)
+
+    update_matches(user_id, db)
+
     return {"message": "Onboarding data updated successfully"}
