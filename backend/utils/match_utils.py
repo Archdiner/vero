@@ -39,46 +39,36 @@ def compute_compatibility_score(user1: User, user2: User) -> float:
             score_sum += factor_score * weight
             total_weight += weight
 
-    # Factor 1: Age difference (assume max 10 years difference)
     if user1.age is not None and user2.age is not None:
         add_numeric_factor(user1.age, user2.age, max_diff=10, weight=0.1)
 
-    # Factor 2: Smoking preference (boolean, weight 0.1)
     if user1.smoking_preference is not None and user2.smoking_preference is not None:
         add_factor(user1.smoking_preference == user2.smoking_preference, weight=0.1)
 
-    # Factor 3: Drinking preference (boolean, weight 0.1)
     if user1.drinking_preference is not None and user2.drinking_preference is not None:
         add_factor(user1.drinking_preference == user2.drinking_preference, weight=0.1)
 
-    # Factor 4: Pet preference (boolean, weight 0.1)
     if user1.pet_preference is not None and user2.pet_preference is not None:
         add_factor(user1.pet_preference == user2.pet_preference, weight=0.05)
 
     if user1.music_preference is not None and user2.music_preference is not None:
         add_factor(user1.music_preference == user2.music_preference, weight=0.05)
 
-    # Factor 5: Cleanliness level (scale 1-10, weight 0.15)
     if user1.cleanliness_level is not None and user2.cleanliness_level is not None:
         add_numeric_factor(user1.cleanliness_level, user2.cleanliness_level, max_diff=9, weight=0.15)
 
-    # Factor 6: Social preference (string, weight 0.1)
     if user1.social_preference and user2.social_preference:
-        add_factor(user1.social_preference.lower() == user2.social_preference.lower(), weight=0.1)
+        add_factor(user1.social_preference == user2.social_preference, weight=0.1)
 
-    # Factor 7: Bedtime (time, weight 0.15; assume maximum acceptable difference is 120 minutes)
     if user1.bedtime and user2.bedtime:
         add_time_factor(user1.bedtime, user2.bedtime, max_diff_minutes=120, weight=0.15)
 
-    # Factor 8: Budget range (integer, weight 0.1; assume max difference 3000)
     if user1.budget_range is not None and user2.budget_range is not None:
         add_numeric_factor(user1.budget_range, user2.budget_range, max_diff=3000, weight=0.1)
 
-    # Factor 9: Move-in date (optional; weight 0.1; assume max difference 60 days)
     if user1.move_in_date and user2.move_in_date:
         add_date_factor(user1.move_in_date, user2.move_in_date, max_diff_days=60, weight=0.1)
 
-    # Normalize score (if no factors are available, return 0)
     if total_weight > 0:
         return score_sum / total_weight
     else:
@@ -119,7 +109,7 @@ def update_matches(current_user_id: int, db: Session) -> list:
                 user1_id=current_user_id,
                 user2_id=other.id,
                 compatibility_score=score,
-                match_status=MatchStatus.PENDING
+                match_status=MatchStatus.pending
             )
             db.add(new_match)
         
