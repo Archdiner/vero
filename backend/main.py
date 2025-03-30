@@ -5,8 +5,8 @@ from sqlalchemy import func, and_, or_
 from db import get_db, engine
 from models import User, RoommateMatch, MatchStatus, Base
 from schemas import UserCreate, UserLogin, UserResponse, Token, UserOnboarding
-from backend.utils.auth_utils import hash_password, verify_password, create_access_token, decode_access_token
-from backend.utils.match_utils import compute_compatibility_score, update_matches
+from utils.auth_utils import hash_password, verify_password, create_access_token, decode_access_token
+from utils.match_utils import compute_compatibility_score, update_matches
 import jwt
 
 origins = [
