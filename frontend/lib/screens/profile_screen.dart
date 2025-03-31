@@ -15,6 +15,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _email;
   String? _username;
   bool _isLoading = false;
+  bool _isDarkTheme = true;
 
   @override
   void initState() {
@@ -48,7 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final data = json.decode(response.body);
         setState(() {
           _email = data['email'];
-          _username = data['username'];
+          _username = data['fullname']; // Use full name here.
         });
       } else {
         if (response.statusCode == 401) {
@@ -74,9 +75,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), // Same dark background as SwipeScreen.
+      backgroundColor: Colors.black, // Same as SwipeScreen.
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: Colors.black,
         title: const Text(
           'Profile',
           style: TextStyle(
@@ -89,80 +90,275 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Center(
-              child: _email == null
-                  ? const Text(
-                      'No profile data',
-                      style: TextStyle(color: Colors.white),
-                    )
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Signed in as $_username',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Email: $_email',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        ElevatedButton(
-                          onPressed: _logout,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF6F40),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30,
-                              vertical: 12,
-                            ),
-                          ),
-                          child: const Text(
-                            'Logout',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
+          : _buildProfileBody(),
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+
+  Widget _buildProfileBody() {
+    if (_email == null || _username == null) {
+      return const Center(
+        child: Text(
+          'No profile data',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        children: [
+          // TOP USER INFO CARD
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(16),
             ),
-      bottomNavigationBar: Container(
-        color: Colors.transparent,
-        padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                // Placeholder avatar
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey,
+                  ),
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Name & email
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _username ?? '',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _email ?? '',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // PROFILE SETTINGS SECTION
+          _buildSectionHeader('Profile settings'),
+          const SizedBox(height: 8),
+          _buildSettingsItem(
+            icon: Icons.person_outline,
+            title: 'Personal information',
+            onTap: () {
+              // Navigate to personal info screen
+            },
+          ),
+          _buildSettingsItem(
+            icon: Icons.tune,
+            title: 'Preferences',
+            onTap: () {
+              // Navigate to preferences screen
+            },
+          ),
+          _buildSettingsItem(
+            icon: Icons.notifications_none,
+            title: 'Notifications',
+            onTap: () {
+              // Navigate to notifications screen
+            },
+          ),
+          _buildThemeToggleItem(),
+
+          const SizedBox(height: 24),
+
+          // SUPPORT SECTION
+          _buildSectionHeader('Support'),
+          const SizedBox(height: 8),
+          _buildSettingsItem(
+            icon: Icons.help_outline,
+            title: 'Contact us',
+            onTap: () {
+              // Navigate to contact page
+            },
+          ),
+          _buildSettingsItem(
+            icon: Icons.star_border,
+            title: 'Rate us',
+            onTap: () {
+              // Launch app store rating page
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // LEGAL SECTION
+          _buildSectionHeader('Legal section'),
+          const SizedBox(height: 8),
+          _buildSettingsItem(
+            icon: Icons.info_outline,
+            title: 'CGU',
+            onTap: () {
+              // Terms & conditions
+            },
+          ),
+          _buildSettingsItem(
+            icon: Icons.privacy_tip_outlined,
+            title: 'Privacy Policy',
+            onTap: () {
+              // Privacy policy page
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // LOGOUT
+          _buildSettingsItem(
+            icon: Icons.logout,
+            iconColor: Colors.redAccent,
+            title: 'Logout',
+            titleColor: Colors.redAccent,
+            onTap: _logout,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsItem({
+    required IconData icon,
+    required String title,
+    VoidCallback? onTap,
+    Color iconColor = Colors.white70,
+    Color titleColor = Colors.white,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // Left: Search icon (white/grey) redirects to SwipeScreen.
-            IconButton(
-              icon: const Icon(Icons.search, color: Colors.white54),
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/swipe');
-              },
+            Icon(icon, color: iconColor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(color: titleColor, fontSize: 14),
+              ),
             ),
-            // Center: More icon (gray) – placeholder action.
-            IconButton(
-              icon: const Icon(Icons.more_horiz, color: Colors.white54),
-              onPressed: () {
-                // Handle center action if needed.
-              },
-            ),
-            // Right: Profile icon (orange) – currently on ProfileScreen.
-            IconButton(
-              icon: const Icon(Icons.person_outline, color: Color(0xFFFF6F40)),
-              onPressed: () {
-                // Already on ProfileScreen; optionally refresh or do nothing.
-              },
-            ),
+            const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 16),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildThemeToggleItem() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.brightness_4_outlined, color: Colors.white70),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'Theme',
+              style: TextStyle(color: Colors.white, fontSize: 14),
+            ),
+          ),
+          Text(
+            _isDarkTheme ? 'Dark' : 'Light',
+            style: const TextStyle(color: Colors.white54, fontSize: 14),
+          ),
+          const SizedBox(width: 8),
+          Switch(
+            activeColor: const Color(0xFFFF6F40),
+            value: _isDarkTheme,
+            onChanged: (val) {
+              setState(() {
+                _isDarkTheme = val;
+              });
+              // Optionally add theme logic here.
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return Container(
+      color: Colors.transparent,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // Left: Search icon (white/grey) -> navigate to SwipeScreen.
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white54),
+            onPressed: () {
+              Navigator.pushReplacementNamed(context, '/swipe');
+            },
+          ),
+          // Center: More icon (gray) – placeholder.
+          IconButton(
+            icon: const Icon(Icons.more_horiz, color: Colors.white54),
+            onPressed: () {
+              // Handle center action if needed.
+            },
+          ),
+          // Right: Profile icon (orange) – already on ProfileScreen.
+          IconButton(
+            icon: const Icon(Icons.person_outline, color: Color(0xFFFF6F40)),
+            onPressed: () {
+              // Already on profile screen.
+            },
+          ),
+        ],
       ),
     );
   }
