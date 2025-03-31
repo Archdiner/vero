@@ -90,21 +90,36 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
         primarySwatch: Colors.red,
       ),
       initialRoute: _isLoading 
-        ? '/splash' 
-        : (_isLoggedIn 
-          ? '/swipe'  // If logged in, go to swipe screen regardless of onboarding status
-          : '/auth'),
+          ? '/splash' 
+          : (_isLoggedIn ? '/swipe' : '/auth'),
+      // Remove '/swipe' from here so onGenerateRoute handles it.
       routes: {
         '/splash': (context) => SplashScreen(),
         '/auth': (context) => AuthScreen(),
         '/home': (context) => HomeScreen(),
-        '/swipe': (context) => SwipeScreen(),
         '/favourites': (context) => FavouritesScreen(),
         '/details': (context) => RestaurantDetailsScreen(),
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
-        '/profile': (context) => ProfileScreen(),
-        '/onboarding': (context) => OnboardingScreen()
+        '/onboarding': (context) => OnboardingScreen(),
+      },
+      onGenerateRoute: (RouteSettings settings) {
+        if (settings.name == '/swipe') {
+          return PageRouteBuilder(
+            settings: settings,
+            pageBuilder: (context, animation, secondaryAnimation) => SwipeScreen(),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          );
+        } else if (settings.name == '/profile') {
+          return PageRouteBuilder(
+            settings: settings,
+            pageBuilder: (context, animation, secondaryAnimation) => ProfileScreen(),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          );
+        }
+        return null; // For other routes, use default routing.
       },
     );
   }
