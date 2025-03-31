@@ -92,7 +92,7 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
       initialRoute: _isLoading 
           ? '/splash' 
           : (_isLoggedIn ? '/swipe' : '/auth'),
-      // Note: Remove '/swipe' from here so that onGenerateRoute will handle it.
+      // Remove '/swipe' from here so onGenerateRoute handles it.
       routes: {
         '/splash': (context) => SplashScreen(),
         '/auth': (context) => AuthScreen(),
@@ -118,8 +118,8 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           );
-        } 
-        return null; // default routing for other pages.
+        }
+        return null; // For other routes, use default routing.
       },
     );
   }
