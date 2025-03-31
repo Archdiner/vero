@@ -9,6 +9,8 @@ from utils.auth_utils import hash_password, verify_password, create_access_token
 from utils.match_utils import compute_compatibility_score, update_matches
 import jwt
 
+app = FastAPI()
+
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:8000",
@@ -18,8 +20,6 @@ origins = [
     "http://127.0.0.1:52762",  # Also add with IP
     # "https://your-production-domain.com"
 ]
-
-app = FastAPI()
 
 # Add CORS middleware
 app.add_middleware(
@@ -36,8 +36,6 @@ Base.metadata.create_all(bind=engine)
 @app.get("/")
 def home():
     return {"message": "Welcome to Roommate Finder!"}
-
-app = FastAPI()
 
 @app.get("/potential_roommates")
 def get_potential_roommates(
