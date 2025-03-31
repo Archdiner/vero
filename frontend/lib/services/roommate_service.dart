@@ -9,6 +9,7 @@ class RoommateService {
   final String _baseUrl = utils.BASE_URL;
   
   // Fetch potential roommate matches
+  // Temporarily fetching all users until matching logic is implemented
   Future<List<UserProfile>> fetchPotentialMatches({
     required int offset,
     required int limit,
@@ -22,9 +23,9 @@ class RoommateService {
         throw Exception('No authentication token found');
       }
       
-      // Make API request for potential matches
+      // Make API request for potential roommates
       final response = await http.get(
-        Uri.parse('$_baseUrl/matches?offset=$offset&limit=$limit'),
+        Uri.parse('$_baseUrl/potential_roommates?offset=$offset&limit=$limit'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -33,9 +34,10 @@ class RoommateService {
       
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
+        print('Fetched ${data.length} potential roommates');
         return data.map((json) => UserProfile.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to load matches: ${response.statusCode}');
+        throw Exception('Failed to load potential roommates: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching potential matches: $e');
@@ -54,15 +56,18 @@ class RoommateService {
         throw Exception('No authentication token found');
       }
       
+      // Convert string userId to int for the API
+      int? roommateId = int.tryParse(userId);
+      if (roommateId == null) {
+        throw Exception('Invalid user ID format');
+      }
+      
       final response = await http.post(
-        Uri.parse('$_baseUrl/like'),
+        Uri.parse('$_baseUrl/like/$roommateId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: json.encode({
-          'liked_user_id': userId,
-        }),
       );
       
       if (response.statusCode == 200) {
@@ -95,15 +100,18 @@ class RoommateService {
         throw Exception('No authentication token found');
       }
       
+      // Convert string userId to int for the API
+      int? roommateId = int.tryParse(userId);
+      if (roommateId == null) {
+        throw Exception('Invalid user ID format');
+      }
+      
       final response = await http.post(
-        Uri.parse('$_baseUrl/dislike'),
+        Uri.parse('$_baseUrl/reject/$roommateId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: json.encode({
-          'disliked_user_id': userId,
-        }),
       );
       
       if (response.statusCode == 200) {

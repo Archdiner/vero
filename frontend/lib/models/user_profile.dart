@@ -39,8 +39,16 @@ class UserProfile {
   
   // Create a UserProfile from JSON data
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    // Convert id to String if it's an int
+    var userId = json['id'];
+    if (userId is int) {
+      userId = userId.toString();
+    } else if (userId == null) {
+      userId = '';
+    }
+    
     return UserProfile(
-      id: json['id'] ?? '',
+      id: userId,
       fullName: json['fullname'] ?? 'No Name',
       age: json['age'] ?? 0,
       profilePicture: json['profile_picture'] ?? '',
