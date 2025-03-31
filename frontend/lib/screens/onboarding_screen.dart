@@ -1,10 +1,15 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../utils/config.dart' as utils;
 import '../services/auth_service.dart';
+import '../services/supabase_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -35,7 +40,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _instagramController = TextEditingController();
-  final TextEditingController _profilePictureController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _majorController = TextEditingController();
   final TextEditingController _budgetRangeController = TextEditingController();
@@ -45,6 +49,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _bedtimeController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
+
+  // Image picker
+  final ImagePicker _picker = ImagePicker();
+  File? _selectedImage;
+  Uint8List? _webImage; // For web platform
+  String? _uploadedImageUrl;
+  bool _isUploadingImage = false;
 
   // Drop-down values
   String? _selectedGender;
@@ -77,7 +88,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void dispose() {
     _pageController.dispose();
     _instagramController.dispose();
-    _profilePictureController.dispose();
     _ageController.dispose();
     _majorController.dispose();
     _budgetRangeController.dispose();
@@ -90,6 +100,192 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
+  // Image picking methods
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          if (kIsWeb) {
+            // Web platform
+            _webImage = null; // Reset first
+            pickedFile.readAsBytes().then((value) {
+              setState(() {
+                _webImage = value;
+                _uploadedImageUrl = null; // Reset the uploaded URL when a new image is selected
+              });
+              // Upload image after setting state
+              _uploadProfileImage();
+            });
+          } else {
+            // Mobile platform
+            _selectedImage = File(pickedFile.path);
+            _uploadedImageUrl = null; // Reset the uploaded URL when a new image is selected
+            // Upload image automatically after selection
+            _uploadProfileImage();
+          }
+        });
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error selecting image: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Show image picker options dialog
+  Future<void> _showImagePickerOptions() async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Select Profile Image',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const Divider(color: Colors.grey),
+          ListTile(
+            leading: const Icon(Icons.camera_alt, color: Color(0xFFFF6F40)),
+            title: const Text('Take a photo', style: TextStyle(color: Colors.white)),
+            onTap: () {
+              Navigator.of(context).pop();
+              _pickImage(ImageSource.camera);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library, color: Color(0xFFFF6F40)),
+            title: const Text('Choose from gallery', style: TextStyle(color: Colors.white)),
+            onTap: () {
+              Navigator.of(context).pop();
+              _pickImage(ImageSource.gallery);
+            },
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  // Upload profile image to Supabase Storage
+  Future<void> _uploadProfileImage() async {
+    // Check if there's an image to upload
+    if (!kIsWeb && _selectedImage == null) return;
+    if (kIsWeb && _webImage == null) return;
+
+    setState(() {
+      _isUploadingImage = true;
+    });
+
+    try {
+      // Get user email to use as user ID
+      final prefs = await SharedPreferences.getInstance();
+      final userEmail = prefs.getString('user_email') ?? 'unknown_user';
+      
+      print('Using user ID for upload: $userEmail');
+      
+      // Make email safe for use in file names by removing special characters
+      final safeUserId = userEmail.replaceAll(RegExp(r'[^\w\s]+'), '_');
+      
+      print('Safe user ID for upload: $safeUserId');
+
+      // Upload image to Supabase Storage
+      final supabaseService = SupabaseService();
+      
+      if (!supabaseService.isInitialized) {
+        print('Supabase service is not initialized');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Supabase service is not initialized. Please try again later.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isUploadingImage = false;
+        });
+        return;
+      }
+      
+      print('Supabase service is initialized, proceeding with upload');
+      
+      // Use the appropriate image source based on platform
+      final imageSource = kIsWeb ? _webImage : _selectedImage;
+      
+      print('Image source type: ${imageSource.runtimeType}');
+      
+      final uploadedUrl = await supabaseService.uploadProfileImage(
+        imageSource: imageSource,
+        userId: safeUserId,
+      );
+
+      if (uploadedUrl != null) {
+        setState(() {
+          _uploadedImageUrl = uploadedUrl;
+        });
+        print('Image uploaded successfully: $_uploadedImageUrl');
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile picture uploaded successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        print('Upload returned null URL');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to upload image. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error uploading image: $e');
+      String errorMessage = 'Error uploading image';
+      
+      if (e.toString().contains('storage/object-too-large')) {
+        errorMessage = 'Image is too large. Please choose a smaller image.';
+      } else if (e.toString().contains('permission') || e.toString().contains('security policy')) {
+        errorMessage = 'Permission denied. Please check Supabase storage permissions.';
+      } else if (e.toString().contains('network')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isUploadingImage = false;
+      });
+    }
+  }
+
   Future<void> _updateOnboarding() async {
     // Check if all required fields are filled
     if (!_validateRequiredFields()) {
@@ -97,7 +293,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       List<String> missingFields = [];
       
       if (_instagramController.text.isEmpty) missingFields.add('Instagram Username');
-      // Removed requirement for Profile Picture URL
       if (_ageController.text.isEmpty) missingFields.add('Age');
       if (_selectedGender == null) missingFields.add('Gender');
       if (_selectedUniversity == null) missingFields.add('University');
@@ -170,7 +365,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     // Process text values
     final instagramValue = _instagramController.text.trim();
-    final profilePictureValue = _profilePictureController.text.trim();
+    final profilePictureValue = _uploadedImageUrl; // Use the uploaded image URL
     final moveInDateValue = _moveInDateController.text.trim();
     final snapchatValue = _snapchatController.text.trim();
     final bedtimeValue = _bedtimeController.text.trim();
@@ -281,7 +476,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _validateRequiredFields() {
     // Debug logging to identify which field fails validation
     final instagramValid = _instagramController.text.isNotEmpty;
-    // Removed profile picture URL from required checks
     final ageValid = _ageController.text.isNotEmpty;
     final genderValid = _selectedGender != null;
     final universityValid = _selectedUniversity != null;
@@ -291,13 +485,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     
     print('Validation results:');
     print('- Instagram: $instagramValid (${_instagramController.text})');
-    // Removed profile picture URL print statement
     print('- Age: $ageValid (${_ageController.text})');
     print('- Gender: $genderValid ($_selectedGender)');
     print('- University: $universityValid ($_selectedUniversity)');
     print('- Year of Study: $yearOfStudyValid ($_selectedYearOfStudy)');
     print('- Cleanliness: $cleanlinessValid (${_cleanlinessLevelController.text})');
     print('- Social Preference: $socialPrefValid ($_selectedSocialPreference)');
+    // Profile image is optional, so we don't validate it as required
+    print('- Profile Image: ${_uploadedImageUrl != null ? "Uploaded" : "Not uploaded"}');
     
     // Check required fields based on the user's requirements
     return instagramValid &&
@@ -490,6 +685,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 24),
             
+            // Profile Picture Selection
+            _buildImageSection(),
+            const SizedBox(height: 24),
+            
             // Age field
             _buildRequiredTextField(
               controller: _ageController,
@@ -524,13 +723,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 }
                 return null;
               },
-            ),
-            const SizedBox(height: 16),
-            
-            // Profile Picture URL (Optional now)
-            _buildTextField(
-              controller: _profilePictureController,
-              label: 'Profile Picture URL (Optional)',
             ),
             const SizedBox(height: 16),
             
@@ -1140,6 +1332,101 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
       ),
+    );
+  }
+
+  // Profile Picture Selection in _buildBasicInfoPage()
+  Widget _buildImageSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Profile Picture',
+          style: TextStyle(color: Colors.white70, fontSize: 16),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _showImagePickerOptions,
+          child: Container(
+            height: 200,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[800]!),
+            ),
+            child: _isUploadingImage
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFFFF6F40),
+                    ),
+                  )
+                : _getImageWidget(), // Use helper method to get appropriate image widget
+          ),
+        ),
+        if (_uploadedImageUrl != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 16,
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Image uploaded successfully',
+                    style: TextStyle(color: Colors.green, fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  // Helper method to get the appropriate image widget based on platform and state
+  Widget _getImageWidget() {
+    if (kIsWeb) {
+      if (_webImage != null) {
+        // Web platform with selected image
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(
+            _webImage!,
+            fit: BoxFit.cover,
+          ),
+        );
+      }
+    } else if (_selectedImage != null) {
+      // Mobile platform with selected image
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.file(
+          _selectedImage!,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    
+    // Default placeholder when no image is selected
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.add_a_photo,
+          color: Colors.grey[600],
+          size: 48,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Add Profile Picture',
+          style: TextStyle(color: Colors.grey[600]),
+        ),
+      ],
     );
   }
 }
