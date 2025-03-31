@@ -11,9 +11,30 @@ import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/auth_service.dart';
+import 'services/supabase_service.dart';
+import 'utils/supabase_config.dart' as supabase_config;
+import 'package:flutter/foundation.dart';
 
-void main() {
-  runApp(TinderForRestaurants());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Supabase
+  try {
+    final supabaseService = SupabaseService();
+    await supabaseService.initialize(
+      supabase_config.SUPABASE_URL,
+      supabase_config.SUPABASE_ANON_KEY,
+    );
+    if (kDebugMode) {
+      print('Supabase initialized successfully');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print('Error initializing Supabase: $e');
+    }
+  }
+  
+  runApp(const TinderForRestaurants());
 }
 
 class TinderForRestaurants extends StatefulWidget {
