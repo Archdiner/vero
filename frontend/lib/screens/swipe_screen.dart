@@ -91,7 +91,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), // dark background
+      backgroundColor: Colors.black, // dark background
       body: SafeArea(
         child: Column(
           children: [
