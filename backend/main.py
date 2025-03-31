@@ -60,34 +60,35 @@ def get_potential_roommates(
             detail="Invalid token"
         )
 
-    # ADD CODE HERE: Query the matches database to get the current user's matches.
-    matches = db.query(RoommateMatch).filter(
-        or_(
-            RoommateMatch.user1_id == current_user_id,
-            RoommateMatch.user2_id == current_user_id
-        )
-    ).all()
-
+    # TEMPORARY: Return all users except current user
+    # This will be replaced with proper matching logic later
+    all_users = db.query(User).filter(User.id != current_user_id).all()
+    
     results = []
-    for match in matches:
-        # Determine the other user in the match.
-        other_user_id = match.user2_id if match.user1_id == current_user_id else match.user1_id
-        other_user = db.query(User).filter(User.id == other_user_id).first()
-        if other_user:
+    for user in all_users:
+        if user:
             results.append({
-                "id": other_user.id,
-                "fullname": other_user.fullname,
-                "age": other_user.age,
-                "gender": other_user.gender.value if hasattr(other_user, "gender") and other_user.gender else None,
-                "major": other_user.major,
-                "year_of_study": other_user.year_of_study,
-                "bio": other_user.bio,
-                "profile_picture": other_user.profile_picture,
-                "compatibility_score": match.compatibility_score
+                "id": user.id,
+                "fullname": user.fullname,
+                "age": user.age,
+                "gender": user.gender.value if user.gender else None,
+                "university": user.university,
+                "major": user.major,
+                "year_of_study": user.year_of_study,
+                "bio": user.bio,
+                "profile_picture": user.profile_picture,
+                "compatibility_score": 0,  # We'll calculate this properly later
+                "budget_range": user.budget_range,
+                "cleanliness_level": user.cleanliness_level,
+                "social_preference": user.social_preference.value if user.social_preference else None,
+                "smoking_preference": user.smoking_preference,
+                "drinking_preference": user.drinking_preference,
+                "pet_preference": user.pet_preference,
+                "music_preference": user.music_preference
             })
 
-    sorted_results = sorted(results, key=lambda x: x["compatibility_score"], reverse=True)
-    return sorted_results[offset:offset + limit]
+    # Apply pagination
+    return results[offset:offset + limit]
 
 
 @app.post("/like/{roommate_id}")
@@ -133,18 +134,18 @@ def like_roommate(
         if existing_match.user1_id == user_id:
             existing_match.user1_liked = True
             if existing_match.user2_liked:
-                existing_match.match_status = MatchStatus.MATCHED
+                existing_match.match_status = MatchStatus.matched
         else:
             existing_match.user2_liked = True
             if existing_match.user1_liked:
-                existing_match.match_status = MatchStatus.MATCHED
+                existing_match.match_status = MatchStatus.matched
     else:
         # Create new match
         new_match = RoommateMatch(
             user1_id=user_id,
             user2_id=roommate_id,
             compatibility_score=0,  # This should be calculated based on preferences
-            match_status=MatchStatus.PENDING,
+            match_status=MatchStatus.pending,
             user1_liked=True
         )
         db.add(new_match)
@@ -192,14 +193,14 @@ def reject_roommate(
 
     if existing_match:
         # Update existing match status to rejected
-        existing_match.match_status = MatchStatus.REJECTED
+        existing_match.match_status = MatchStatus.rejected
     else:
         # Create new rejected match
         new_match = RoommateMatch(
             user1_id=user_id,
             user2_id=roommate_id,
             compatibility_score=0,
-            match_status=MatchStatus.REJECTED
+            match_status=MatchStatus.rejected
         )
         db.add(new_match)
 
@@ -234,7 +235,7 @@ def get_matches(
                 RoommateMatch.user1_id == user_id,
                 RoommateMatch.user2_id == user_id
             ),
-            RoommateMatch.match_status == MatchStatus.MATCHED
+            RoommateMatch.match_status == MatchStatus.matched
         )
     ).all()
 
