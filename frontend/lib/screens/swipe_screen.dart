@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:swipable_stack/swipable_stack.dart';
 import 'dart:math' show min;
 
-// Example placeholders for your services and models
-import '../services/api_service.dart';
-import '../models/restaurant.dart';
+// Import our new models and services
+import '../models/user_profile.dart';
+import '../services/roommate_service.dart';
 
 class SwipeScreen extends StatefulWidget {
   const SwipeScreen({Key? key}) : super(key: key);
@@ -15,76 +15,74 @@ class SwipeScreen extends StatefulWidget {
 
 class _SwipeScreenState extends State<SwipeScreen> {
   final SwipableStackController _controller = SwipableStackController();
-  final ApiService _apiService = ApiService();
+  final RoommateService _roommateService = RoommateService();
 
-  List<Restaurant> _restaurants = [];
+  List<UserProfile> _potentialMatches = [];
   int _offset = 0;
   final int _limit = 10;
   bool _isFetching = false;
   String _userName = '';
+  Map<String, dynamic> _currentUserProfile = {};
 
   @override
   void initState() {
     super.initState();
-    _fetchRestaurants();
-    _fetchUserName();
+    _fetchPotentialMatches();
+    _fetchCurrentUserInfo();
   }
 
-  Future<void> _fetchRestaurants() async {
+  Future<void> _fetchPotentialMatches() async {
     if (_isFetching) return;
     setState(() => _isFetching = true);
 
     try {
-      final newRestaurants = await _apiService.fetchRestaurants(
+      final newMatches = await _roommateService.fetchPotentialMatches(
         offset: _offset,
         limit: _limit,
       );
-      if (newRestaurants.isNotEmpty) {
+      if (newMatches.isNotEmpty) {
         setState(() {
-          _restaurants.addAll(newRestaurants);
+          _potentialMatches.addAll(newMatches);
           _offset += _limit;
         });
       }
     } catch (e) {
-      print("Error fetching restaurants: $e");
+      print("Error fetching potential matches: $e");
     } finally {
       setState(() => _isFetching = false);
     }
   }
 
-  Future<void> _fetchUserName() async {
+  Future<void> _fetchCurrentUserInfo() async {
     try {
-      final name = await _apiService.getUserName();
+      final profileData = await _roommateService.getCurrentUserProfile();
       if (mounted) {
         setState(() {
-          _userName = name;
+          _currentUserProfile = profileData;
+          _userName = profileData['fullname'] ?? '';
         });
       }
     } catch (e) {
-      print('Error fetching user name: $e');
+      print('Error fetching user profile: $e');
     }
   }
 
   void _onSwipeCompleted(int index, SwipeDirection direction) {
-    print("Swiped card $index: ${direction == SwipeDirection.right ? 'LIKE' : 'DISLIKE'}");
+    final swipedUser = _potentialMatches[index];
+    
+    if (direction == SwipeDirection.right) {
+      // User liked this profile
+      _roommateService.likeUser(swipedUser.id);
+      print("Liked user: ${swipedUser.fullName}");
+    } else if (direction == SwipeDirection.left) {
+      // User disliked this profile
+      _roommateService.dislikeUser(swipedUser.id);
+      print("Disliked user: ${swipedUser.fullName}");
+    }
 
     // If near the end, fetch more
-    if (_restaurants.length - index <= 3) {
-      _fetchRestaurants();
-    }
-  }
-
-  // New method to toggle favorite status for a restaurant
-  Future<void> _toggleFavorite(Restaurant restaurant) async {
-    try {
-      final bool updatedFavoriteState = await _apiService.toggleFavorite(
-        restaurant.chainId
-      );
-      setState(() {
-        restaurant.isFavorited = updatedFavoriteState;
-      });
-    } catch (e) {
-      print("Error toggling favorite: $e");
+    if (_potentialMatches.length - index <= 3) {
+      _fetchPotentialMatches();
     }
   }
 
@@ -95,26 +93,32 @@ class _SwipeScreenState extends State<SwipeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ===== TOP BAR (Avatar, "Hello [name]!", location, bell) =====
+            // ===== TOP BAR (Avatar, "Hello [name]!", location) =====
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
                 children: [
-                  // Example avatar
+                  // User's avatar 
                   CircleAvatar(
                     radius: 22,
-                    backgroundImage: NetworkImage(
-                      'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg',
-                    ),
+                    backgroundImage: _currentUserProfile['profile_picture'] != null && 
+                                     _currentUserProfile['profile_picture'].toString().isNotEmpty
+                        ? NetworkImage(_currentUserProfile['profile_picture']) 
+                        : null,
+                    child: _currentUserProfile['profile_picture'] == null || 
+                           _currentUserProfile['profile_picture'].toString().isEmpty
+                        ? const Icon(Icons.person, color: Colors.white)
+                        : null,
+                    backgroundColor: Colors.grey[800],
                   ),
                   const SizedBox(width: 12),
-                  // Greeting & location
+                  // Greeting & university
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Hello ${_userName}!",
+                          "Hello ${_userName.split(' ').first}!",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -122,9 +126,9 @@ class _SwipeScreenState extends State<SwipeScreen> {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        const Text(
-                          "Your location",
-                          style: TextStyle(
+                        Text(
+                          _currentUserProfile['university'] ?? "Find your roommate",
+                          style: const TextStyle(
                             color: Colors.white54,
                             fontSize: 12,
                           ),
@@ -141,7 +145,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
               ),
             ),
 
-            // ===== SEARCH BAR + ORANGE SQUARE ICON =====
+            // ===== SEARCH BAR + FILTER ICON =====
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Container(
@@ -159,7 +163,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       child: TextField(
                         style: const TextStyle(color: Colors.white),
                         decoration: const InputDecoration(
-                          hintText: "Search",
+                          hintText: "Search for roommates",
                           hintStyle: TextStyle(color: Colors.white54),
                           border: InputBorder.none,
                         ),
@@ -171,13 +175,19 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Color(0xFFFF6F40), // brand orange
+                        color: const Color(0xFFFF6F40), // brand orange
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: IconButton(
                         icon: const Icon(Icons.filter_list, color: Colors.white),
                         onPressed: () {
-                          // handle filter
+                          // TODO: Add filtering functionality later
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Filtering feature coming soon!'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -189,17 +199,27 @@ class _SwipeScreenState extends State<SwipeScreen> {
 
             // ===== SWIPE STACK =====
             Expanded(
-              child: _restaurants.isEmpty
-                  ? const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
+              child: _potentialMatches.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const CircularProgressIndicator(color: Color(0xFFFF6F40)),
+                          const SizedBox(height: 16),
+                          Text(
+                            _isFetching ? "Finding roommates..." : "No more profiles to show",
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                        ],
+                      ),
                     )
                   : SwipableStack(
                       controller: _controller,
-                      itemCount: _restaurants.length,
+                      itemCount: _potentialMatches.length,
                       onSwipeCompleted: _onSwipeCompleted,
                       builder: (context, index, constraints) {
-                        final restaurant = _restaurants[index];
-                        return _buildRestaurantCard(context, constraints, restaurant);
+                        final userProfile = _potentialMatches[index];
+                        return _buildUserProfileCard(context, constraints, userProfile);
                       },
                     ),
             ),
@@ -207,27 +227,28 @@ class _SwipeScreenState extends State<SwipeScreen> {
             // ===== BOTTOM NAVIGATION (3 icons) =====
             Container(
               color: Colors.transparent,
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   // Left: search icon (orange) to indicate current screen
                   IconButton(
-                    icon: const Icon(Icons.search, color: Color(0xFFFF6F40)),
+                    icon: const Icon(Icons.search, color: Color(0xFFFF6F40), size: 28),
                     onPressed: () {
-                      // Already on search screen?
+                      // Already on search screen
                     },
                   ),
-                  // Center: three-dot icon (gray)
+                  // Center: chat icon
                   IconButton(
-                    icon: const Icon(Icons.more_horiz, color: Colors.white54),
+                    icon: const Icon(Icons.chat_bubble_outline, color: Colors.white54, size: 26),
                     onPressed: () {
-                      // handle middle nav
+                      // Navigate to chats screen
+                      // TODO: Implement chat screen navigation
                     },
                   ),
                   // Right: person icon (gray)
                   IconButton(
-                    icon: const Icon(Icons.person_outline, color: Colors.white54),
+                    icon: const Icon(Icons.person_outline, color: Colors.white54, size: 28),
                     onPressed: () {
                       Navigator.pushReplacementNamed(context, '/profile');
                     },
@@ -241,14 +262,14 @@ class _SwipeScreenState extends State<SwipeScreen> {
     );
   }
 
-  Widget _buildRestaurantCard(
+  Widget _buildUserProfileCard(
     BuildContext context,
     BoxConstraints constraints,
-    Restaurant restaurant,
+    UserProfile userProfile,
   ) {
     // Slightly smaller so it doesn't get chopped
     final cardWidth = constraints.maxWidth * 0.9;
-    final cardHeight = constraints.maxHeight * 0.75;
+    final cardHeight = constraints.maxHeight * 0.85;
 
     return Align(
       alignment: Alignment.center,
@@ -263,15 +284,15 @@ class _SwipeScreenState extends State<SwipeScreen> {
               height: cardHeight,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: NetworkImage(
-                    'https://via.placeholder.com/600x800?text=No+Image',
-                  ),
+                  image: userProfile.profilePicture.isNotEmpty
+                      ? NetworkImage(userProfile.profilePicture)
+                      : const NetworkImage('https://via.placeholder.com/600x800?text=No+Image'),
                   fit: BoxFit.cover,
                 ),
               ),
               child: Stack(
                 children: [
-                  // Dark gradient at bottom
+                  // Dark gradient overlay for readability
                   Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
@@ -279,98 +300,79 @@ class _SwipeScreenState extends State<SwipeScreen> {
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                           colors: [
-                            Colors.black.withOpacity(0.7),
+                            Colors.black.withOpacity(0.8),
                             Colors.transparent,
+                            Colors.black.withOpacity(0.3), // light overlay at the top
                           ],
-                          stops: const [0.0, 0.5],
+                          stops: const [0.0, 0.5, 1.0],
                         ),
                       ),
                     ),
                   ),
 
-                  // Restaurant info
+                  // User info at the bottom
                   Positioned(
                     left: 16,
                     right: 16,
-                    bottom: 60, // space for the buttons
+                    bottom: 80, // space for the buttons
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // "Location" chip
+                        // University chip
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFF6F40),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text(
-                            "Location",
-                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          child: Text(
+                            userProfile.university,
+                            style: const TextStyle(color: Colors.white, fontSize: 12),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
 
-                        // Name
-                        Text(
-                          restaurant.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        // Rating
-                        if (restaurant.avgRating != null) ...[
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(Icons.star, color: Colors.yellow, size: 20),
-                              const SizedBox(width: 5),
-                              Text(
-                                restaurant.avgRating!.toStringAsFixed(1),
-                                style: const TextStyle(color: Colors.white, fontSize: 16),
-                              ),
-                            ],
-                          ),
-                        ],
-
-                        // Example tags
-                        const SizedBox(height: 6),
+                        // Name and Age
                         Row(
                           children: [
-                            _buildTag("Tag 01"),
-                            _buildTag("Tag 02"),
-                            _buildTag("Tag 03"),
+                            Expanded(
+                              child: Text(
+                                "${userProfile.fullName}, ${userProfile.age}",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                           ],
                         ),
+                        
+                        const SizedBox(height: 4),
+                        
+                        // Year of Study (if available)
+                        if (userProfile.yearOfStudy != null)
+                          Text(
+                            "Year ${userProfile.yearOfStudy}",
+                            style: const TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+
+                        // Bio (if available)
+                        if (userProfile.bio != null && userProfile.bio!.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            userProfile.bio!,
+                            style: const TextStyle(color: Colors.white70, fontSize: 14),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ],
-              ),
-            ),
-          ),
-
-          // Responsive Bookmark/Save Icon
-          Positioned(
-            top: 10,
-            right: 10,
-            child: InkWell(
-              onTap: () {
-                _toggleFavorite(restaurant);
-              },
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(
-                  restaurant.isFavorited ? Icons.bookmark : Icons.bookmark_border,
-                  color: restaurant.isFavorited ? const Color(0xFFFF6F40) : Colors.white,
-                  size: 30,
-                ),
               ),
             ),
           ),
@@ -389,11 +391,11 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     _controller.next(swipeDirection: SwipeDirection.left);
                   },
                   child: Container(
-                    width: 130, // tweak width
-                    height: 50, // tweak height
+                    width: 130,
+                    height: 50,
                     decoration: BoxDecoration(
                       color: const Color(0xFF2C2C2C), // dark gray
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(25),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black26,
@@ -402,11 +404,19 @@ class _SwipeScreenState extends State<SwipeScreen> {
                         ),
                       ],
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.close, color: Color(0xFFFF6F40), size: 27),
-                        SizedBox(width: 4),
+                      children: [
+                        Icon(Icons.close, color: Color(0xFFFF6F40), size: 28),
+                        SizedBox(width: 8),
+                        Text(
+                          "NOPE",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -422,7 +432,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     height: 50,
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF6F40),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(25),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black26,
@@ -431,16 +441,50 @@ class _SwipeScreenState extends State<SwipeScreen> {
                         ),
                       ],
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.favorite, color: Colors.white, size: 27),
-                        SizedBox(width: 4),
+                      children: [
+                        Icon(Icons.favorite, color: Colors.white, size: 26),
+                        SizedBox(width: 8),
+                        Text(
+                          "LIKE",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
               ],
+            ),
+          ),
+          
+          // Info button (top-right)
+          Positioned(
+            top: 16,
+            right: 16,
+            child: GestureDetector(
+              onTap: () {
+                // Show more detailed profile info
+                _showDetailedProfile(context, userProfile);
+              },
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: const Icon(
+                  Icons.info_outline,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
             ),
           ),
         ],
@@ -450,8 +494,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
 
   Widget _buildTag(String tag) {
     return Container(
-      margin: const EdgeInsets.only(right: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.white24,
         borderRadius: BorderRadius.circular(12),
@@ -459,6 +502,142 @@ class _SwipeScreenState extends State<SwipeScreen> {
       child: Text(
         tag,
         style: const TextStyle(color: Colors.white, fontSize: 12),
+      ),
+    );
+  }
+  
+  void _showDetailedProfile(BuildContext context, UserProfile userProfile) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Profile header with image
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Profile image
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(15),
+                      child: Image.network(
+                        userProfile.profilePicture.isNotEmpty
+                            ? userProfile.profilePicture
+                            : 'https://via.placeholder.com/150?text=No+Image',
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // Name, age, university details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${userProfile.fullName}, ${userProfile.age}",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            userProfile.university,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                            ),
+                          ),
+                          if (userProfile.yearOfStudy != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              "Year ${userProfile.yearOfStudy}",
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Bio section
+                if (userProfile.bio != null && userProfile.bio!.isNotEmpty) ...[
+                  const Text(
+                    "About Me",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    userProfile.bio!,
+                    style: const TextStyle(color: Colors.white70, fontSize: 15),
+                  ),
+                ],
+                
+                const SizedBox(height: 24),
+                
+                // Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // NOPE Button
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _controller.next(swipeDirection: SwipeDirection.left);
+                      },
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      label: const Text("NOPE", style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      ),
+                    ),
+                    
+                    // LIKE Button
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _controller.next(swipeDirection: SwipeDirection.right);
+                      },
+                      icon: const Icon(Icons.favorite, color: Colors.white),
+                      label: const Text("LIKE", style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

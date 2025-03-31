@@ -176,7 +176,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icons.tune,
             title: 'Preferences',
             onTap: () {
-              // Navigate to preferences screen
+              // Handle preferences locally
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Preferences feature coming soon!'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
           ),
           _buildSettingsItem(

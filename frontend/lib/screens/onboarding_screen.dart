@@ -203,18 +203,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       final prefs = await SharedPreferences.getInstance();
       final userEmail = prefs.getString('user_email') ?? 'unknown_user';
       
-      print('Using user ID for upload: $userEmail');
-      
       // Make email safe for use in file names by removing special characters
       final safeUserId = userEmail.replaceAll(RegExp(r'[^\w\s]+'), '_');
-      
-      print('Safe user ID for upload: $safeUserId');
 
       // Upload image to Supabase Storage
       final supabaseService = SupabaseService();
       
       if (!supabaseService.isInitialized) {
-        print('Supabase service is not initialized');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Supabase service is not initialized. Please try again later.'),
@@ -227,12 +222,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         return;
       }
       
-      print('Supabase service is initialized, proceeding with upload');
-      
       // Use the appropriate image source based on platform
       final imageSource = kIsWeb ? _webImage : _selectedImage;
-      
-      print('Image source type: ${imageSource.runtimeType}');
       
       final uploadedUrl = await supabaseService.uploadProfileImage(
         imageSource: imageSource,
@@ -253,7 +244,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         );
       } else {
-        print('Upload returned null URL');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to upload image. Please try again.'),
@@ -267,8 +257,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       
       if (e.toString().contains('storage/object-too-large')) {
         errorMessage = 'Image is too large. Please choose a smaller image.';
-      } else if (e.toString().contains('permission') || e.toString().contains('security policy')) {
-        errorMessage = 'Permission denied. Please check Supabase storage permissions.';
+      } else if (e.toString().contains('permission')) {
+        errorMessage = 'Permission denied. Please check your Supabase configuration.';
       } else if (e.toString().contains('network')) {
         errorMessage = 'Network error. Please check your internet connection.';
       }
@@ -446,7 +436,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         );
         
         // Navigate to swipe screen
-        Navigator.pushReplacementNamed(context, '/swipe');
+        await _completeOnboarding();
       } else {
         final responseBody = json.decode(response.body);
         final errorMsg = responseBody['detail'] ?? 'Failed to update onboarding data';
@@ -542,6 +532,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+    }
+  }
+
+  // Add a method to complete onboarding
+  Future<void> _completeOnboarding() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('onboarding_completed', true);
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/swipe');
+      }
+    } catch (e) {
+      print('Error completing onboarding: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error saving your profile: ${e.toString()}")),
+        );
+      }
     }
   }
 

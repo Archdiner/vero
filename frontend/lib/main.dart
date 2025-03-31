@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth_screen.dart';
-import 'screens/preferences_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/swipe_screen.dart';
 import 'screens/favourites_screen.dart';
@@ -93,12 +92,11 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
       initialRoute: _isLoading 
         ? '/splash' 
         : (_isLoggedIn 
-          ? (_hasCompletedOnboarding ? '/home' : '/onboarding')
+          ? '/swipe'  // If logged in, go to swipe screen regardless of onboarding status
           : '/auth'),
       routes: {
         '/splash': (context) => SplashScreen(),
         '/auth': (context) => AuthScreen(),
-        '/preferences': (context) => PreferencesScreen(),
         '/home': (context) => HomeScreen(),
         '/swipe': (context) => SwipeScreen(),
         '/favourites': (context) => FavouritesScreen(),

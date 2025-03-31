@@ -30,17 +30,9 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (success) {
-        // Check if the user has completed onboarding
-        final hasCompletedOnboarding = await _authService.hasCompletedOnboarding();
-        
+        // User logged in successfully, go to the main app
         if (mounted) {
-          if (hasCompletedOnboarding) {
-            // User has completed onboarding, go to the main app
-            Navigator.pushReplacementNamed(context, '/swipe');
-          } else {
-            // User hasn't completed onboarding, redirect to onboarding
-            Navigator.pushReplacementNamed(context, '/onboarding');
-          }
+          Navigator.pushReplacementNamed(context, '/swipe');
         }
       } else {
         if (mounted) {
@@ -56,11 +48,9 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
