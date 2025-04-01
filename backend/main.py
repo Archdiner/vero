@@ -105,12 +105,57 @@ def get_potential_roommates(
         else:
             rejected_user_ids.append(match.user1_id)
     
-    # Query potential matches - exclude rejected users in cooldown period
+    # Get already matched users
+    matched_users = db.query(RoommateMatch).filter(
+        or_(
+            and_(
+                RoommateMatch.user1_id == current_user_id,
+                RoommateMatch.match_status == MatchStatus.matched
+            ),
+            and_(
+                RoommateMatch.user2_id == current_user_id,
+                RoommateMatch.match_status == MatchStatus.matched
+            )
+        )
+    ).all()
+    
+    # Extract IDs of already matched users
+    matched_user_ids = []
+    for match in matched_users:
+        if match.user1_id == current_user_id:
+            matched_user_ids.append(match.user2_id)
+        else:
+            matched_user_ids.append(match.user1_id)
+    
+    # Get users who are awaiting match (you've liked them but they haven't responded yet)
+    pending_users = db.query(RoommateMatch).filter(
+        and_(
+            RoommateMatch.user1_id == current_user_id,
+            RoommateMatch.user1_liked == True,
+            RoommateMatch.match_status == MatchStatus.pending
+        )
+    ).all()
+    
+    # Also get users who've liked the current user but current user hasn't responded
+    # These should still appear in the swiping queue, so we don't exclude them
+    pending_user_ids = [match.user2_id for match in pending_users]
+    
+    # Combine all IDs of users to exclude (only rejected and matched, not pending)
+    excluded_user_ids = rejected_user_ids + matched_user_ids
+    
+    # Debug logging
+    print(f"Excluded users: {len(excluded_user_ids)} total")
+    print(f"- Rejected users in cooldown: {len(rejected_user_ids)}")
+    print(f"- Already matched users: {len(matched_user_ids)}")
+    
+    # Query potential matches - exclude rejected and matched users
     all_users = db.query(User).filter(
         User.id != current_user_id,
         User.gender == current_user.gender,  # Same gender as per requirement
-        ~User.id.in_(rejected_user_ids) if rejected_user_ids else True
+        ~User.id.in_(excluded_user_ids) if excluded_user_ids else True
     ).all()
+    
+    print(f"Found {len(all_users)} potential matches after filtering")
     
     # Calculate compatibility scores for all potential matches
     results = []
