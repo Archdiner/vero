@@ -349,8 +349,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       );
 
       if (updateResponse.statusCode == 200) {
-        // Update shared preferences to indicate onboarding is completed
-        await prefs.setBool('onboarding_completed', true);
+        // Use AuthService to mark onboarding as completed
+        final authService = AuthService();
+        await authService.markOnboardingCompleted();
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -362,8 +363,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         );
 
-        // Call _completeOnboarding to update preferences and navigate to swipe screen
-        _completeOnboarding();
+        // Navigate to the swipe screen
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/swipe');
+        }
       } else {
         final errorData = jsonDecode(updateResponse.body);
         throw Exception(errorData['detail'] ?? 'Failed to update profile');
@@ -451,8 +454,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // Add a method to complete onboarding
   Future<void> _completeOnboarding() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('onboarding_completed', true);
+      // Use the AuthService to properly mark onboarding as completed
+      final authService = AuthService();
+      await authService.markOnboardingCompleted();
+      
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/swipe');
       }

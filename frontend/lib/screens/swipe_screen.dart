@@ -71,8 +71,8 @@ class _SwipeScreenState extends State<SwipeScreen> {
     final swipedUser = _potentialMatches[index];
     
     if (direction == SwipeDirection.right) {
-      // User liked this profile
-      _roommateService.likeUser(swipedUser.id);
+      // User liked this profile - Check if it's a match
+      _checkForMatch(swipedUser);
       print("Liked user: ${swipedUser.fullName}");
     } else if (direction == SwipeDirection.left) {
       // User disliked this profile
@@ -84,6 +84,217 @@ class _SwipeScreenState extends State<SwipeScreen> {
     if (_potentialMatches.length - index <= 3) {
       _fetchPotentialMatches();
     }
+  }
+
+  void _checkForMatch(UserProfile matchedUser) async {
+    try {
+      // Call likeUser once and check if it resulted in a match
+      final isMatch = await _roommateService.likeUser(matchedUser.id);
+      
+      if (isMatch && mounted) {
+        // Show match dialog
+        _showMatchDialog(matchedUser);
+      }
+    } catch (e) {
+      print('Error checking for match: $e');
+    }
+  }
+  
+  void _showMatchDialog(UserProfile matchedUser) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            width: double.infinity,
+            height: 500,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFFFF6F40),
+                width: 2,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header with match text
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Column(
+                    children: [
+                      // Confetti or stars animation could be added here
+                      const Text(
+                        'It\'s a Match!',
+                        style: TextStyle(
+                          color: Color(0xFFFF6F40),
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'You and ${matchedUser.fullName} have liked each other',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // User avatars side by side
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Current user avatar
+                      Column(
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 2,
+                              ),
+                              image: _currentUserProfile['profile_picture'] != null
+                                  ? DecorationImage(
+                                      image: NetworkImage(_currentUserProfile['profile_picture']),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child: _currentUserProfile['profile_picture'] == null
+                                ? const Icon(Icons.person, color: Colors.white, size: 50)
+                                : null,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _userName.split(' ').first,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      ),
+                      
+                      // Heart icon between avatars
+                      const Icon(
+                        Icons.favorite,
+                        color: Color(0xFFFF6F40),
+                        size: 40,
+                      ),
+                      
+                      // Matched user avatar
+                      Column(
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 2,
+                              ),
+                              image: matchedUser.profilePicture.isNotEmpty
+                                  ? DecorationImage(
+                                      image: NetworkImage(matchedUser.profilePicture),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child: matchedUser.profilePicture.isEmpty
+                                ? const Icon(Icons.person, color: Colors.white, size: 50)
+                                : null,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            matchedUser.fullName.split(' ').first,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Action buttons
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: Column(
+                    children: [
+                      // Send Message button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context); // Close dialog
+                            // TODO: Navigate to chat with this user
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Chat with ${matchedUser.fullName} coming soon!'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF6F40),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: const Text(
+                            'Send Message',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      // Keep Swiping button
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.pop(context); // Close dialog
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white, width: 1),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: const Text(
+                            'Keep Swiping',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -283,8 +494,8 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   IconButton(
                     icon: const Icon(Icons.chat_bubble_outline, color: Colors.white54, size: 26),
                     onPressed: () {
-                      // Navigate to chats screen
-                      // TODO: Implement chat screen navigation
+                      // Navigate to matches screen
+                      Navigator.pushReplacementNamed(context, '/matches');
                     },
                   ),
                   // Right: person icon (gray)

@@ -40,8 +40,7 @@ dependencies:
   image_picker: ^1.1.2
   uuid: ^4.5.1
   path: ^1.8.0
-
-
+  intl: ^0.20.2  # Added for date formatting
 
 dev_dependencies:
   flutter_test:
