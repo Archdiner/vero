@@ -16,6 +16,12 @@ class UserProfile {
   final bool? musicPreference;
   final String? bio;
   final String? instagramUsername;
+  final String? sleepTime;
+  final String? wakeTime;
+  final String? guestPolicy;
+  final String? roomTypePreference;
+  final String? religiousPreference;
+  final String? dietaryRestrictions;
   bool isLiked;
   
   // Match-related fields
@@ -41,6 +47,12 @@ class UserProfile {
     this.musicPreference,
     this.bio,
     this.instagramUsername,
+    this.sleepTime,
+    this.wakeTime,
+    this.guestPolicy,
+    this.roomTypePreference,
+    this.religiousPreference,
+    this.dietaryRestrictions,
     this.isLiked = false,
     this.compatibilityScore,
     this.matchedAt,
@@ -55,6 +67,36 @@ class UserProfile {
       userId = userId.toString();
     } else if (userId == null) {
       userId = '';
+    }
+    
+    // Format sleep_time and wake_time if provided in raw format
+    String? sleepTimeFormatted;
+    String? wakeTimeFormatted;
+    
+    if (json['sleep_time'] != null) {
+      if (json['sleep_time'] is String) {
+        sleepTimeFormatted = json['sleep_time'];
+      } else {
+        try {
+          final time = DateTime.parse(json['sleep_time'].toString());
+          sleepTimeFormatted = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+        } catch (e) {
+          sleepTimeFormatted = json['sleep_time'].toString();
+        }
+      }
+    }
+    
+    if (json['wake_time'] != null) {
+      if (json['wake_time'] is String) {
+        wakeTimeFormatted = json['wake_time'];
+      } else {
+        try {
+          final time = DateTime.parse(json['wake_time'].toString());
+          wakeTimeFormatted = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+        } catch (e) {
+          wakeTimeFormatted = json['wake_time'].toString();
+        }
+      }
     }
     
     return UserProfile(
@@ -76,6 +118,12 @@ class UserProfile {
       bio: json['bio'],
       // Check both field names since backend uses 'instagram' but we use 'instagramUsername'
       instagramUsername: json['instagram_username'] ?? json['instagram'],
+      sleepTime: sleepTimeFormatted,
+      wakeTime: wakeTimeFormatted,
+      guestPolicy: json['guest_policy'],
+      roomTypePreference: json['room_type_preference'],
+      religiousPreference: json['religious_preference'],
+      dietaryRestrictions: json['dietary_restrictions'],
       isLiked: json['is_liked'] ?? false,
       // Match-related fields from the roommate_matches table
       compatibilityScore: json['compatibility_score'] != null 
@@ -108,6 +156,12 @@ class UserProfile {
       'music_preference': musicPreference,
       'bio': bio,
       'instagram': instagramUsername, // Use 'instagram' for backend compatibility
+      'sleep_time': sleepTime,
+      'wake_time': wakeTime,
+      'guest_policy': guestPolicy,
+      'room_type_preference': roomTypePreference,
+      'religious_preference': religiousPreference,
+      'dietary_restrictions': dietaryRestrictions,
       'is_liked': isLiked,
       'compatibility_score': compatibilityScore,
       'created_at': matchedAt,
