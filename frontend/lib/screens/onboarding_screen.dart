@@ -49,12 +49,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _bedtimeController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
+  
+  // New controllers for enhanced matching
+  final TextEditingController _wakeTimeController = TextEditingController();
+  final TextEditingController _sleepTimeController = TextEditingController();
 
   // Image picker
   final ImagePicker _picker = ImagePicker();
   File? _selectedImage;
   Uint8List? _webImage; // For web platform
-  String? _uploadedImageUrl;
+  String? _imageUrl;
   bool _isUploadingImage = false;
 
   // Drop-down values
@@ -64,8 +68,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   String? _selectedSocialPreference;
   String? _selectedMusicPreference;
   
+  // New dropdown values for enhanced matching
+  String? _selectedGuestPolicy;
+  String? _selectedRoomType;
+  String? _selectedReligiousPreference;
+  String? _selectedDietaryRestriction;
+  
   // Slider value for budget and cleanliness
-  double _budgetValue = 1500.0;
+  double _budgetValue = 1000.0;
   double _cleanlinessValue = 5.0;
 
   // Preference booleans
@@ -97,40 +107,44 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _bedtimeController.dispose();
     _phoneNumberController.dispose();
     _bioController.dispose();
+    
+    // Dispose new controllers
+    _wakeTimeController.dispose();
+    _sleepTimeController.dispose();
+    
     super.dispose();
   }
 
-  // Image picking methods
-  Future<void> _pickImage(ImageSource source) async {
+  // Image Selection Method
+  Future<void> _pickImage() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: source,
+      final imagePicker = ImagePicker();
+      final pickedFile = await imagePicker.pickImage(
+        source: ImageSource.gallery,
         maxWidth: 1000,
         maxHeight: 1000,
         imageQuality: 85,
       );
-
+      
       if (pickedFile != null) {
-        setState(() {
-          if (kIsWeb) {
-            // Web platform
-            _webImage = null; // Reset first
-            pickedFile.readAsBytes().then((value) {
-              setState(() {
-                _webImage = value;
-                _uploadedImageUrl = null; // Reset the uploaded URL when a new image is selected
-              });
-              // Upload image after setting state
-              _uploadProfileImage();
-            });
-          } else {
-            // Mobile platform
+        if (kIsWeb) {
+          // For web platform
+          final bytes = await pickedFile.readAsBytes();
+          setState(() {
+            _webImage = bytes;
+            _imageUrl = null; // Reset the uploaded URL when a new image is selected
+          });
+          // Upload image after setting state
+          _uploadProfileImage();
+        } else {
+          // For mobile platforms
+          setState(() {
             _selectedImage = File(pickedFile.path);
-            _uploadedImageUrl = null; // Reset the uploaded URL when a new image is selected
-            // Upload image automatically after selection
-            _uploadProfileImage();
-          }
-        });
+            _imageUrl = null; // Reset the uploaded URL when a new image is selected
+          });
+          // Upload image automatically after selection
+          _uploadProfileImage();
+        }
       }
     } catch (e) {
       print('Error picking image: $e');
@@ -141,51 +155,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       );
     }
-  }
-
-  // Show image picker options dialog
-  Future<void> _showImagePickerOptions() async {
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[900],
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Select Profile Image',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const Divider(color: Colors.grey),
-          ListTile(
-            leading: const Icon(Icons.camera_alt, color: Color(0xFFFF6F40)),
-            title: const Text('Take a photo', style: TextStyle(color: Colors.white)),
-            onTap: () {
-              Navigator.of(context).pop();
-              _pickImage(ImageSource.camera);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.photo_library, color: Color(0xFFFF6F40)),
-            title: const Text('Choose from gallery', style: TextStyle(color: Colors.white)),
-            onTap: () {
-              Navigator.of(context).pop();
-              _pickImage(ImageSource.gallery);
-            },
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
   }
 
   // Upload profile image to Supabase Storage
@@ -232,9 +201,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
       if (uploadedUrl != null) {
         setState(() {
-          _uploadedImageUrl = uploadedUrl;
+          _imageUrl = uploadedUrl;
         });
-        print('Image uploaded successfully: $_uploadedImageUrl');
+        print('Image uploaded successfully: $_imageUrl');
         
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -277,26 +246,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _updateOnboarding() async {
-    // Check if all required fields are filled
-    if (!_validateRequiredFields()) {
-      // Create a more descriptive error message
-      List<String> missingFields = [];
-      
-      if (_instagramController.text.isEmpty) missingFields.add('Instagram Username');
-      if (_ageController.text.isEmpty) missingFields.add('Age');
-      if (_selectedGender == null) missingFields.add('Gender');
-      if (_selectedUniversity == null) missingFields.add('University');
-      if (_selectedYearOfStudy == null) missingFields.add('Year of Study');
-      if (_cleanlinessLevelController.text.isEmpty) missingFields.add('Cleanliness Level');
-      if (_selectedSocialPreference == null) missingFields.add('Social Preference');
-      
-      String errorMessage = "Please fill in the following required fields: ${missingFields.join(', ')}";
-      
+    // Check for required fields
+    if (_selectedGender == null ||
+        _selectedUniversity == null ||
+        _selectedYearOfStudy == null ||
+        _selectedSocialPreference == null ||
+        _ageController.text.isEmpty ||
+        _instagramController.text.isEmpty ||
+        _cleanlinessLevelController.text.isEmpty ||
+        _selectedGuestPolicy == null ||
+        _selectedRoomType == null ||
+        _sleepTimeController.text.isEmpty ||
+        _wakeTimeController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
+        const SnackBar(
+          content: Text(
+            'Please complete all required fields in each section before submitting.',
+            style: TextStyle(color: Colors.white),
+          ),
           backgroundColor: Colors.red,
-          duration: Duration(seconds: 5),
         ),
       );
       return;
@@ -306,153 +274,107 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _isLoading = true;
     });
 
-    // Retrieve the access token from SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token') ?? '';
-    print('Onboarding: Using token: ${token.isEmpty ? "EMPTY" : token.substring(0, 10) + "..."}');
-
-    // Get user profile to retrieve email and fullname
-    String? emailValue;
-    String? nameValue;
-    
     try {
-      final profileUrl = '${utils.BASE_URL}/profile';
-      print('Onboarding: Fetching user profile from: $profileUrl');
-      
-      final profileResponse = await http.get(
-        Uri.parse(profileUrl),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-      
-      if (profileResponse.statusCode == 200) {
-        final profileData = json.decode(profileResponse.body);
-        emailValue = profileData['email'];
-        nameValue = profileData['fullname'];
-        print('Onboarding: Successfully fetched user profile. Email: $emailValue, Name: $nameValue');
-      } else {
-        print('Onboarding: Failed to fetch user profile. Status: ${profileResponse.statusCode}');
-        // Use empty values if profile fetch fails
-        emailValue = '';
-        nameValue = '';
+      // Retrieve access token from SharedPreferences
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? accessToken = prefs.getString('access_token');
+
+      if (accessToken == null) {
+        throw Exception('No access token found');
       }
-    } catch (e) {
-      print('Onboarding: Error fetching user profile: $e');
-      // Use empty values if profile fetch fails
-      emailValue = '';
-      nameValue = '';
-    }
 
-    final url = '${utils.BASE_URL}/onboarding';
-    print('Onboarding: Making request to: $url');
-
-    // Helper function to parse int from string
-    int? parseIntOrNull(String value) {
-      value = value.trim();
-      return value.isEmpty ? null : int.tryParse(value);
-    }
-
-    // Process text values
-    final instagramValue = _instagramController.text.trim();
-    final profilePictureValue = _uploadedImageUrl; // Use the uploaded image URL
-    final moveInDateValue = _moveInDateController.text.trim();
-    final snapchatValue = _snapchatController.text.trim();
-    final bedtimeValue = _bedtimeController.text.trim();
-    final phoneNumberValue = _phoneNumberController.text.trim();
-    final bioValue = _bioController.text.trim();
-
-    // Map social preference from UI to backend enum
-    String? socialPreferenceBackendValue;
-    if (_selectedSocialPreference == 'Introvert') {
-      socialPreferenceBackendValue = 'introvert';
-    } else if (_selectedSocialPreference == 'Extrovert') {
-      socialPreferenceBackendValue = 'extrovert';
-    } else if (_selectedSocialPreference == 'Ambivert') {
-      socialPreferenceBackendValue = 'ambivert';
-    }
-
-    // Map gender from UI to backend enum
-    String? genderBackendValue;
-    if (_selectedGender == 'Male') {
-      genderBackendValue = 'male';
-    } else if (_selectedGender == 'Female') {
-      genderBackendValue = 'female';
-    } else if (_selectedGender == 'Other') {
-      genderBackendValue = 'other';
-    }
-
-    // Build the request body
-    final body = json.encode({
-      "email": emailValue,
-      "fullname": nameValue,
-      "instagram": instagramValue,
-      "profile_picture": profilePictureValue,
-      "age": parseIntOrNull(_ageController.text),
-      "gender": genderBackendValue,
-      "university": _selectedUniversity,
-      "major": _majorController.text.isEmpty ? null : _majorController.text,
-      "year_of_study": _selectedYearOfStudy != null ? int.parse(_selectedYearOfStudy!) : null,
-      "budget_range": _budgetValue.toInt(),
-      "move_in_date": moveInDateValue.isEmpty ? null : moveInDateValue,
-      "smoking_preference": _smokingPreference,
-      "drinking_preference": _drinkingPreference,
-      "pet_preference": _petPreference,
-      "music_preference": _musicPreference,
-      "cleanliness_level": parseIntOrNull(_cleanlinessLevelController.text),
-      "social_preference": socialPreferenceBackendValue,
-      "snapchat": snapchatValue.isEmpty ? null : snapchatValue,
-      "bedtime": bedtimeValue.isEmpty ? null : bedtimeValue,
-      "phone_number": phoneNumberValue.isEmpty ? null : phoneNumberValue,
-      "bio": bioValue.isEmpty ? null : bioValue,
-    });
-    
-    print('Onboarding: Request body: ${body.substring(0, min(100, body.length))}...');
-
-    try {
-      print('Onboarding: Sending request...');
-      final response = await http.post(
-        Uri.parse(url),
+      // Get user profile to access email and full name
+      final response = await http.get(
+        Uri.parse('${utils.BASE_URL}/auth/profile'),
         headers: {
+          'Authorization': 'Bearer $accessToken',
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
         },
-        body: body,
       );
 
-      print('Onboarding: Received response with status code: ${response.statusCode}');
-      if (response.statusCode == 200) {
-        print('Onboarding: Success response body: ${response.body}');
-        // Mark onboarding as completed
-        final authService = AuthService();
-        await authService.markOnboardingCompleted();
+      if (response.statusCode != 200) {
+        throw Exception('Failed to get user profile');
+      }
+
+      final profileData = jsonDecode(response.body);
+      final email = profileData['email'];
+      final fullName = profileData['full_name'];
+
+      // Construct request body with all fields including new ones
+      final Map<String, dynamic> userData = {
+        'email': email,
+        'full_name': fullName,
+        'instagram_username': _instagramController.text,
+        'age': int.parse(_ageController.text),
+        'gender': _selectedGender,
+        'university': _selectedUniversity,
+        'year_of_study': _selectedYearOfStudy,
+        'major': _majorController.text,
+        'profile_picture_url': _imageUrl,
+        'bio': _bioController.text,
+        'move_in_date': _moveInDateController.text.isNotEmpty
+            ? _moveInDateController.text
+            : null,
+        'budget_range': int.parse(_budgetRangeController.text),
+        'cleanliness_level': int.parse(_cleanlinessLevelController.text),
+        'social_preference': _selectedSocialPreference,
+        'music_preference': _musicPreference,
+        'smoking_preference': _smokingPreference,
+        'drinking_preference': _drinkingPreference,
+        'pet_preference': _petPreference,
+        'snapchat_username': _snapchatController.text.isEmpty
+            ? null
+            : _snapchatController.text,
+        'phone_number': _phoneNumberController.text.isEmpty
+            ? null
+            : _phoneNumberController.text,
+        // New fields
+        'wake_time': _wakeTimeController.text,
+        'sleep_time': _sleepTimeController.text,
+        'guest_policy': _selectedGuestPolicy,
+        'room_type_preference': _selectedRoomType,
+        'religious_preference': _selectedReligiousPreference == 'None' ? null : _selectedReligiousPreference,
+        'dietary_restrictions': _selectedDietaryRestriction == 'None' ? null : _selectedDietaryRestriction,
+        'onboarding_completed': true,
+      };
+
+      // Send update request
+      final updateResponse = await http.post(
+        Uri.parse('${utils.BASE_URL}/auth/update-onboarding'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(userData),
+      );
+
+      if (updateResponse.statusCode == 200) {
+        // Update shared preferences to indicate onboarding is completed
+        await prefs.setBool('onboarding_completed', true);
         
-        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Welcome! Your profile has been set up successfully."),
+            content: Text(
+              'Profile updated successfully!',
+              style: TextStyle(color: Colors.white),
+            ),
             backgroundColor: Colors.green,
           ),
         );
-        
-        // Navigate to swipe screen
-        await _completeOnboarding();
+
+        // Call _completeOnboarding to update preferences and navigate to swipe screen
+        _completeOnboarding();
       } else {
-        final responseBody = json.decode(response.body);
-        final errorMsg = responseBody['detail'] ?? 'Failed to update onboarding data';
-        print('Onboarding: Error response body: ${response.body}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMsg),
-            backgroundColor: Colors.red,
-          ),
-        );
+        final errorData = jsonDecode(updateResponse.body);
+        throw Exception(errorData['detail'] ?? 'Failed to update profile');
       }
     } catch (e) {
-      print('Onboarding: Exception during request: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Error: ${e.toString()}"),
+          content: Text(
+            'Error: ${e.toString()}',
+            style: const TextStyle(color: Colors.white),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -463,66 +385,57 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  bool _validateRequiredFields() {
-    // Debug logging to identify which field fails validation
-    final instagramValid = _instagramController.text.isNotEmpty;
-    final ageValid = _ageController.text.isNotEmpty;
-    final genderValid = _selectedGender != null;
-    final universityValid = _selectedUniversity != null;
-    final yearOfStudyValid = _selectedYearOfStudy != null;
-    final cleanlinessValid = _cleanlinessLevelController.text.isNotEmpty;
-    final socialPrefValid = _selectedSocialPreference != null;
-    
-    print('Validation results:');
-    print('- Instagram: $instagramValid (${_instagramController.text})');
-    print('- Age: $ageValid (${_ageController.text})');
-    print('- Gender: $genderValid ($_selectedGender)');
-    print('- University: $universityValid ($_selectedUniversity)');
-    print('- Year of Study: $yearOfStudyValid ($_selectedYearOfStudy)');
-    print('- Cleanliness: $cleanlinessValid (${_cleanlinessLevelController.text})');
-    print('- Social Preference: $socialPrefValid ($_selectedSocialPreference)');
-    // Profile image is optional, so we don't validate it as required
-    print('- Profile Image: ${_uploadedImageUrl != null ? "Uploaded" : "Not uploaded"}');
-    
-    // Check required fields based on the user's requirements
-    return instagramValid &&
-           ageValid &&
-           genderValid &&
-           universityValid &&
-           yearOfStudyValid &&
-           cleanlinessValid &&
-           socialPrefValid;
-  }
-
   void _nextPage() {
     if (_currentPage < _totalPages - 1) {
-      // Validate current form before proceeding
-      if (_formKeys[_currentPage].currentState?.validate() ?? false) {
-        print('Successfully validated page ${_currentPage + 1}');
+      bool canProceed = true;
+      String errorMessage = '';
+      
+      // Validate based on current page
+      if (_currentPage == 0) { // Basic Info page
+        if (_ageController.text.isEmpty ||
+            _selectedGender == null) {
+          canProceed = false;
+          errorMessage = 'Please fill all required fields on this page: age and gender.';
+        }
+      } else if (_currentPage == 1) { // Education page
+        if (_selectedUniversity == null || _selectedYearOfStudy == null) {
+          canProceed = false;
+          errorMessage = 'Please select your university and year of study.';
+        }
+      } else if (_currentPage == 2) { // Living Preferences page
+        if (_cleanlinessLevelController.text.isEmpty ||
+            _selectedSocialPreference == null ||
+            _selectedGuestPolicy == null ||
+            _selectedRoomType == null ||
+            _sleepTimeController.text.isEmpty ||
+            _wakeTimeController.text.isEmpty) {
+          canProceed = false;
+          errorMessage = 'Please fill all required living preference fields.';
+        }
+      } else if (_currentPage == 3) { // Contact Information page
+        if (_instagramController.text.isEmpty) {
+          canProceed = false;
+          errorMessage = 'Please provide your Instagram username.';
+        }
+      }
+      
+      if (canProceed) {
         _pageController.nextPage(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
       } else {
-        print('Failed to validate page ${_currentPage + 1}');
-      }
-    } else {
-      // On last page, submit the form
-      final isValid = _formKeys[_currentPage].currentState?.validate() ?? false;
-      print('Last page validation result: $isValid');
-      
-      if (isValid && _validateRequiredFields()) {
-        print('All validation passed, submitting form');
-        _updateOnboarding();
-      } else {
-        print('Final validation failed, not submitting');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Please fill in all required fields"),
+          SnackBar(
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );
       }
+    } else {
+      // If we're on the last page, submit the form
+      _formKeys[_currentPage].currentState?.save();
+      _updateOnboarding();
     }
   }
 
@@ -693,8 +606,81 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 24),
             
-            // Profile Picture Selection
-            _buildImageSection(),
+            // Profile image picker
+            Column(
+              children: [
+                const Text(
+                  'Profile Picture',
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+                const SizedBox(height: 10),
+                Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[800],
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFFFF6F40), width: 2),
+                          image: _imageUrl != null
+                              ? DecorationImage(
+                                  image: NetworkImage(_imageUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : _webImage != null
+                                  ? DecorationImage(
+                                      image: MemoryImage(_webImage!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : _selectedImage != null
+                                      ? DecorationImage(
+                                          image: FileImage(_selectedImage!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                        ),
+                        child: (_imageUrl == null && _selectedImage == null && _webImage == null)
+                            ? const Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Colors.white70,
+                              )
+                            : null,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFF6F40),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_isUploadingImage)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                if (_imageUrl != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      'Image uploaded',
+                      style: TextStyle(color: Colors.green),
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(height: 24),
             
             // Age field
@@ -942,7 +928,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   context: context,
                   initialDate: DateTime.now(),
                   firstDate: DateTime(2023),
-                  lastDate: DateTime(2025),
+                  lastDate: DateTime(2025, 12, 31),
                   builder: (context, child) {
                     return Theme(
                       data: ThemeData.dark().copyWith(
@@ -985,7 +971,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 16),
 
-                        _buildRequiredDropdown(
+            _buildRequiredDropdown(
               label: 'Music Preference',
               value: _selectedMusicPreference,
               items: const ['Headphones', 'Speakers'],
@@ -1004,10 +990,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               },
             ),
             const SizedBox(height: 16),
+            
+            // Sleep/Wake Schedule Section
+            const Text(
+              'Sleep & Wake Schedule',
+              style: TextStyle(color: Colors.white70, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            
             // Bedtime with TimePicker (moved from contact info)
             _buildTextField(
-              controller: _bedtimeController,
-              label: 'Typical Bedtime (Optional)',
+              controller: _sleepTimeController,
+              label: 'Sleep Time',
               readOnly: true,
               onTap: () async {
                 TimeOfDay? pickedTime = await showTimePicker(
@@ -1031,9 +1025,107 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   final hours = pickedTime.hour.toString().padLeft(2, '0');
                   final minutes = pickedTime.minute.toString().padLeft(2, '0');
                   setState(() {
-                    _bedtimeController.text = "$hours:$minutes";
+                    _sleepTimeController.text = "$hours:$minutes";
                   });
                 }
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Wake time with TimePicker
+            _buildTextField(
+              controller: _wakeTimeController,
+              label: 'Wake Time',
+              readOnly: true,
+              onTap: () async {
+                TimeOfDay? pickedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: ThemeData.dark().copyWith(
+                        colorScheme: const ColorScheme.dark(
+                          primary: Color(0xFFFF6F40),
+                          onPrimary: Colors.white,
+                          surface: Colors.grey,
+                          onSurface: Colors.white,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (pickedTime != null) {
+                  final hours = pickedTime.hour.toString().padLeft(2, '0');
+                  final minutes = pickedTime.minute.toString().padLeft(2, '0');
+                  setState(() {
+                    _wakeTimeController.text = "$hours:$minutes";
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 20),
+            
+            // Guest Policy dropdown
+            _buildRequiredDropdown(
+              label: 'Guest Policy',
+              value: _selectedGuestPolicy,
+              items: const ['Frequent', 'Occasional', 'Rare', 'None'],
+              onChanged: (value) {
+                setState(() {
+                  _selectedGuestPolicy = value;
+                });
+              },
+              validator: (value) {
+                if (value == null) {
+                  return 'Please select your guest policy preference';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Room Type Preference dropdown
+            _buildRequiredDropdown(
+              label: 'Room Type Preference',
+              value: _selectedRoomType,
+              items: const ['2-person', '3-person', '4-person', '5-person', 'Any'],
+              onChanged: (value) {
+                setState(() {
+                  _selectedRoomType = value;
+                });
+              },
+              validator: (value) {
+                if (value == null) {
+                  return 'Please select your preferred room type';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Religious Preference dropdown
+            _buildDropdown(
+              label: 'Religious/Cultural Preference (Optional)',
+              value: _selectedReligiousPreference,
+              items: const ['Muslim', 'Christian', 'Jewish', 'Hindu', 'Buddhist', 'None', 'Other'],
+              onChanged: (value) {
+                setState(() {
+                  _selectedReligiousPreference = value;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Dietary Restrictions dropdown
+            _buildDropdown(
+              label: 'Dietary Restrictions (Optional)',
+              value: _selectedDietaryRestriction,
+              items: const ['Halal', 'Kosher', 'Vegetarian', 'Vegan', 'None', 'Other'],
+              onChanged: (value) {
+                setState(() {
+                  _selectedDietaryRestriction = value;
+                });
               },
             ),
             const SizedBox(height: 20),
@@ -1258,59 +1350,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     required String label,
     required String? value,
     required List<String> items,
-    required void Function(String?) onChanged,
+    required Function(String?) onChanged,
     String? Function(String?)? validator,
-    String? hint,
   }) {
-    // Ensure there's a default validator if none is provided
-    final finalValidator = validator ?? (value) {
-      if (value == null || value.isEmpty) {
-        return '$label is required';
-      }
-      return null;
-    };
-    
-    return DropdownButtonFormField<String>(
-      value: value,
-      validator: finalValidator,
-      items: items.map((String item) {
-        return DropdownMenuItem<String>(
-          value: item,
-          child: Text(item),
-        );
-      }).toList(),
-      decoration: InputDecoration(
-        labelText: '$label *',
-        labelStyle: const TextStyle(color: Colors.white70),
-        filled: true,
-        fillColor: Colors.grey[900],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 16),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[800]!),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          items: items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: onChanged,
+          validator: validator,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey[800],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          dropdownColor: Colors.grey[800],
+          style: const TextStyle(color: Colors.white),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFFF6F40)),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red),
-        ),
-        errorStyle: const TextStyle(color: Colors.red),
-        hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[600]),
-      ),
-      dropdownColor: Colors.grey[900],
-      style: const TextStyle(color: Colors.white),
-      onChanged: onChanged,
+      ],
     );
   }
 
@@ -1319,120 +1392,53 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[800]!),
+    return SwitchListTile(
+      title: Text(
+        title,
+        style: const TextStyle(color: Colors.white),
       ),
-      child: SwitchListTile(
-        title: Text(
-          title,
-          style: const TextStyle(color: Colors.white, fontSize: 15),
-        ),
-        value: value,
-        activeColor: const Color(0xFFFF6F40),
-        onChanged: onChanged,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        dense: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
+      value: value,
+      activeColor: const Color(0xFFFF6F40),
+      onChanged: onChanged,
+      contentPadding: EdgeInsets.zero,
     );
   }
 
-  // Profile Picture Selection in _buildBasicInfoPage()
-  Widget _buildImageSection() {
+  // Build a dropdown field without required validation
+  Widget _buildDropdown({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required Function(String?) onChanged,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Profile Picture',
-          style: TextStyle(color: Colors.white70, fontSize: 16),
-        ),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: _showImagePickerOptions,
-          child: Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[800]!),
-            ),
-            child: _isUploadingImage
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFFFF6F40),
-                    ),
-                  )
-                : _getImageWidget(), // Use helper method to get appropriate image widget
-          ),
-        ),
-        if (_uploadedImageUrl != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: 16,
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Image uploaded successfully',
-                    style: TextStyle(color: Colors.green, fontSize: 14),
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  // Helper method to get the appropriate image widget based on platform and state
-  Widget _getImageWidget() {
-    if (kIsWeb) {
-      if (_webImage != null) {
-        // Web platform with selected image
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.memory(
-            _webImage!,
-            fit: BoxFit.cover,
-          ),
-        );
-      }
-    } else if (_selectedImage != null) {
-      // Mobile platform with selected image
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Image.file(
-          _selectedImage!,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    
-    // Default placeholder when no image is selected
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.add_a_photo,
-          color: Colors.grey[600],
-          size: 48,
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 16),
         ),
         const SizedBox(height: 8),
-        Text(
-          'Add Profile Picture',
-          style: TextStyle(color: Colors.grey[600]),
+        DropdownButtonFormField<String>(
+          value: value,
+          items: items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey[800],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          dropdownColor: Colors.grey[800],
+          style: const TextStyle(color: Colors.white),
         ),
       ],
     );

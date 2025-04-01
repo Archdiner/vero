@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Time, func, Index, Enum
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Time, func, Index, Enum, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.orm import declarative_base
@@ -26,6 +26,45 @@ class MatchStatus(enum.Enum):
     rejected = "rejected"  # When one user rejects the other
     blocked = "blocked"  # When one user blocks the other
 
+class UserPreferences(Base):
+    __tablename__ = "user_preferences"
+    
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    
+    # Attribute importance (0.0 to 1.0, where 1.0 is extremely important)
+    cleanliness_importance = Column(Float, default=0.8)  # Default high as per your requirements
+    sleep_schedule_importance = Column(Float, default=0.7)
+    guest_policy_importance = Column(Float, default=0.6)
+    room_type_importance = Column(Float, default=0.5)
+    religious_importance = Column(Float, default=0.5)
+    dietary_importance = Column(Float, default=0.5)
+    
+    # Preferred values (updated based on swiped profiles)
+    preferred_cleanliness = Column(Float, default=5.0)  # 1-10 scale
+    
+    # Guest policy preference weights stored as JSON
+    # Example: {"frequent": 0.8, "occasional": 0.5, "rare": 0.2, "none": 0.0}
+    guest_policy_weights = Column(JSON, default=dict)
+    
+    # Room type preference weights stored as JSON
+    # Example: {"2-person": 0.7, "3-person": 0.5, "4-person": 0.3, "5-person": 0.1}
+    room_type_weights = Column(JSON, default=dict)
+    
+    # Religious preference weights stored as JSON
+    religious_weights = Column(JSON, default=dict)
+    
+    # Dietary restriction weights stored as JSON
+    dietary_weights = Column(JSON, default=dict)
+    
+    # Rejection cooldown period in days (how long before showing rejected profiles again)
+    rejection_cooldown = Column(Integer, default=30)
+    
+    # Last updated timestamp
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    
+    # Relationship
+    user = relationship("User", backref="preferences")
+
 class User(Base):
     __tablename__ = "users"
     
@@ -49,16 +88,24 @@ class User(Base):
     cleanliness_level = Column(Integer, nullable=True, index=True)
     social_preference = Column(Enum(SocialPreference), nullable=True, index=True)
     snapchat = Column(String, nullable=True)
-    bedtime = Column(Time, nullable=True)
+    sleep_time = Column(Time, nullable=True)  # This field was renamed from bedtime in the database
+    wake_time = Column(Time, nullable=True)   # Added for compatibility matching
     phone_number = Column(String, nullable=True)
     bio = Column(String, unique=False, nullable=True)
     music_preference = Column(Boolean, nullable=True, index=True)
-
+    
+    # New fields for enhanced matching
+    guest_policy = Column(String, nullable=True)
+    room_type_preference = Column(String, nullable=True)
+    religious_preference = Column(String, nullable=True)
+    dietary_restrictions = Column(String, nullable=True)
+    
     # Add composite indexes for common query patterns
     __table_args__ = (
-        Index('idx_user_preferences', 'university', 'budget_range', 'smoking_preference', 'drinking_preference', 'pet_preference'),
-        Index('idx_user_compatibility', 'cleanliness_level', 'social_preference', 'bedtime'),
-    )
+    Index('idx_user_preferences', 'university', 'budget_range', 'smoking_preference', 'drinking_preference', 'pet_preference'),
+    Index('idx_user_compatibility', 'cleanliness_level', 'social_preference', 'sleep_time'),  # Updated from bedtime to sleep_time
+    Index('idx_user_enhanced_matching', 'gender', 'cleanliness_level'),
+)
 
     # Relationships
     sent_matches = relationship("RoommateMatch", foreign_keys="RoommateMatch.user1_id", back_populates="user1")
@@ -77,8 +124,9 @@ class RoommateMatch(Base):
     user1_liked = Column(Boolean, default=False)
     user2_liked = Column(Boolean, default=False)
     
-    # Track only when the match was created
+    # Track timestamps for match lifecycle
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    rejected_at = Column(DateTime, nullable=True)  # When the match was rejected, for cooldown implementation
     
     # Relationships
     user1 = relationship("User", foreign_keys=[user1_id], back_populates="sent_matches")
@@ -88,6 +136,7 @@ class RoommateMatch(Base):
     __table_args__ = (
         Index('idx_match_status_score', 'match_status', 'compatibility_score'),
         Index('idx_match_users', 'user1_id', 'user2_id'),
+        Index('idx_match_cooldown', 'rejected_at'),
     )
 
 """
