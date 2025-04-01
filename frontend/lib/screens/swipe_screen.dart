@@ -40,15 +40,32 @@ class _SwipeScreenState extends State<SwipeScreen> {
         offset: _offset,
         limit: _limit,
       );
+      
+      print("Fetched ${newMatches.length} potential roommates");
+      
       if (newMatches.isNotEmpty) {
         setState(() {
           _potentialMatches.addAll(newMatches);
           _offset += _limit;
+          _isFetching = false;
         });
+      } else {
+        // No more matches found - show empty state
+        setState(() {
+          _isFetching = false;
+          // Keep _potentialMatches as is (empty if initial load, or with remaining cards if mid-swiping)
+        });
+        
+        // If this was an initial load (offset=0) and no profiles were found,
+        // we should show the empty state immediately
+        if (_offset == 0 && _potentialMatches.isEmpty) {
+          print("No potential roommates available at all");
+        } else if (_potentialMatches.isEmpty) {
+          print("No more potential roommates to load");
+        }
       }
     } catch (e) {
       print("Error fetching potential matches: $e");
-    } finally {
       setState(() => _isFetching = false);
     }
   }
@@ -83,6 +100,22 @@ class _SwipeScreenState extends State<SwipeScreen> {
     // If near the end, fetch more
     if (_potentialMatches.length - index <= 3) {
       _fetchPotentialMatches();
+    }
+    
+    // If this was the last card, check if we need to show empty state
+    if (index == _potentialMatches.length - 1) {
+      // Add a short delay to let the swipe animation finish
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted && _potentialMatches.length <= index + 1) {
+          print("Last card swiped, checking for more profiles");
+          setState(() {
+            // Clear the list so we show the empty state while fetching
+            if (_potentialMatches.length == index + 1) {
+              _potentialMatches = [];
+            }
+          });
+        }
+      });
     }
   }
 
@@ -456,12 +489,54 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const CircularProgressIndicator(color: Color(0xFFFF6F40)),
+                          _isFetching
+                              ? const CircularProgressIndicator(color: Color(0xFFFF6F40))
+                              : const Icon(
+                                  Icons.search_off,
+                                  size: 64,
+                                  color: Colors.white54,
+                                ),
                           const SizedBox(height: 16),
                           Text(
-                            _isFetching ? "Finding roommates..." : "No more profiles to show",
-                            style: const TextStyle(color: Colors.white70),
+                            _isFetching 
+                                ? "Finding roommates..." 
+                                : _offset > 0
+                                    ? "No more profiles to show"
+                                    : "No profiles available",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold
+                            ),
                           ),
+                          if (!_isFetching) ...[
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 32),
+                              child: Text(
+                                _offset > 0
+                                    ? "You've seen all available roommates. Check back later for new matches!"
+                                    : "There are no potential roommates matching your criteria at this time.",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                // Try to fetch again
+                                _offset = 0;
+                                _potentialMatches = [];
+                                _fetchPotentialMatches();
+                              },
+                              icon: const Icon(Icons.refresh),
+                              label: const Text("Try Again"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFF6F40),
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     )
