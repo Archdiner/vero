@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:swipable_stack/swipable_stack.dart';
 import 'dart:math' show min;
+import 'package:url_launcher/url_launcher.dart';
 
 // Import our new models and services
 import '../models/user_profile.dart';
 import '../services/roommate_service.dart';
+import '../widgets/detailed_profile_view.dart';
 
 class SwipeScreen extends StatefulWidget {
   const SwipeScreen({Key? key}) : super(key: key);
@@ -33,7 +35,13 @@ class _SwipeScreenState extends State<SwipeScreen> {
 
   Future<void> _fetchPotentialMatches() async {
     if (_isFetching) return;
-    setState(() => _isFetching = true);
+    
+    // Check if widget is still mounted before setting state
+    if (mounted) {
+      setState(() => _isFetching = true);
+    } else {
+      return; // Exit early if widget is no longer mounted
+    }
 
     try {
       final newMatches = await _roommateService.fetchPotentialMatches(
@@ -42,6 +50,18 @@ class _SwipeScreenState extends State<SwipeScreen> {
       );
       
       print("Fetched ${newMatches.length} potential roommates");
+      
+      // Debug log the first profile to see what fields are available
+      if (newMatches.isNotEmpty) {
+        final firstProfile = newMatches[0];
+        print('First profile data: ${firstProfile.fullName}, University: ${firstProfile.university}');
+        print('Profile preferences: Cleanliness: ${firstProfile.cleanlinessLevel}, Sleep: ${firstProfile.sleepTime}, Wake: ${firstProfile.wakeTime}');
+        print('More preferences: Smoking: ${firstProfile.smokingPreference}, Drinking: ${firstProfile.drinkingPreference}, Pets: ${firstProfile.petPreference}');
+        print('Compatibility score: ${firstProfile.compatibilityScore}');
+      }
+      
+      // Check if the widget is still mounted before calling setState
+      if (!mounted) return;
       
       if (newMatches.isNotEmpty) {
         setState(() {
@@ -66,7 +86,11 @@ class _SwipeScreenState extends State<SwipeScreen> {
       }
     } catch (e) {
       print("Error fetching potential matches: $e");
-      setState(() => _isFetching = false);
+      
+      // Check if widget is still mounted before setting state
+      if (mounted) {
+        setState(() => _isFetching = false);
+      }
     }
   }
 
@@ -615,6 +639,8 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       ? NetworkImage(userProfile.profilePicture)
                       : const NetworkImage('https://via.placeholder.com/600x800?text=No+Image'),
                   fit: BoxFit.cover,
+                  // Add error handler for images
+                  onError: (exception, stackTrace) => print('Error loading profile image: $exception'),
                 ),
               ),
               child: Stack(
@@ -645,7 +671,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // University chip
+                        // University chip - add null check
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
@@ -694,6 +720,29 @@ class _SwipeScreenState extends State<SwipeScreen> {
                             style: const TextStyle(color: Colors.white70, fontSize: 14),
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                        
+                        // Add compatibility score if available
+                        if (userProfile.compatibilityScore != null) ...[
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.favorite,
+                                color: Color(0xFFFF6F40),
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${userProfile.compatibilityScore!.toInt()}% Compatible',
+                                style: const TextStyle(
+                                  color: Color(0xFFFF6F40),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ],
@@ -841,131 +890,97 @@ class _SwipeScreenState extends State<SwipeScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Profile header with image
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Profile image
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
-                      child: Image.network(
-                        userProfile.profilePicture.isNotEmpty
-                            ? userProfile.profilePicture
-                            : 'https://via.placeholder.com/150?text=No+Image',
-                        width: 120,
-                        height: 120,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Name, age, university details
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "${userProfile.fullName}, ${userProfile.age}",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            userProfile.university,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                            ),
-                          ),
-                          if (userProfile.yearOfStudy != null) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              "Year ${userProfile.yearOfStudy}",
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
+      builder: (context) => DetailedProfileView(
+        userProfile: userProfile,
+        onInstagramTap: (username) {
+          if (username.isNotEmpty) {
+            final instagramUrl = 'https://instagram.com/$username';
+            _launchURL(instagramUrl);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Instagram username not available'),
+              ),
+            );
+          }
+        },
+        actionButtons: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // NOPE Button
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _controller.next(swipeDirection: SwipeDirection.left);
+                },
+                icon: const Icon(Icons.close, color: Colors.white),
+                label: const Text("NOPE", style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
-                
-                const SizedBox(height: 24),
-                
-                // Bio section
-                if (userProfile.bio != null && userProfile.bio!.isNotEmpty) ...[
-                  const Text(
-                    "About Me",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    userProfile.bio!,
-                    style: const TextStyle(color: Colors.white70, fontSize: 15),
-                  ),
-                ],
-                
-                const SizedBox(height: 24),
-                
-                // Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    // NOPE Button
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _controller.next(swipeDirection: SwipeDirection.left);
-                      },
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      label: const Text("NOPE", style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      ),
-                    ),
-                    
-                    // LIKE Button
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _controller.next(swipeDirection: SwipeDirection.right);
-                      },
-                      icon: const Icon(Icons.favorite, color: Colors.white),
-                      label: const Text("LIKE", style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      ),
-                    ),
-                  ],
+              ),
+              
+              // LIKE Button
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _controller.next(swipeDirection: SwipeDirection.right);
+                },
+                icon: const Icon(Icons.favorite, color: Colors.white),
+                label: const Text("LIKE", style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  void _launchURL(String url) async {
+    try {
+      final Uri uri = Uri.parse(url);
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      print('Error launching URL: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open Instagram'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // Override dispose to cancel the SwipableStackController
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  // Add helper method to check if a profile has preference data, similar to matches_screen
+  bool _hasAnyPreferences(UserProfile profile) {
+    return profile.cleanlinessLevel != null ||
+        profile.sleepTime != null ||
+        profile.wakeTime != null ||
+        profile.smokingPreference != null ||
+        profile.drinkingPreference != null ||
+        profile.petPreference != null ||
+        profile.musicPreference != null ||
+        profile.socialPreference != null ||
+        (profile.guestPolicy != null && profile.guestPolicy!.isNotEmpty) ||
+        (profile.roomTypePreference != null && profile.roomTypePreference!.isNotEmpty) ||
+        (profile.religiousPreference != null && profile.religiousPreference!.isNotEmpty) ||
+        (profile.dietaryRestrictions != null && profile.dietaryRestrictions!.isNotEmpty) ||
+        profile.budgetRange != null;
   }
 }

@@ -127,8 +127,9 @@ def get_potential_roommates(
         else:
             matched_user_ids.append(match.user1_id)
     
-    # Get users who are awaiting match (you've liked them but they haven't responded yet)
-    pending_users = db.query(RoommateMatch).filter(
+    # Get users who the current user has already liked but no match yet
+    # These are users where current_user is user1 and has liked
+    already_liked_users = db.query(RoommateMatch).filter(
         and_(
             RoommateMatch.user1_id == current_user_id,
             RoommateMatch.user1_liked == True,
@@ -136,19 +137,64 @@ def get_potential_roommates(
         )
     ).all()
     
-    # Also get users who've liked the current user but current user hasn't responded
-    # These should still appear in the swiping queue, so we don't exclude them
-    pending_user_ids = [match.user2_id for match in pending_users]
+    # Also check for cases where current_user is user2 and has liked
+    already_liked_users_as_user2 = db.query(RoommateMatch).filter(
+        and_(
+            RoommateMatch.user2_id == current_user_id,
+            RoommateMatch.user2_liked == True,
+            RoommateMatch.match_status == MatchStatus.pending
+        )
+    ).all()
     
-    # Combine all IDs of users to exclude (only rejected and matched, not pending)
-    excluded_user_ids = rejected_user_ids + matched_user_ids
+    # Extract IDs of users you've already liked
+    already_liked_user_ids = []
+    for match in already_liked_users:
+        already_liked_user_ids.append(match.user2_id)
+    
+    for match in already_liked_users_as_user2:
+        already_liked_user_ids.append(match.user1_id)
+    
+    # Get users who've liked the current user but current user hasn't responded
+    # These should still appear in the swiping queue
+    users_who_liked_you = db.query(RoommateMatch).filter(
+        and_(
+            RoommateMatch.user2_id == current_user_id,
+            RoommateMatch.user1_liked == True,
+            RoommateMatch.user2_liked == False,  # You haven't responded yet
+            RoommateMatch.match_status == MatchStatus.pending
+        )
+    ).all()
+    
+    # Also check for cases where current_user is user1
+    users_who_liked_you_as_user1 = db.query(RoommateMatch).filter(
+        and_(
+            RoommateMatch.user1_id == current_user_id,
+            RoommateMatch.user2_liked == True,
+            RoommateMatch.user1_liked == False,  # You haven't responded yet
+            RoommateMatch.match_status == MatchStatus.pending
+        )
+    ).all()
+    
+    # Extract IDs of users who've liked you (should still show in queue)
+    users_who_liked_you_ids = []
+    for match in users_who_liked_you:
+        users_who_liked_you_ids.append(match.user1_id)
+    
+    for match in users_who_liked_you_as_user1:
+        users_who_liked_you_ids.append(match.user2_id)
+    
+    # Combine all IDs of users to exclude (rejected, matched, and already liked)
+    # But keep users who've liked you but you haven't responded to
+    excluded_user_ids = rejected_user_ids + matched_user_ids + already_liked_user_ids
     
     # Debug logging
     print(f"Excluded users: {len(excluded_user_ids)} total")
     print(f"- Rejected users in cooldown: {len(rejected_user_ids)}")
     print(f"- Already matched users: {len(matched_user_ids)}")
+    print(f"- Users you've already liked: {len(already_liked_user_ids)}")
+    print(f"- Users who've liked you (still showing): {len(users_who_liked_you_ids)}")
     
-    # Query potential matches - exclude rejected and matched users
+    # Query potential matches - exclude rejected, matched, and already liked users
     all_users = db.query(User).filter(
         User.id != current_user_id,
         User.gender == current_user.gender,  # Same gender as per requirement
@@ -221,6 +267,9 @@ def like_roommate(
             detail="Invalid token"
         )
 
+    # Debug log the like action
+    print(f"User {user_id} is liking roommate {roommate_id}")
+
     # Check if roommate exists
     roommate = db.query(User).filter(User.id == roommate_id).first()
     if not roommate:
@@ -239,17 +288,27 @@ def like_roommate(
 
     is_match = False
     if existing_match:
+        # Debug log the existing match
+        print(f"Found existing match record: user1={existing_match.user1_id}, user2={existing_match.user2_id}, status={existing_match.match_status.value}")
+        print(f"Current likes status: user1_liked={existing_match.user1_liked}, user2_liked={existing_match.user2_liked}")
+        
         # Update existing match
         if existing_match.user1_id == user_id:
             existing_match.user1_liked = True
             if existing_match.user2_liked:
                 existing_match.match_status = MatchStatus.matched
                 is_match = True
+                print(f"It's a match! Both users liked each other.")
+            else:
+                print(f"User {user_id} liked user {roommate_id}, waiting for them to like back")
         else:
             existing_match.user2_liked = True
             if existing_match.user1_liked:
                 existing_match.match_status = MatchStatus.matched
                 is_match = True
+                print(f"It's a match! Both users liked each other.")
+            else:
+                print(f"User {user_id} liked user {roommate_id}, waiting for them to like back")
     else:
         # Create new match
         new_match = RoommateMatch(
@@ -263,6 +322,7 @@ def like_roommate(
             user1_liked=True
         )
         db.add(new_match)
+        print(f"Created new match record: user1={user_id}, user2={roommate_id}, status=pending")
 
     # Update the user preferences based on this like
     update_user_preferences(user_id, roommate_id, liked=True, db=db)
@@ -330,8 +390,78 @@ def reject_roommate(
     db.commit()
     return {"message": "Roommate rejected successfully"}
 
+@app.post("/unmatch/{roommate_id}")
+def unmatch_roommate(
+    roommate_id: int,
+    Authorization: str = Header(None),
+    db: Session = Depends(get_db)
+):
+    if not Authorization or not Authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid token"
+        )
+
+    token = Authorization.split("Bearer ")[1]
+    try:
+        payload = decode_access_token(token)
+        user_id = payload.get("user_id")
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+
+    # Debug log the unmatch action
+    print(f"User {user_id} is unmatching from roommate {roommate_id}")
+
+    # Check if match exists
+    existing_match = db.query(RoommateMatch).filter(
+        or_(
+            and_(RoommateMatch.user1_id == user_id, RoommateMatch.user2_id == roommate_id),
+            and_(RoommateMatch.user1_id == roommate_id, RoommateMatch.user2_id == user_id)
+        )
+    ).first()
+
+    if not existing_match:
+        print(f"No match record found between users {user_id} and {roommate_id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Match not found"
+        )
+
+    # Log the current state of the match
+    print(f"Current match state: status={existing_match.match_status.value}, " +
+          f"user1_liked={existing_match.user1_liked}, user2_liked={existing_match.user2_liked}")
+
+    # Check if it's a valid state to unmatch (either pending or matched)
+    if existing_match.match_status not in [MatchStatus.pending, MatchStatus.matched]:
+        print(f"Cannot unmatch users in current state: {existing_match.match_status.value}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot unmatch from this user in the current state"
+        )
+
+    # Update match status to rejected for cooldown
+    existing_match.match_status = MatchStatus.rejected
+    existing_match.rejected_at = func.now()  # Set rejection timestamp for cooldown
+
+    # Reset the likes to allow potential future matching after cooldown
+    if existing_match.user1_id == user_id:
+        existing_match.user1_liked = False
+        print(f"User {user_id} (user1) is unmatching from user {roommate_id} (user2)")
+    else:
+        existing_match.user2_liked = False
+        print(f"User {user_id} (user2) is unmatching from user {roommate_id} (user1)")
+
+    print(f"Updated match status to rejected, it will re-appear after the cooldown period")
+
+    db.commit()
+    return {"message": "Successfully unmatched"}
+
 @app.get("/matches")
 def get_matches(
+    include_preferences: bool = False,
     Authorization: str = Header(None),
     db: Session = Depends(get_db)
 ):
@@ -369,7 +499,8 @@ def get_matches(
         other_user = db.query(User).filter(User.id == other_user_id).first()
         
         if other_user:
-            response.append({
+            # Create base response dictionary
+            user_data = {
                 "id": other_user.id,
                 "fullname": other_user.fullname,
                 "age": other_user.age,
@@ -380,8 +511,32 @@ def get_matches(
                 "profile_picture": other_user.profile_picture,
                 "compatibility_score": match.compatibility_score,
                 "university": other_user.university,
-                "instagram": other_user.instagram
-            })
+                "instagram": other_user.instagram,
+                "created_at": match.created_at.isoformat() if match.created_at else None,
+                "match_status": match.match_status.value
+            }
+            
+            # If include_preferences flag is set, add preference data
+            if include_preferences:
+                preference_data = {
+                    "budget_range": other_user.budget_range,
+                    "cleanliness_level": other_user.cleanliness_level,
+                    "social_preference": other_user.social_preference.value if other_user.social_preference else None,
+                    "smoking_preference": other_user.smoking_preference,
+                    "drinking_preference": other_user.drinking_preference,
+                    "pet_preference": other_user.pet_preference,
+                    "music_preference": other_user.music_preference,
+                    "guest_policy": other_user.guest_policy,
+                    "room_type_preference": other_user.room_type_preference,
+                    "religious_preference": other_user.religious_preference,
+                    "dietary_restrictions": other_user.dietary_restrictions,
+                    "sleep_time": other_user.sleep_time.strftime("%H:%M") if other_user.sleep_time else None,
+                    "wake_time": other_user.wake_time.strftime("%H:%M") if other_user.wake_time else None
+                }
+                # Add preference data to the response
+                user_data.update(preference_data)
+            
+            response.append(user_data)
 
     return response
 
@@ -758,6 +913,7 @@ def update_onboarding_auth(
 @app.get("/profile/{user_id}")
 def get_user_profile(
     user_id: int,
+    include_preferences: bool = False,
     Authorization: str = Header(None), 
     db: Session = Depends(get_db)
 ):
@@ -791,8 +947,8 @@ def get_user_profile(
             detail="User not found"
         )
 
-    # Return user information
-    return {
+    # Create base response with user information
+    user_data = {
         "id": requested_user.id,
         "fullname": requested_user.fullname,
         "username": requested_user.username,
@@ -805,3 +961,48 @@ def get_user_profile(
         "year_of_study": requested_user.year_of_study,
         "bio": requested_user.bio
     }
+    
+    # Add preference data if requested
+    if include_preferences:
+        # Calculate compatibility score if this is not the current user
+        compatibility_score = None
+        if user_id != current_user_id:
+            current_user = db.query(User).filter(User.id == current_user_id).first()
+            if current_user:
+                compatibility_score = compute_compatibility_score(current_user, requested_user)
+        
+        preference_data = {
+            "budget_range": requested_user.budget_range,
+            "cleanliness_level": requested_user.cleanliness_level,
+            "social_preference": requested_user.social_preference.value if requested_user.social_preference else None,
+            "smoking_preference": requested_user.smoking_preference,
+            "drinking_preference": requested_user.drinking_preference,
+            "pet_preference": requested_user.pet_preference,
+            "music_preference": requested_user.music_preference,
+            "guest_policy": requested_user.guest_policy,
+            "room_type_preference": requested_user.room_type_preference,
+            "religious_preference": requested_user.religious_preference,
+            "dietary_restrictions": requested_user.dietary_restrictions,
+            "sleep_time": requested_user.sleep_time.strftime("%H:%M") if requested_user.sleep_time else None,
+            "wake_time": requested_user.wake_time.strftime("%H:%M") if requested_user.wake_time else None
+        }
+        
+        if compatibility_score is not None:
+            preference_data["compatibility_score"] = compatibility_score
+            
+        user_data.update(preference_data)
+    
+    return user_data
+
+@app.get("/user/{user_id}")
+def get_user_by_id(
+    user_id: int,
+    include_preferences: bool = True,  # Default to true for this endpoint
+    Authorization: str = Header(None), 
+    db: Session = Depends(get_db)
+):
+    """
+    Alias for profile/{user_id} with preferences included by default.
+    This endpoint is used by the mobile app for detailed user views.
+    """
+    return get_user_profile(user_id, include_preferences, Authorization, db)

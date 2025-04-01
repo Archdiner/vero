@@ -3,6 +3,7 @@ import '../models/user_profile.dart';
 import '../services/roommate_service.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../widgets/detailed_profile_view.dart';
 
 class MatchesScreen extends StatefulWidget {
   const MatchesScreen({Key? key}) : super(key: key);
@@ -32,9 +33,12 @@ class _MatchesScreenState extends State<MatchesScreen> {
 
       final matches = await _roommateService.fetchMatches();
       
-      // Debug: Print the received matches data
+      // Debug: Print the received matches data with preferences
       for (var match in matches) {
         print('Match data: ${match.fullName}, University: ${match.university}, Instagram: ${match.instagramUsername}, Score: ${match.compatibilityScore}');
+        print('Preferences data: Cleanliness: ${match.cleanlinessLevel}, SleepTime: ${match.sleepTime}, WakeTime: ${match.wakeTime}');
+        print('More preferences: Smoking: ${match.smokingPreference}, Drinking: ${match.drinkingPreference}, Pets: ${match.petPreference}');
+        print('Has any preferences: ${_hasAnyPreferences(match)}');
       }
       
       if (mounted) {
@@ -423,11 +427,41 @@ class _MatchesScreenState extends State<MatchesScreen> {
   }
   
   void _showDetailedProfile(UserProfile match) {
-    // TODO: Implement detailed profile view
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Viewing ${match.fullName}\'s profile coming soon!'),
-        duration: const Duration(seconds: 2),
+    // Debug output to check if preferences exist
+    print('Showing detailed profile for: ${match.fullName}');
+    print('Preferences data: Cleanliness: ${match.cleanlinessLevel}, SleepTime: ${match.sleepTime}, WakeTime: ${match.wakeTime}');
+    print('More preferences: Smoking: ${match.smokingPreference}, Drinking: ${match.drinkingPreference}, Pets: ${match.petPreference}');
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (context) => DetailedProfileView(
+        userProfile: match,
+        onInstagramTap: (username) => _openInstagramProfile(match),
+        actionButtons: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showUnmatchConfirmation(match);
+                },
+                icon: const Icon(Icons.close, color: Colors.white),
+                label: const Text("Unmatch", style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -612,5 +646,82 @@ class _MatchesScreenState extends State<MatchesScreen> {
         );
       }
     }
+  }
+
+  // Helper method to check if user has any preference data to display
+  bool _hasAnyPreferences(UserProfile match) {
+    return match.cleanlinessLevel != null ||
+        match.sleepTime != null ||
+        match.wakeTime != null ||
+        match.smokingPreference != null ||
+        match.drinkingPreference != null ||
+        match.petPreference != null ||
+        match.musicPreference != null ||
+        match.socialPreference != null ||
+        (match.guestPolicy != null && match.guestPolicy!.isNotEmpty) ||
+        (match.roomTypePreference != null && match.roomTypePreference!.isNotEmpty) ||
+        (match.religiousPreference != null && match.religiousPreference!.isNotEmpty) ||
+        (match.dietaryRestrictions != null && match.dietaryRestrictions!.isNotEmpty) ||
+        match.budgetRange != null;
+  }
+  
+  // Helper method to format sleep and wake times
+  String _formatSleepSchedule(String? sleepTime, String? wakeTime) {
+    String schedule = '';
+    
+    if (sleepTime != null && sleepTime.isNotEmpty) {
+      schedule += 'Sleep: $sleepTime';
+    }
+    
+    if (wakeTime != null && wakeTime.isNotEmpty) {
+      if (schedule.isNotEmpty) {
+        schedule += ' • ';
+      }
+      schedule += 'Wake: $wakeTime';
+    }
+    
+    return schedule.isNotEmpty ? schedule : 'Not specified';
+  }
+  
+  // Helper method to capitalize social preference
+  String _capitalizeSocialPreference(String value) {
+    if (value.isEmpty) return '';
+    return value[0].toUpperCase() + value.substring(1);
+  }
+  
+  // Helper method to build a preference item
+  Widget _buildPreferenceItem(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: const Color(0xFFFF6F40),
+          size: 18,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 } 
