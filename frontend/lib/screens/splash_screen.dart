@@ -96,7 +96,15 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       if (!mounted) return;
 
       if (isLoggedIn) {
-        Navigator.pushReplacementNamed(context, '/swipe');
+        // Check if user has completed onboarding
+        final hasCompletedOnboarding = await _authService.hasCompletedOnboarding();
+        print('Splash screen: Onboarding completed: $hasCompletedOnboarding');
+        
+        if (hasCompletedOnboarding) {
+          Navigator.pushReplacementNamed(context, '/swipe');
+        } else {
+          Navigator.pushReplacementNamed(context, '/onboarding');
+        }
       } else {
         Navigator.pushReplacementNamed(context, '/auth');
       }

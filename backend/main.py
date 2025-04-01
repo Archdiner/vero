@@ -3,11 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
 from db import get_db, engine
-from models import User, RoommateMatch, MatchStatus, Base
+from models import User, RoommateMatch, MatchStatus, Base, UserPreferences
 from schemas import UserCreate, UserLogin, UserResponse, Token, UserOnboarding
 from utils.auth_utils import hash_password, verify_password, create_access_token, decode_access_token
-from utils.match_utils import compute_compatibility_score, update_matches
+from utils.match_utils import compute_compatibility_score, update_matches, update_user_preferences
 import jwt
+from datetime import datetime, timedelta
 
 app = FastAPI()
 
@@ -60,13 +61,64 @@ def get_potential_roommates(
             detail="Invalid token"
         )
 
-    # TEMPORARY: Return all users except current user
-    # This will be replaced with proper matching logic later
-    all_users = db.query(User).filter(User.id != current_user_id).all()
+    # Get current user
+    current_user = db.query(User).filter(User.id == current_user_id).first()
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
     
+    # Ensure the user has preferences initialized
+    user_prefs = db.query(UserPreferences).filter(UserPreferences.user_id == current_user_id).first()
+    if not user_prefs:
+        # Create default preferences if they don't exist
+        user_prefs = UserPreferences(user_id=current_user_id)
+        db.add(user_prefs)
+        db.commit()
+    
+    # Calculate cooldown date based on user's preferences
+    cooldown_days = user_prefs.rejection_cooldown
+    cooldown_date = func.now() - timedelta(days=cooldown_days)
+    
+    # Get rejected user IDs that are still in cooldown period
+    rejected_matches = db.query(RoommateMatch).filter(
+        or_(
+            and_(
+                RoommateMatch.user1_id == current_user_id,
+                RoommateMatch.match_status == MatchStatus.rejected,
+                RoommateMatch.rejected_at > cooldown_date
+            ),
+            and_(
+                RoommateMatch.user2_id == current_user_id,
+                RoommateMatch.match_status == MatchStatus.rejected,
+                RoommateMatch.rejected_at > cooldown_date
+            )
+        )
+    ).all()
+    
+    # Extract IDs of users in cooldown period
+    rejected_user_ids = []
+    for match in rejected_matches:
+        if match.user1_id == current_user_id:
+            rejected_user_ids.append(match.user2_id)
+        else:
+            rejected_user_ids.append(match.user1_id)
+    
+    # Query potential matches - exclude rejected users in cooldown period
+    all_users = db.query(User).filter(
+        User.id != current_user_id,
+        User.gender == current_user.gender,  # Same gender as per requirement
+        ~User.id.in_(rejected_user_ids) if rejected_user_ids else True
+    ).all()
+    
+    # Calculate compatibility scores for all potential matches
     results = []
     for user in all_users:
         if user:
+            # Calculate compatibility score
+            compatibility_score = compute_compatibility_score(current_user, user)
+            
             results.append({
                 "id": user.id,
                 "fullname": user.fullname,
@@ -77,18 +129,29 @@ def get_potential_roommates(
                 "year_of_study": user.year_of_study,
                 "bio": user.bio,
                 "profile_picture": user.profile_picture,
-                "compatibility_score": 0,  # We'll calculate this properly later
+                "compatibility_score": compatibility_score,
                 "budget_range": user.budget_range,
                 "cleanliness_level": user.cleanliness_level,
                 "social_preference": user.social_preference.value if user.social_preference else None,
                 "smoking_preference": user.smoking_preference,
                 "drinking_preference": user.drinking_preference,
                 "pet_preference": user.pet_preference,
-                "music_preference": user.music_preference
+                "music_preference": user.music_preference,
+                "guest_policy": user.guest_policy,
+                "room_type_preference": user.room_type_preference,
+                "religious_preference": user.religious_preference,
+                "dietary_restrictions": user.dietary_restrictions,
+                "sleep_time": user.sleep_time.strftime("%H:%M") if user.sleep_time else None,
+                "wake_time": user.wake_time.strftime("%H:%M") if user.wake_time else None
             })
-
+    
+    # Sort results by compatibility score (highest first)
+    results.sort(key=lambda x: x["compatibility_score"], reverse=True)
+    
     # Apply pagination
-    return results[offset:offset + limit]
+    paginated_results = results[offset:offset + limit]
+    
+    return paginated_results
 
 
 @app.post("/like/{roommate_id}")
@@ -129,29 +192,38 @@ def like_roommate(
         )
     ).first()
 
+    is_match = False
     if existing_match:
         # Update existing match
         if existing_match.user1_id == user_id:
             existing_match.user1_liked = True
             if existing_match.user2_liked:
                 existing_match.match_status = MatchStatus.matched
+                is_match = True
         else:
             existing_match.user2_liked = True
             if existing_match.user1_liked:
                 existing_match.match_status = MatchStatus.matched
+                is_match = True
     else:
         # Create new match
         new_match = RoommateMatch(
             user1_id=user_id,
             user2_id=roommate_id,
-            compatibility_score=0,  # This should be calculated based on preferences
+            compatibility_score=compute_compatibility_score(
+                db.query(User).filter(User.id == user_id).first(),
+                roommate
+            ),
             match_status=MatchStatus.pending,
             user1_liked=True
         )
         db.add(new_match)
 
+    # Update the user preferences based on this like
+    update_user_preferences(user_id, roommate_id, liked=True, db=db)
+
     db.commit()
-    return {"message": "Roommate liked successfully"}
+    return {"message": "Roommate liked successfully", "is_match": is_match}
 
 @app.post("/reject/{roommate_id}")
 def reject_roommate(
@@ -194,15 +266,21 @@ def reject_roommate(
     if existing_match:
         # Update existing match status to rejected
         existing_match.match_status = MatchStatus.rejected
+        # Set the rejection timestamp for cooldown period
+        existing_match.rejected_at = func.now()
     else:
         # Create new rejected match
         new_match = RoommateMatch(
             user1_id=user_id,
             user2_id=roommate_id,
             compatibility_score=0,
-            match_status=MatchStatus.rejected
+            match_status=MatchStatus.rejected,
+            rejected_at=func.now()  # Set the rejection timestamp
         )
         db.add(new_match)
+
+    # Update the user preferences based on this rejection
+    update_user_preferences(user_id, roommate_id, liked=False, db=db)
 
     db.commit()
     return {"message": "Roommate rejected successfully"}
@@ -360,6 +438,46 @@ def get_profile(Authorization: str = Header(None), db: Session = Depends(get_db)
 
     return {"id": user.id, "email": user.email, "fullname": user.fullname, "username": user.username}
 
+@app.get("/auth/profile")
+def get_auth_profile(Authorization: str = Header(None), db: Session = Depends(get_db)):
+    # This is a duplicate of the /profile endpoint, but with a different URL path
+    if not Authorization or not Authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid token"
+        )
+
+    token = Authorization.split("Bearer ")[1]
+
+    try:
+        payload = decode_access_token(token)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired"
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload"
+        )
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    return {"id": user.id, "email": user.email, "fullname": user.fullname, "username": user.username}
+
 @app.get("/verify_token")
 def verify_token(Authorization: str = Header(None)):
     if not Authorization or not Authorization.startswith("Bearer "):
@@ -464,6 +582,78 @@ def update_onboarding(
     db.commit()
     db.refresh(user)
 
+    update_matches(user_id, db)
+
+    return {"message": "Onboarding data updated successfully"}
+
+@app.post("/auth/update-onboarding")
+def update_onboarding_auth(
+    onboarding_data: UserOnboarding,
+    Authorization: str = Header(None),
+    db: Session = Depends(get_db)
+):
+    # Validate and decode the access token
+    if not Authorization or not Authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid token"
+        )
+    token = Authorization.split("Bearer ")[1]
+    try:
+        payload = decode_access_token(token)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired"
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload"
+        )
+
+    # Retrieve the current user
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Update user with provided onboarding data
+    update_data = onboarding_data.dict(exclude_unset=True)
+    
+    # Convert field names from frontend naming to backend model naming
+    field_mappings = {
+        "instagram_username": "instagram",
+        "snapchat_username": "snapchat"
+        # sleep_time now directly maps to sleep_time in the database
+    }
+    
+    for key, value in update_data.items():
+        # Map frontend field names to backend model field names if needed
+        model_key = field_mappings.get(key, key)
+        
+        # Special handling for enum fields
+        if model_key == "gender" or model_key == "social_preference":
+            if value:
+                value = value[0].lower() + value[1::]
+        
+        # Only set the attribute if the field exists in the user model
+        if hasattr(user, model_key):
+            setattr(user, model_key, value)
+
+    db.commit()
+    db.refresh(user)
+
+    # Update matches for this user
     update_matches(user_id, db)
 
     return {"message": "Onboarding data updated successfully"}

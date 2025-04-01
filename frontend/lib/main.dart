@@ -91,7 +91,9 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
       ),
       initialRoute: _isLoading 
           ? '/splash' 
-          : (_isLoggedIn ? '/swipe' : '/auth'),
+          : (_isLoggedIn 
+              ? (_hasCompletedOnboarding ? '/swipe' : '/onboarding')
+              : '/auth'),
       // Remove '/swipe' from here so onGenerateRoute handles it.
       routes: {
         '/splash': (context) => SplashScreen(),

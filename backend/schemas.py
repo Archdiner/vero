@@ -52,5 +52,11 @@ class UserOnboarding(BaseModel):
     meal_schedule: Optional[str] = None
     social_preference: Optional[str] = None
     snapchat: Optional[str] = None
-    bedtime: Optional[time] = None
     phone_number: Optional[str] = None
+    bio: Optional[str] = None
+    sleep_time: Optional[str] = None
+    wake_time: Optional[str] = None
+    guest_policy: Optional[str] = None
+    room_type_preference: Optional[str] = None
+    religious_preference: Optional[str] = None
+    dietary_restrictions: Optional[str] = None
