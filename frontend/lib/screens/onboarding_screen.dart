@@ -310,7 +310,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         'university': _selectedUniversity,
         'year_of_study': _selectedYearOfStudy,
         'major': _majorController.text,
-        'profile_picture_url': _imageUrl,
+        'profile_picture': _imageUrl,
         'bio': _bioController.text,
         'move_in_date': _moveInDateController.text.isNotEmpty
             ? _moveInDateController.text
