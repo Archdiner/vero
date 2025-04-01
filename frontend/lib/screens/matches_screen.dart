@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/user_profile.dart';
 import '../services/roommate_service.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MatchesScreen extends StatefulWidget {
   const MatchesScreen({Key? key}) : super(key: key);
@@ -30,6 +31,11 @@ class _MatchesScreenState extends State<MatchesScreen> {
       });
 
       final matches = await _roommateService.fetchMatches();
+      
+      // Debug: Print the received matches data
+      for (var match in matches) {
+        print('Match data: ${match.fullName}, University: ${match.university}, Instagram: ${match.instagramUsername}, Score: ${match.compatibilityScore}');
+      }
       
       if (mounted) {
         setState(() {
@@ -243,12 +249,11 @@ class _MatchesScreenState extends State<MatchesScreen> {
         },
         child: Row(
           children: [
+            // Add padding to the left of the image
+            const SizedBox(width: 8),
             // Profile image
             ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-              ),
+              borderRadius: BorderRadius.circular(12),
               child: Image.network(
                 match.profilePicture.isNotEmpty
                     ? match.profilePicture
@@ -282,11 +287,12 @@ class _MatchesScreenState extends State<MatchesScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
+                    // Fix university display with null check
                     Text(
-                      '${match.age} • ${match.university}',
+                      '${match.age} • ${match.university ?? 'Unknown University'}',
                       style: const TextStyle(color: Colors.white70),
                     ),
-                    if (match.major != null) ...[
+                    if (match.major != null && match.major!.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
                         match.major!,
@@ -316,7 +322,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                         const SizedBox(width: 4),
                         Text(
                           match.compatibilityScore != null
-                            ? '${(match.compatibilityScore! * 100).toInt()}% Compatible'
+                            ? '${match.compatibilityScore!.toInt()}% Compatible'
                             : 'Compatible',
                           style: const TextStyle(
                             color: Color(0xFFFF6F40),
@@ -330,15 +336,15 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 ),
               ),
             ),
-            // Chat button
+            // Instagram button (replacing chat button)
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: IconButton(
                 onPressed: () {
-                  _showChatScreen(match);
+                  _openInstagramProfile(match);
                 },
                 icon: const Icon(
-                  Icons.chat_bubble_outline,
+                  Icons.photo_camera, // More Instagram-like camera icon
                   color: Color(0xFFFF6F40),
                 ),
               ),
@@ -372,16 +378,16 @@ class _MatchesScreenState extends State<MatchesScreen> {
             ),
             const SizedBox(height: 20),
             
-            // Chat button
+            // Instagram button (replacing chat button)
             ListTile(
-              leading: const Icon(Icons.chat, color: Color(0xFFFF6F40)),
+              leading: const Icon(Icons.photo_camera, color: Color(0xFFFF6F40)),
               title: const Text(
-                'Send Message',
+                'Open Instagram',
                 style: TextStyle(color: Colors.white),
               ),
               onTap: () {
                 Navigator.pop(context);
-                _showChatScreen(match);
+                _openInstagramProfile(match);
               },
             ),
             
@@ -412,16 +418,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-  
-  void _showChatScreen(UserProfile match) {
-    // TODO: Implement chat screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Chat with ${match.fullName} coming soon!'),
-        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -505,6 +501,112 @@ class _MatchesScreenState extends State<MatchesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('An error occurred while unmatching.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  // Add method to handle opening Instagram
+  void _openInstagramProfile(UserProfile match) {
+    // Debug the match data
+    print('Opening Instagram for ${match.fullName}. Instagram: ${match.instagramUsername}, University: ${match.university}');
+    
+    if (match.instagramUsername != null && match.instagramUsername!.isNotEmpty) {
+      // Launch Instagram URL using the username
+      final instagramUrl = 'https://instagram.com/${match.instagramUsername}';
+      _launchURL(instagramUrl);
+    } else {
+      // Show a specific message about this user if Instagram is not available
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${match.fullName}\'s Instagram not available'),
+          action: SnackBarAction(
+            label: 'Add Manually',
+            onPressed: () {
+              // This would ideally open an UI to manually add the Instagram
+              _showInstagramInputDialog(match);
+            },
+          ),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+  
+  // Method to show a dialog to manually input Instagram username
+  void _showInstagramInputDialog(UserProfile match) {
+    final TextEditingController _controller = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          title: Text(
+            'Add ${match.fullName}\'s Instagram',
+            style: const TextStyle(color: Colors.white),
+          ),
+          content: TextField(
+            controller: _controller,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'Enter Instagram username',
+              hintStyle: TextStyle(color: Colors.white54),
+              prefixText: '@',
+              prefixStyle: TextStyle(color: Colors.white70),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white30),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFFFF6F40)),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                if (_controller.text.isNotEmpty) {
+                  // Launch Instagram with the manually entered username
+                  final instagramUrl = 'https://instagram.com/${_controller.text.trim()}';
+                  _launchURL(instagramUrl);
+                }
+              },
+              child: const Text(
+                'Open',
+                style: TextStyle(color: Color(0xFFFF6F40)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Method to launch URLs
+  void _launchURL(String url) async {
+    try {
+      final Uri uri = Uri.parse(url);
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      print('Error launching URL: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open Instagram'),
             duration: Duration(seconds: 2),
           ),
         );

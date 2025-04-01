@@ -15,6 +15,7 @@ class UserProfile {
   final bool? petPreference;
   final bool? musicPreference;
   final String? bio;
+  final String? instagramUsername;
   bool isLiked;
   
   // Match-related fields
@@ -39,6 +40,7 @@ class UserProfile {
     this.petPreference,
     this.musicPreference,
     this.bio,
+    this.instagramUsername,
     this.isLiked = false,
     this.compatibilityScore,
     this.matchedAt,
@@ -72,6 +74,8 @@ class UserProfile {
       petPreference: json['pet_preference'],
       musicPreference: json['music_preference'],
       bio: json['bio'],
+      // Check both field names since backend uses 'instagram' but we use 'instagramUsername'
+      instagramUsername: json['instagram_username'] ?? json['instagram'],
       isLiked: json['is_liked'] ?? false,
       // Match-related fields from the roommate_matches table
       compatibilityScore: json['compatibility_score'] != null 
@@ -103,6 +107,7 @@ class UserProfile {
       'pet_preference': petPreference,
       'music_preference': musicPreference,
       'bio': bio,
+      'instagram': instagramUsername, // Use 'instagram' for backend compatibility
       'is_liked': isLiked,
       'compatibility_score': compatibilityScore,
       'created_at': matchedAt,

@@ -333,7 +333,9 @@ def get_matches(
                 "year_of_study": other_user.year_of_study,
                 "bio": other_user.bio,
                 "profile_picture": other_user.profile_picture,
-                "compatibility_score": match.compatibility_score
+                "compatibility_score": match.compatibility_score,
+                "university": other_user.university,
+                "instagram": other_user.instagram
             })
 
     return response
@@ -707,3 +709,54 @@ def update_onboarding_auth(
     update_matches(user_id, db)
 
     return {"message": "Onboarding data updated successfully"}
+
+@app.get("/profile/{user_id}")
+def get_user_profile(
+    user_id: int,
+    Authorization: str = Header(None), 
+    db: Session = Depends(get_db)
+):
+    if not Authorization or not Authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid token"
+        )
+
+    token = Authorization.split("Bearer ")[1]
+
+    try:
+        payload = decode_access_token(token)
+        current_user_id = payload.get("user_id")
+        if not current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload"
+            )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+
+    # Check if the requested user exists
+    requested_user = db.query(User).filter(User.id == user_id).first()
+    if not requested_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Return user information
+    return {
+        "id": requested_user.id,
+        "fullname": requested_user.fullname,
+        "username": requested_user.username,
+        "profile_picture": requested_user.profile_picture,
+        "instagram": requested_user.instagram,
+        "university": requested_user.university,
+        "age": requested_user.age,
+        "gender": requested_user.gender.value if requested_user.gender else None,
+        "major": requested_user.major,
+        "year_of_study": requested_user.year_of_study,
+        "bio": requested_user.bio
+    }
