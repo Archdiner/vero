@@ -62,6 +62,11 @@ class RoommateService {
         throw Exception('Invalid user ID format');
       }
       
+      // Send like request to backend
+      // Backend should handle updating the roommate_matches table:
+      // - If no record exists, create a new one with appropriate user_liked field set to true
+      // - If record exists, update the appropriate user_liked field
+      // - If both users have liked each other, update match_status accordingly
       final response = await http.post(
         Uri.parse('$_baseUrl/like/$roommateId'),
         headers: {
@@ -72,15 +77,16 @@ class RoommateService {
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // Usually the endpoint returns if it's a match
+        
+        // Check if it's a match - the backend should determine this based on
+        // both user1_liked and user2_liked being true in the roommate_matches table
         final isMatch = data['is_match'] ?? false;
         
-        // TODO: Handle match notification if isMatch is true
         if (isMatch) {
           print('It\'s a match!');
         }
         
-        return true;
+        return isMatch; // Return whether it's a match or not
       } else {
         throw Exception('Failed to like user: ${response.statusCode}');
       }
@@ -106,6 +112,10 @@ class RoommateService {
         throw Exception('Invalid user ID format');
       }
       
+      // Send reject request to backend
+      // Backend should handle updating the roommate_matches table:
+      // - Set rejected_at timestamp
+      // - Update match_status to rejected
       final response = await http.post(
         Uri.parse('$_baseUrl/reject/$roommateId'),
         headers: {
@@ -206,6 +216,82 @@ class RoommateService {
     } catch (e) {
       print('Error getting profile picture from prefs: $e');
       return null;
+    }
+  }
+  
+  // Fetch all successful matches for the current user
+  Future<List<UserProfile>> fetchMatches() async {
+    try {
+      // Get auth token
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token') ?? '';
+      
+      if (token.isEmpty) {
+        throw Exception('No authentication token found');
+      }
+      
+      // Make API request for matches based on the roommate_matches table
+      // This endpoint should return matches where match_status indicates a successful match
+      final response = await http.get(
+        Uri.parse('$_baseUrl/matches'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        print('Fetched ${data.length} matches');
+        
+        // Convert the response data to UserProfile objects
+        // The response should include user details of matched users
+        return data.map((json) => UserProfile.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load matches: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching matches: $e');
+      // Return empty list in case of error to avoid app crashes
+      return [];
+    }
+  }
+  
+  // Unmatch from a user
+  Future<bool> unmatchUser(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token') ?? '';
+      
+      if (token.isEmpty) {
+        throw Exception('No authentication token found');
+      }
+      
+      // Convert string userId to int for the API
+      int? roommateId = int.tryParse(userId);
+      if (roommateId == null) {
+        throw Exception('Invalid user ID format');
+      }
+      
+      // Send unmatch request to backend
+      // Backend should handle updating the roommate_matches table:
+      // - Update match_status to 'unmatched'
+      final response = await http.post(
+        Uri.parse('$_baseUrl/unmatch/$roommateId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Failed to unmatch user: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error unmatching user: $e');
+      return false;
     }
   }
 } 

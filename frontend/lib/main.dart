@@ -9,6 +9,7 @@ import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/matches_screen.dart';
 import 'services/auth_service.dart';
 import 'services/supabase_service.dart';
 import 'utils/supabase_config.dart' as supabase_config;
@@ -58,9 +59,29 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
 
   Future<void> _checkLoginStatus() async {
     try {
+      print('Checking login status...');
+      setState(() {
+        _isLoading = true;
+      });
+
       final isLoggedIn = await _authService.isLoggedIn();
+      print('User is logged in: $isLoggedIn');
+      
+      if (!isLoggedIn) {
+        if (mounted) {
+          setState(() {
+            _isLoggedIn = false;
+            _hasCompletedOnboarding = false;
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+      
+      // Only check onboarding status if the user is logged in
       final hasCompletedOnboarding = await _authService.hasCompletedOnboarding();
-      print('Login check completed. User logged in: $isLoggedIn, Onboarding completed: $hasCompletedOnboarding');
+      print('Onboarding completed: $hasCompletedOnboarding');
+      
       if (mounted) {
         setState(() {
           _isLoggedIn = isLoggedIn;
@@ -92,7 +113,7 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
       initialRoute: _isLoading 
           ? '/splash' 
           : (_isLoggedIn 
-              ? (_hasCompletedOnboarding ? '/swipe' : '/onboarding')
+              ? '/swipe'  // Always go to swipe screen if logged in
               : '/auth'),
       // Remove '/swipe' from here so onGenerateRoute handles it.
       routes: {
@@ -117,6 +138,13 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
           return PageRouteBuilder(
             settings: settings,
             pageBuilder: (context, animation, secondaryAnimation) => ProfileScreen(),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          );
+        } else if (settings.name == '/matches') {
+          return PageRouteBuilder(
+            settings: settings,
+            pageBuilder: (context, animation, secondaryAnimation) => MatchesScreen(),
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           );

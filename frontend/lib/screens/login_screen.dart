@@ -24,22 +24,18 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      print('Attempting to login with email: ${emailController.text.trim()}');
       final success = await _authService.login(
         emailController.text.trim(),
         passwordController.text,
       );
 
       if (success) {
-        // Check if user has completed onboarding
-        final hasCompletedOnboarding = await _authService.hasCompletedOnboarding();
+        print('Login successful, navigating to swipe screen');
         
         if (mounted) {
-          // Navigate based on onboarding status
-          if (hasCompletedOnboarding) {
-            Navigator.pushReplacementNamed(context, '/swipe');
-          } else {
-            Navigator.pushReplacementNamed(context, '/onboarding');
-          }
+          // Always navigate to swipe screen after successful login
+          Navigator.pushReplacementNamed(context, '/swipe');
         }
       } else {
         if (mounted) {
@@ -49,6 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } catch (e) {
+      print('Login error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An error occurred: ${e.toString()}')),

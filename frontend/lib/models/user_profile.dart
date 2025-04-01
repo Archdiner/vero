@@ -17,6 +17,11 @@ class UserProfile {
   final String? bio;
   bool isLiked;
   
+  // Match-related fields
+  final double? compatibilityScore;
+  final String? matchedAt; // ISO 8601 timestamp string when matched
+  final String? matchStatus; // Enum string from the database: 'matched', 'pending', etc.
+  
   UserProfile({
     required this.id,
     required this.fullName,
@@ -35,6 +40,9 @@ class UserProfile {
     this.musicPreference,
     this.bio,
     this.isLiked = false,
+    this.compatibilityScore,
+    this.matchedAt,
+    this.matchStatus,
   });
   
   // Create a UserProfile from JSON data
@@ -65,6 +73,14 @@ class UserProfile {
       musicPreference: json['music_preference'],
       bio: json['bio'],
       isLiked: json['is_liked'] ?? false,
+      // Match-related fields from the roommate_matches table
+      compatibilityScore: json['compatibility_score'] != null 
+          ? (json['compatibility_score'] is int 
+              ? json['compatibility_score'].toDouble() 
+              : json['compatibility_score'])
+          : null,
+      matchedAt: json['created_at'],
+      matchStatus: json['match_status'],
     );
   }
   
@@ -88,6 +104,9 @@ class UserProfile {
       'music_preference': musicPreference,
       'bio': bio,
       'is_liked': isLiked,
+      'compatibility_score': compatibilityScore,
+      'created_at': matchedAt,
+      'match_status': matchStatus,
     };
   }
   
