@@ -304,7 +304,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       final Map<String, dynamic> userData = {
         'email': email,
         'full_name': fullName,
-        'instagram_username': _instagramController.text,
+        'instagram': _instagramController.text,
         'age': int.parse(_ageController.text),
         'gender': _selectedGender,
         'university': _selectedUniversity,
@@ -322,7 +322,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         'smoking_preference': _smokingPreference,
         'drinking_preference': _drinkingPreference,
         'pet_preference': _petPreference,
-        'snapchat_username': _snapchatController.text.isEmpty
+        'snapchat': _snapchatController.text.isEmpty
             ? null
             : _snapchatController.text,
         'phone_number': _phoneNumberController.text.isEmpty

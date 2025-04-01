@@ -135,6 +135,7 @@ class RoommateService {
         throw Exception('No authentication token found');
       }
       
+      // First try to get the complete profile from the standard endpoint
       final response = await http.get(
         Uri.parse('$_baseUrl/profile'),
         headers: {
@@ -143,13 +144,68 @@ class RoommateService {
       );
       
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final basicUserData = json.decode(response.body);
+        
+        // Try to get profile picture from SharedPreferences first as a fallback
+        String? profilePicture = await _getProfilePictureFromPrefs();
+        
+        // If we have a profile picture in the basic data, use it
+        if (basicUserData.containsKey('profile_picture') && 
+            basicUserData['profile_picture'] != null && 
+            basicUserData['profile_picture'].toString().isNotEmpty) {
+          profilePicture = basicUserData['profile_picture'];
+        } else {
+          // Otherwise, attempt to get detailed profile info
+          try {
+            final detailedResponse = await http.get(
+              Uri.parse('$_baseUrl/auth/profile'),
+              headers: {
+                'Authorization': 'Bearer $token',
+                'Content-Type': 'application/json',
+              },
+            );
+            
+            if (detailedResponse.statusCode == 200) {
+              final detailedData = json.decode(detailedResponse.body);
+              // Update profile picture if available in detailed data
+              if (detailedData.containsKey('profile_picture') && 
+                  detailedData['profile_picture'] != null && 
+                  detailedData['profile_picture'].toString().isNotEmpty) {
+                profilePicture = detailedData['profile_picture'];
+              }
+              
+              // Add any additional fields from the detailed response
+              basicUserData.addAll(detailedData);
+            }
+          } catch (e) {
+            print('Error fetching detailed profile: $e');
+            // Continue with basic data, no need to throw
+          }
+        }
+        
+        // Add profile picture to the user data
+        if (profilePicture != null && profilePicture.isNotEmpty) {
+          basicUserData['profile_picture'] = profilePicture;
+        }
+        
+        return basicUserData;
       } else {
         throw Exception('Failed to get user profile: ${response.statusCode}');
       }
     } catch (e) {
       print('Error getting user profile: $e');
       return {};
+    }
+  }
+  
+  // Helper method to get profile picture from SharedPreferences
+  Future<String?> _getProfilePictureFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('profile_image_url');
+    } catch (e) {
+      print('Error getting profile picture from prefs: $e');
+      return null;
     }
   }
 } 

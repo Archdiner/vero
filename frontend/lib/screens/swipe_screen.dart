@@ -99,17 +99,56 @@ class _SwipeScreenState extends State<SwipeScreen> {
               child: Row(
                 children: [
                   // User's avatar 
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundImage: _currentUserProfile['profile_picture'] != null && 
+                  GestureDetector(
+                    onTap: () => Navigator.pushNamed(context, '/profile'),
+                    child: _currentUserProfile.isEmpty
+                      ? Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[800],
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white54,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Hero(
+                          tag: 'user-profile-picture',
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[800],
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFFFF6F40),
+                                width: 2,
+                              ),
+                              image: _currentUserProfile['profile_picture'] != null && 
                                      _currentUserProfile['profile_picture'].toString().isNotEmpty
-                        ? NetworkImage(_currentUserProfile['profile_picture']) 
-                        : null,
-                    child: _currentUserProfile['profile_picture'] == null || 
-                           _currentUserProfile['profile_picture'].toString().isEmpty
-                        ? const Icon(Icons.person, color: Colors.white)
-                        : null,
-                    backgroundColor: Colors.grey[800],
+                                ? DecorationImage(
+                                    image: NetworkImage(_currentUserProfile['profile_picture']),
+                                    fit: BoxFit.cover,
+                                    onError: (exception, stackTrace) {
+                                      print('Error loading profile image: $exception');
+                                    }
+                                  )
+                                : null,
+                            ),
+                            child: _currentUserProfile['profile_picture'] == null || 
+                                  _currentUserProfile['profile_picture'].toString().isEmpty
+                                ? const Icon(Icons.person, color: Colors.white)
+                                : null,
+                          ),
+                        ),
                   ),
                   const SizedBox(width: 12),
                   // Greeting & university
@@ -118,7 +157,9 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Hello ${_userName.split(' ').first}!",
+                          _userName.isEmpty 
+                            ? "Hello there!" 
+                            : "Hello ${_userName.split(' ').first}!",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,

@@ -88,41 +88,49 @@ class SupabaseService {
     }
 
     try {
+      print('Starting image upload to Supabase...');
+      
       // Generate a unique name for the image
       final uuid = const Uuid();
       final fileExtension = _getFileExtension(imageSource);
       final fileName = 'profile_${userId}_${uuid.v4()}$fileExtension';
       
+      print('Generated filename: $fileName');
+      
       // Upload the image to Supabase Storage
       final String bucketName = supabase_config.PROFILE_IMAGES_BUCKET;
+      print('Uploading to bucket: $bucketName');
       
       // Handle different image source types
       if (kIsWeb && imageSource is String) {
         // Web platform with data URL
+        print('Uploading web image (data URL)...');
         await _supabaseClient.storage
           .from(bucketName)
           .uploadBinary(
             fileName,
             _dataUriToBytes(imageSource),
-            fileOptions: FileOptions(contentType: 'image/jpeg'),
+            fileOptions: FileOptions(contentType: 'image/jpeg', cacheControl: '3600'),
           );
       } else if (imageSource is File) {
         // Mobile platform with File
+        print('Uploading mobile file image...');
         await _supabaseClient.storage
           .from(bucketName)
           .upload(
             fileName,
             imageSource,
-            fileOptions: FileOptions(contentType: 'image/jpeg'),
+            fileOptions: FileOptions(contentType: 'image/jpeg', cacheControl: '3600'),
           );
       } else if (imageSource is Uint8List) {
         // Binary data
+        print('Uploading binary image data...');
         await _supabaseClient.storage
           .from(bucketName)
           .uploadBinary(
             fileName,
             imageSource,
-            fileOptions: FileOptions(contentType: 'image/jpeg'),
+            fileOptions: FileOptions(contentType: 'image/jpeg', cacheControl: '3600'),
           );
       } else {
         throw Exception('Unsupported image source type');
@@ -132,12 +140,13 @@ class SupabaseService {
       final imageUrl = _supabaseClient.storage
         .from(bucketName)
         .getPublicUrl(fileName);
+      
+      print('Image uploaded successfully. Public URL: $imageUrl');
         
       // Save the URL to SharedPreferences for quick access
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('profile_image_url', imageUrl);
       
-      print('Image uploaded successfully: $imageUrl');
       return imageUrl;
     } catch (e) {
       print('Error uploading image: $e');
