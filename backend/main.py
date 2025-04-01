@@ -436,7 +436,21 @@ def get_profile(Authorization: str = Header(None), db: Session = Depends(get_db)
             detail="User not found"
         )
 
-    return {"id": user.id, "email": user.email, "fullname": user.fullname, "username": user.username}
+    # Return expanded user information including profile picture
+    return {
+        "id": user.id,
+        "email": user.email,
+        "fullname": user.fullname,
+        "username": user.username,
+        "profile_picture": user.profile_picture,
+        "instagram": user.instagram,
+        "university": user.university,
+        "age": user.age,
+        "gender": user.gender.value if user.gender else None,
+        "major": user.major,
+        "year_of_study": user.year_of_study,
+        "bio": user.bio
+    }
 
 @app.get("/auth/profile")
 def get_auth_profile(Authorization: str = Header(None), db: Session = Depends(get_db)):
@@ -476,7 +490,21 @@ def get_auth_profile(Authorization: str = Header(None), db: Session = Depends(ge
             detail="User not found"
         )
 
-    return {"id": user.id, "email": user.email, "fullname": user.fullname, "username": user.username}
+    # Return expanded user information including profile picture
+    return {
+        "id": user.id,
+        "email": user.email,
+        "fullname": user.fullname,
+        "username": user.username,
+        "profile_picture": user.profile_picture,
+        "instagram": user.instagram,
+        "university": user.university,
+        "age": user.age,
+        "gender": user.gender.value if user.gender else None,
+        "major": user.major,
+        "year_of_study": user.year_of_study,
+        "bio": user.bio
+    }
 
 @app.get("/verify_token")
 def verify_token(Authorization: str = Header(None)):
@@ -574,13 +602,25 @@ def update_onboarding(
 
     # Update user with provided onboarding data
     update_data = onboarding_data.dict(exclude_unset=True)
+    
+    # Debug print for troubleshooting
+    print(f"Received update data: {update_data}")
+    
     for key, value in update_data.items():
         if key == "gender" or key == "social_preference":
             value = value[0].lower() + value[1::]
+        
+        # Debug print for each field being processed
+        print(f"Setting {key} = {value}")
+        
         setattr(user, key, value)
 
+    # Commit changes and refresh the user from the database
     db.commit()
     db.refresh(user)
+    
+    # Debug print the updated user data
+    print(f"Updated user: profile_picture={user.profile_picture}, instagram={user.instagram}")
 
     update_matches(user_id, db)
 
@@ -633,9 +673,12 @@ def update_onboarding_auth(
     # Convert field names from frontend naming to backend model naming
     field_mappings = {
         "instagram_username": "instagram",
-        "snapchat_username": "snapchat"
-        # sleep_time now directly maps to sleep_time in the database
+        "snapchat_username": "snapchat",
+        "profile_picture": "profile_picture"  # Add explicit mapping for profile_picture
     }
+    
+    # Debug print for troubleshooting
+    print(f"Received update data: {update_data}")
     
     for key, value in update_data.items():
         # Map frontend field names to backend model field names if needed
@@ -646,12 +689,19 @@ def update_onboarding_auth(
             if value:
                 value = value[0].lower() + value[1::]
         
+        # Debug print for each field being processed
+        print(f"Setting {model_key} = {value} (from {key})")
+        
         # Only set the attribute if the field exists in the user model
         if hasattr(user, model_key):
             setattr(user, model_key, value)
 
+    # Commit changes and refresh the user from the database
     db.commit()
     db.refresh(user)
+
+    # Debug print the updated user data
+    print(f"Updated user: profile_picture={user.profile_picture}, instagram={user.instagram}")
 
     # Update matches for this user
     update_matches(user_id, db)

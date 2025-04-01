@@ -16,6 +16,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _username;
   bool _isLoading = false;
   bool _isDarkTheme = true;
+  String? _profilePicture;
 
   @override
   void initState() {
@@ -50,7 +51,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _email = data['email'];
           _username = data['fullname']; // Use full name here.
+          _profilePicture = data['profile_picture'];
         });
+        
+        // If profile picture isn't in the response, try to get it from SharedPreferences
+        if (_profilePicture == null || _profilePicture!.isEmpty) {
+          _profilePicture = prefs.getString('profile_image_url');
+        }
       } else {
         if (response.statusCode == 401) {
           await prefs.remove('access_token');
@@ -118,18 +125,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             child: Row(
               children: [
-                // Placeholder avatar
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.grey,
-                  ),
-                  child: const Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 40,
+                // User avatar with profile picture
+                Hero(
+                  tag: 'user-profile-picture',
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey[800],
+                      border: Border.all(
+                        color: const Color(0xFFFF6F40),
+                        width: 2,
+                      ),
+                      image: _profilePicture != null && _profilePicture!.isNotEmpty
+                        ? DecorationImage(
+                            image: NetworkImage(_profilePicture!),
+                            fit: BoxFit.cover,
+                            onError: (exception, stackTrace) {
+                              print('Error loading profile image: $exception');
+                            },
+                          )
+                        : null,
+                    ),
+                    child: _profilePicture == null || _profilePicture!.isEmpty
+                      ? const Icon(
+                          Icons.person,
+                          color: Colors.white,
+                          size: 40,
+                        )
+                      : null,
                   ),
                 ),
                 const SizedBox(width: 16),
