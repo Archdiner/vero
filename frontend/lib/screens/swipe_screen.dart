@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/user_profile.dart';
 import '../services/roommate_service.dart';
 import '../widgets/detailed_profile_view.dart';
+import '../utils/themes.dart'; // Import our theme
 
 class SwipeScreen extends StatefulWidget {
   const SwipeScreen({Key? key}) : super(key: key);
@@ -172,7 +173,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
               color: const Color(0xFF1E1E1E),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: const Color(0xFFFF6F40),
+                color: AppColors.primaryBlue, // Blue border instead of orange
                 width: 2,
               ),
             ),
@@ -188,7 +189,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       const Text(
                         'It\'s a Match!',
                         style: TextStyle(
-                          color: Color(0xFFFF6F40),
+                          color: AppColors.primaryBlue, // Blue text
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                         ),
@@ -246,7 +247,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       // Heart icon between avatars
                       const Icon(
                         Icons.favorite,
-                        color: Color(0xFFFF6F40),
+                        color: AppColors.primaryBlue, // Blue heart instead of orange
                         size: 40,
                       ),
                       
@@ -306,7 +307,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF6F40),
+                            backgroundColor: AppColors.primaryBlue, // Blue button instead of orange
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
@@ -397,7 +398,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                               color: Colors.grey[800],
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: const Color(0xFFFF6F40),
+                                color: AppColors.primaryBlue, // Blue border instead of orange
                                 width: 2,
                               ),
                               image: _currentUserProfile['profile_picture'] != null && 
@@ -484,7 +485,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6F40), // brand orange
+                        color: AppColors.primaryBlue, // Blue box instead of orange
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: IconButton(
@@ -514,7 +515,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _isFetching
-                              ? const CircularProgressIndicator(color: Color(0xFFFF6F40))
+                              ? const CircularProgressIndicator(color: AppColors.primaryBlue) // Blue progress indicator
                               : const Icon(
                                   Icons.search_off,
                                   size: 64,
@@ -556,7 +557,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                               icon: const Icon(Icons.refresh),
                               label: const Text("Try Again"),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF6F40),
+                                backgroundColor: AppColors.primaryBlue, // Blue button
                                 foregroundColor: Colors.white,
                               ),
                             ),
@@ -584,7 +585,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                 children: [
                   // Left: search icon (orange) to indicate current screen
                   IconButton(
-                    icon: const Icon(Icons.search, color: Color(0xFFFF6F40), size: 28),
+                    icon: const Icon(Icons.search, color: AppColors.primaryBlue, size: 28),
                     onPressed: () {
                       // Already on search screen
                     },
@@ -675,7 +676,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF6F40),
+                            color: AppColors.primaryBlue, // Blue chip instead of orange
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -730,14 +731,14 @@ class _SwipeScreenState extends State<SwipeScreen> {
                             children: [
                               const Icon(
                                 Icons.favorite,
-                                color: Color(0xFFFF6F40),
+                                color: AppColors.primaryBlue, // Blue icon instead of orange
                                 size: 16,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '${userProfile.compatibilityScore!.toInt()}% Compatible',
                                 style: const TextStyle(
-                                  color: Color(0xFFFF6F40),
+                                  color: AppColors.primaryBlue, // Blue text instead of orange
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -783,7 +784,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.close, color: Color(0xFFFF6F40), size: 28),
+                        Icon(Icons.close, color: AppColors.primaryBlue, size: 28),
                         SizedBox(width: 8),
                         Text(
                           "NOPE",
@@ -807,7 +808,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     width: 130,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF6F40),
+                      color: AppColors.primaryBlue,
                       borderRadius: BorderRadius.circular(25),
                       boxShadow: [
                         BoxShadow(

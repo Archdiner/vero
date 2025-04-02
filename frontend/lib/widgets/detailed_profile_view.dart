@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user_profile.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../utils/themes.dart'; // Import the theme system
 
 class DetailedProfileView extends StatelessWidget {
   final UserProfile userProfile;
@@ -102,14 +103,14 @@ class DetailedProfileView extends StatelessWidget {
                             children: [
                               const Icon(
                                 Icons.favorite,
-                                color: Color(0xFFFF6F40),
+                                color: AppColors.primaryBlue,
                                 size: 16,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '${userProfile.compatibilityScore!.toInt()}% Compatible',
                                 style: const TextStyle(
-                                  color: Color(0xFFFF6F40),
+                                  color: AppColors.primaryBlue,
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -160,7 +161,7 @@ class DetailedProfileView extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(
                     Icons.photo_camera,
-                    color: Color(0xFFFF6F40),
+                    color: AppColors.primaryBlue,
                   ),
                   title: const Text(
                     'Instagram',
@@ -369,7 +370,7 @@ class DetailedProfileView extends StatelessWidget {
       children: [
         Icon(
           icon,
-          color: const Color(0xFFFF6F40),
+          color: AppColors.primaryBlue,
           size: 18,
         ),
         const SizedBox(width: 8),
