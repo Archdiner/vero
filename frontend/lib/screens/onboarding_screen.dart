@@ -23,6 +23,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController(initialPage: 0);
   int _currentPage = 0;
   bool _isLoading = false;
+  bool _isValidatingInstagram = false;
   
   // Progress indicators
   final int _totalPages = 4;
@@ -54,6 +55,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _wakeTimeController = TextEditingController();
   final TextEditingController _sleepTimeController = TextEditingController();
 
+  // Validation patterns
+  final RegExp _instagramRegExp = RegExp(r'^(?!.*\.\.)(?!.*\.$)[^\W][\w.]{0,29}$');
+  final RegExp _snapchatRegExp = RegExp(r'^[a-zA-Z0-9._-]{3,15}$');
+  final RegExp _phoneRegExp = RegExp(r'^\+?[0-9]{10,15}$');
+  
   // Image picker
   final ImagePicker _picker = ImagePicker();
   File? _selectedImage;
@@ -83,6 +89,144 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _drinkingPreference = false;
   bool _petPreference = false;
   bool _musicPreference = false;
+
+  // Validation methods
+  String? _validateInstagram(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Instagram username is required';
+    }
+    
+    // Basic format validation
+    if (!_instagramRegExp.hasMatch(value)) {
+      return 'Invalid Instagram username format';
+    }
+    
+    // Advanced format rules
+    if (value.contains('..') || value.endsWith('.')) {
+      return 'Instagram username cannot contain consecutive periods or end with a period';
+    }
+    
+    return null;
+  }
+
+  String? _validateSnapchat(String? value) {
+    if (value == null || value.isEmpty) {
+      return null; // Optional field
+    }
+    if (!_snapchatRegExp.hasMatch(value)) {
+      return 'Invalid Snapchat username format';
+    }
+    return null;
+  }
+
+  String? _validatePhoneNumber(String? value) {
+    if (value == null || value.isEmpty) {
+      return null; // Optional field
+    }
+    if (!_phoneRegExp.hasMatch(value)) {
+      return 'Please enter a valid phone number';
+    }
+    return null;
+  }
+
+  String? _validateAge(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Age is required';
+    }
+    final age = int.tryParse(value);
+    if (age == null) {
+      return 'Please enter a valid number';
+    }
+    if (age < 17 || age > 100) {
+      return 'Age must be between 17 and 100';
+    }
+    return null;
+  }
+
+  String? _validateCleanliness(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Cleanliness level is required';
+    }
+    final level = int.tryParse(value);
+    if (level == null) {
+      return 'Please enter a valid number';
+    }
+    if (level < 1 || level > 10) {
+      return 'Level must be between 1 and 10';
+    }
+    return null;
+  }
+
+  String? _validateTime(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Time is required';
+    }
+    // Check if time is in the format HH:MM
+    if (!RegExp(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$').hasMatch(value)) {
+      return 'Invalid time format (HH:MM)';
+    }
+    return null;
+  }
+
+  // Function to validate Instagram username against a real account
+  Future<bool> _verifyInstagramAccount(String username) async {
+    setState(() {
+      _isValidatingInstagram = true;
+    });
+    
+    try {
+      // Option 1: Use a more reliable third-party API for Instagram validation
+      // This is a mock call - you would replace this with a real API call
+      final bool useThirdPartyApi = false; // Set to true if you have a third-party API
+      
+      if (useThirdPartyApi) {
+        // Example using RapidAPI Instagram Data Scraper (you'll need to sign up)
+        // Replace with your actual API key and endpoint
+        // final response = await http.get(
+        //   Uri.parse('https://instagram-data-scraper.p.rapidapi.com/user/$username'),
+        //   headers: {
+        //     'X-RapidAPI-Key': 'YOUR_API_KEY_HERE',
+        //     'X-RapidAPI-Host': 'instagram-data-scraper.p.rapidapi.com'
+        //   },
+        // );
+        // 
+        // return response.statusCode == 200 && !response.body.contains('error');
+        
+        // Simulating API response for now
+        await Future.delayed(Duration(seconds: 1));
+        return true;
+      }
+      
+      // Option 2: Enhanced format validation (offline approach)
+      // Instagram usernames must:
+      // - Be between 1-30 characters
+      // - Only contain letters, numbers, periods, and underscores
+      // - Cannot have consecutive periods
+      // - Cannot end with a period
+      // - Cannot start with a number or special character
+      
+      if (!_instagramRegExp.hasMatch(username)) {
+        return false;
+      }
+      
+      // Additional offline validation rules
+      if (username.contains('..') || username.endsWith('.')) {
+        return false;
+      }
+      
+      // For demo purposes, consider the username valid if it passes format validation
+      // In production, you might want to implement a more sophisticated check
+      return true;
+    } catch (e) {
+      print('Error verifying Instagram account: $e');
+      // Fall back to just accepting the format validation
+      return _instagramRegExp.hasMatch(username);
+    } finally {
+      setState(() {
+        _isValidatingInstagram = false;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -246,7 +390,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _updateOnboarding() async {
-    // Check for required fields
+    // Validate all fields across all forms
+    for (int i = 0; i < _formKeys.length; i++) {
+      final formState = _formKeys[i].currentState;
+      if (formState != null && !formState.validate()) {
+        // If any form is invalid, navigate to that page
+        _pageController.animateToPage(
+          i,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please correct the errors before submitting'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    }
+    
+    // Additional validation for required fields not covered by form validation
     if (_selectedGender == null ||
         _selectedUniversity == null ||
         _selectedYearOfStudy == null ||
@@ -266,6 +431,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           backgroundColor: Colors.red,
         ),
+      );
+      return;
+    }
+    
+    // Validate Instagram username format more thoroughly
+    if (!await _verifyInstagramAccount(_instagramController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'The Instagram username format appears to be invalid. Please check and try again.',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      // Navigate to the Instagram input page
+      _pageController.animateToPage(
+        3, // Contact Info page
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
       );
       return;
     }
@@ -389,56 +574,58 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _nextPage() {
-    if (_currentPage < _totalPages - 1) {
-      bool canProceed = true;
-      String errorMessage = '';
-      
-      // Validate based on current page
-      if (_currentPage == 0) { // Basic Info page
-        if (_ageController.text.isEmpty ||
-            _selectedGender == null) {
-          canProceed = false;
-          errorMessage = 'Please fill all required fields on this page: age and gender.';
+    // Validate current form before proceeding
+    if (_formKeys[_currentPage].currentState?.validate() ?? false) {
+      if (_currentPage < _totalPages - 1) {
+        bool canProceed = true;
+        String errorMessage = '';
+        
+        // Additional validation based on current page
+        if (_currentPage == 0) { // Basic Info page
+          if (_selectedGender == null) {
+            canProceed = false;
+            errorMessage = 'Please select your gender.';
+          }
+        } else if (_currentPage == 1) { // Education page
+          if (_selectedUniversity == null || _selectedYearOfStudy == null) {
+            canProceed = false;
+            errorMessage = 'Please select your university and year of study.';
+          }
+        } else if (_currentPage == 2) { // Living Preferences page
+          if (_selectedSocialPreference == null ||
+              _selectedGuestPolicy == null ||
+              _selectedRoomType == null) {
+            canProceed = false;
+            errorMessage = 'Please complete all required dropdown selections.';
+          }
         }
-      } else if (_currentPage == 1) { // Education page
-        if (_selectedUniversity == null || _selectedYearOfStudy == null) {
-          canProceed = false;
-          errorMessage = 'Please select your university and year of study.';
+        
+        if (canProceed) {
+          _pageController.nextPage(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
-      } else if (_currentPage == 2) { // Living Preferences page
-        if (_cleanlinessLevelController.text.isEmpty ||
-            _selectedSocialPreference == null ||
-            _selectedGuestPolicy == null ||
-            _selectedRoomType == null ||
-            _sleepTimeController.text.isEmpty ||
-            _wakeTimeController.text.isEmpty) {
-          canProceed = false;
-          errorMessage = 'Please fill all required living preference fields.';
-        }
-      } else if (_currentPage == 3) { // Contact Information page
-        if (_instagramController.text.isEmpty) {
-          canProceed = false;
-          errorMessage = 'Please provide your Instagram username.';
-        }
-      }
-      
-      if (canProceed) {
-        _pageController.nextPage(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
-        );
+        // If we're on the last page, submit the form
+        _formKeys[_currentPage].currentState?.save();
+        _updateOnboarding();
       }
     } else {
-      // If we're on the last page, submit the form
-      _formKeys[_currentPage].currentState?.save();
-      _updateOnboarding();
+      // Show a message that there are validation errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fix the errors before proceeding'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -688,21 +875,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 24),
             
-            // Age field
+            // Age field with validation
             _buildRequiredTextField(
               controller: _ageController,
               label: 'Age',
               keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Age is required';
-                }
-                final age = int.tryParse(value);
-                if (age == null || age < 18 || age > 100) {
-                  return 'Please enter a valid age (18-100)';
-                }
-                return null;
-              },
+              validator: _validateAge,
             ),
             const SizedBox(height: 16),
             
@@ -874,6 +1052,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     });
                   },
                 ),
+                // Add a hidden FormField for validation purposes
+                FormField<String>(
+                  initialValue: _budgetRangeController.text,
+                  validator: (String? value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Budget is required';
+                    }
+                    final budget = int.tryParse(value);
+                    if (budget == null) {
+                      return 'Please enter a valid budget';
+                    }
+                    if (budget < 0) {
+                      return 'Budget cannot be negative';
+                    }
+                    return null;
+                  },
+                  builder: (FormFieldState<String> state) {
+                    if (state.hasError) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 4.0, left: 8.0),
+                        child: Text(
+                          state.errorText!,
+                          style: TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      );
+                    }
+                    return Container();
+                  },
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -917,6 +1124,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       // Optionally update your controller if needed for the request body
                       _cleanlinessLevelController.text = value.toInt().toString();
                     });
+                  },
+                ),
+                // Add a hidden FormField for validation purposes
+                FormField<String>(
+                  initialValue: _cleanlinessLevelController.text,
+                  validator: _validateCleanliness,
+                  builder: (FormFieldState<String> state) {
+                    if (state.hasError) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 4.0, left: 8.0),
+                        child: Text(
+                          state.errorText!,
+                          style: TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      );
+                    }
+                    return Container();
                   },
                 ),
               ],
@@ -1003,11 +1227,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 8),
             
-            // Bedtime with TimePicker (moved from contact info)
-            _buildTextField(
+            // Sleep Time with validation
+            TextFormField(
               controller: _sleepTimeController,
-              label: 'Sleep Time',
+              style: const TextStyle(color: Colors.white),
               readOnly: true,
+              validator: _validateTime,
               onTap: () async {
                 TimeOfDay? pickedTime = await showTimePicker(
                   context: context,
@@ -1034,14 +1259,42 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   });
                 }
               },
+              decoration: InputDecoration(
+                labelText: 'Sleep Time *',
+                labelStyle: const TextStyle(color: Colors.white70),
+                filled: true,
+                fillColor: Colors.grey[900],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[800]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFFF6F40)),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red),
+                ),
+                errorStyle: const TextStyle(color: Colors.red),
+              ),
             ),
             const SizedBox(height: 16),
             
-            // Wake time with TimePicker
-            _buildTextField(
+            // Wake time with validation
+            TextFormField(
               controller: _wakeTimeController,
-              label: 'Wake Time',
+              style: const TextStyle(color: Colors.white),
               readOnly: true,
+              validator: _validateTime,
               onTap: () async {
                 TimeOfDay? pickedTime = await showTimePicker(
                   context: context,
@@ -1068,6 +1321,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   });
                 }
               },
+              decoration: InputDecoration(
+                labelText: 'Wake Time *',
+                labelStyle: const TextStyle(color: Colors.white70),
+                filled: true,
+                fillColor: Colors.grey[900],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[800]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFFF6F40)),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red),
+                ),
+                errorStyle: const TextStyle(color: Colors.red),
+              ),
             ),
             const SizedBox(height: 20),
             
@@ -1198,31 +1478,116 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 24),
             
-            // Instagram field (moved from education page)
-            _buildRequiredTextField(
-              controller: _instagramController,
-              label: 'Instagram Username',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Instagram username is required';
-                }
-                return null;
-              },
+            // Instagram field with validation and user guidance
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildRequiredTextField(
+                  controller: _instagramController,
+                  label: 'Instagram Username',
+                  validator: _validateInstagram,
+                  helperText: 'Enter your username without the @ symbol',
+                ),
+                if (_isValidatingInstagram)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Validating username format...',
+                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0, left: 12.0),
+                  child: Text(
+                    'Format: Letters, numbers, underscore (_) and periods (.)',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             
-            // Snapchat field
-            _buildTextField(
+            // Snapchat field with validation
+            TextFormField(
               controller: _snapchatController,
-              label: 'Snapchat (Optional)',
+              style: const TextStyle(color: Colors.white),
+              validator: _validateSnapchat,
+              decoration: InputDecoration(
+                labelText: 'Snapchat (Optional)',
+                labelStyle: const TextStyle(color: Colors.white70),
+                filled: true,
+                fillColor: Colors.grey[900],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[800]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFFF6F40)),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red),
+                ),
+                errorStyle: const TextStyle(color: Colors.red),
+              ),
             ),
             const SizedBox(height: 16),
             
-            // Phone Number field
-            _buildTextField(
+            // Phone Number field with validation
+            TextFormField(
               controller: _phoneNumberController,
-              label: 'Phone Number (Optional)',
+              style: const TextStyle(color: Colors.white),
               keyboardType: TextInputType.phone,
+              validator: _validatePhoneNumber,
+              decoration: InputDecoration(
+                labelText: 'Phone Number (Optional)',
+                labelStyle: const TextStyle(color: Colors.white70),
+                filled: true,
+                fillColor: Colors.grey[900],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[800]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFFF6F40)),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red),
+                ),
+                errorStyle: const TextStyle(color: Colors.red),
+              ),
             ),
             const SizedBox(height: 24),
             
@@ -1273,6 +1638,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     bool readOnly = false,
     int maxLines = 1,
     VoidCallback? onTap,
+    String? helperText,
   }) {
     return TextField(
       controller: controller,
@@ -1298,6 +1664,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Color(0xFFFF6F40)),
         ),
+        helperText: helperText,
+        helperStyle: TextStyle(color: Colors.grey[500]),
       ),
     );
   }
@@ -1307,6 +1675,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     required String label,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
+    String? helperText,
   }) {
     // Ensure there's a default validator if none is provided
     final finalValidator = validator ?? (value) {
@@ -1347,6 +1716,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           borderSide: const BorderSide(color: Colors.red),
         ),
         errorStyle: const TextStyle(color: Colors.red),
+        helperText: helperText,
+        helperStyle: TextStyle(color: Colors.grey[500]),
       ),
     );
   }
