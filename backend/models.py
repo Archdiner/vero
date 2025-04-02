@@ -72,7 +72,6 @@ class User(Base):
     email = Column(String, unique=True, nullable=False, index=True)
     hashed_password = Column(String, nullable=False)
     fullname = Column(String, nullable=True) 
-    username = Column(String, unique=True, nullable=True, index=True) 
     instagram = Column(String, nullable=True)  # now nullable
     profile_picture = Column(String, nullable=True)
     age = Column(Integer, nullable=True)
