@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import '../utils/themes.dart'; // Import the theme system
 
 class AuthScreen extends StatelessWidget {
   const AuthScreen({super.key});
@@ -9,7 +10,7 @@ class AuthScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           // 1) Mosaic
@@ -49,7 +50,7 @@ class AuthScreen extends StatelessWidget {
                       color: Colors.grey[600],
                       child: const Icon(
                         Icons.image_outlined,
-                        color: Colors.white70,
+                        color: AppColors.textSecondary,
                         size: 40,
                       ),
                     ),
@@ -62,18 +63,18 @@ class AuthScreen extends StatelessWidget {
           // 2) Multi-stop gradient overlay
           Positioned.fill(
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,   // 0 -> 0.2
-                    Colors.black26,       // 0.2 -> 0.35
-                    Colors.black54,       // 0.35 -> 0.5
-                    Colors.black87,       // 0.5 -> 0.7
-                    Colors.black,         // 0.7 -> 1.0
+                    AppColors.background.withOpacity(0.26),       // 0.2 -> 0.35
+                    AppColors.background.withOpacity(0.54),       // 0.35 -> 0.5
+                    AppColors.background.withOpacity(0.87),       // 0.5 -> 0.7
+                    AppColors.background,         // 0.7 -> 1.0
                   ],
-                  stops: [
+                  stops: const [
                     0.15,  // Start fading at 20% down
                     0.3, // then darker
                     0.45,  
@@ -93,10 +94,10 @@ class AuthScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.location_on,
                   size: 50,
-                  color: Color(0xFFFF6F40),
+                  color: AppColors.primaryBlue,
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -104,17 +105,17 @@ class AuthScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                  child: const Text(
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Text(
                     'Discover the best restaurants near you in just a few taps! Whether you\'re craving a quick bite, a cozy café, or a fine dining experience.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: AppColors.textSecondary,
                       fontSize: 14,
                     ),
                   ),
@@ -127,8 +128,8 @@ class AuthScreen extends StatelessWidget {
                     height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6F40),
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: AppColors.textPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
@@ -154,7 +155,7 @@ class AuthScreen extends StatelessWidget {
                   child: const Text(
                     'Already have an account? Log in',
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: AppColors.textSecondary,
                       fontSize: 14,
                     ),
                   ),

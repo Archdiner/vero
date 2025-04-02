@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../utils/themes.dart'; // Import the theme system
 import 'dart:math';
 import 'dart:io';
 import 'dart:typed_data';
@@ -404,7 +405,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please correct the errors before submitting'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
         return;
@@ -429,7 +430,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Please complete all required fields in each section before submitting.',
             style: TextStyle(color: Colors.white),
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -443,7 +444,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'The Instagram username format appears to be invalid. Please check and try again.',
             style: TextStyle(color: Colors.white),
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
       // Navigate to the Instagram input page
@@ -563,7 +564,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Error: ${e.toString()}',
             style: const TextStyle(color: Colors.white),
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
     } finally {
@@ -609,7 +610,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(errorMessage),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
             ),
           );
         }
@@ -623,7 +624,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fix the errors before proceeding'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
     }
@@ -661,12 +662,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.background,
         title: const Text(
           'Create Your Profile',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         elevation: 0,
       ),
@@ -684,7 +688,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Text(
                       _pageHeaders[_currentPage],
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -692,7 +696,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Text(
                       'Step ${_currentPage + 1}/$_totalPages',
                       style: const TextStyle(
-                        color: Colors.grey,
+                        color: AppColors.textSecondary,
                         fontSize: 14,
                       ),
                     ),
@@ -702,7 +706,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 LinearProgressIndicator(
                   value: (_currentPage + 1) / _totalPages,
                   backgroundColor: Colors.grey[800],
-                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF6F40)),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ],
@@ -746,7 +750,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ElevatedButton(
                   onPressed: _isLoading ? null : _nextPage,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6F40),
+                    backgroundColor: AppColors.primaryBlue,
                     padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -786,7 +790,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const Text(
               'Let\'s get to know you',
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -794,7 +798,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 6),
             const Text(
               'This information helps us create your profile',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
             const SizedBox(height: 24),
             
@@ -803,7 +807,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 const Text(
                   'Profile Picture',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
                 ),
                 const SizedBox(height: 10),
                 Stack(
@@ -817,7 +821,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           color: Colors.grey[800],
                           shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFFFF6F40), width: 2),
+                          border: Border.all(color: AppColors.primaryBlue, width: 2),
                           image: _imageUrl != null
                               ? DecorationImage(
                                   image: NetworkImage(_imageUrl!),
@@ -847,7 +851,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: const BoxDecoration(
-                        color: Color(0xFFFF6F40),
+                        color: AppColors.primaryBlue,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -868,7 +872,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       'Image uploaded',
-                      style: TextStyle(color: Colors.green),
+                      style: TextStyle(color: AppColors.success),
                     ),
                   ),
               ],
@@ -927,7 +931,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const Text(
               'Your Education',
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -935,7 +939,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 6),
             const Text(
               'Tell us about your academic background',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
             const SizedBox(height: 24),
             
@@ -1000,7 +1004,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const Text(
               'Living Preferences',
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -1008,7 +1012,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 6),
             const Text(
               'Help us find your perfect roommate match',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
             const SizedBox(height: 24),
             
@@ -1018,7 +1022,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 const Text(
                   'Maximum Monthly Budget',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -1027,14 +1031,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Text(
                       '\$${_budgetValue.toInt()}',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       'Up to \$5000',
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -1043,7 +1047,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   min: 0,
                   max: 5000,
                   divisions: 50,
-                  activeColor: const Color(0xFFFF6F40),
+                  activeColor: AppColors.primaryBlue,
                   inactiveColor: Colors.grey[800],
                   onChanged: (value) {
                     setState(() {
@@ -1074,7 +1078,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         padding: const EdgeInsets.only(top: 4.0, left: 8.0),
                         child: Text(
                           state.errorText!,
-                          style: TextStyle(color: Colors.red, fontSize: 12),
+                          style: TextStyle(color: AppColors.error, fontSize: 12),
                         ),
                       );
                     }
@@ -1091,7 +1095,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 const Text(
                   'Room Tidiness Level',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -1100,14 +1104,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Text(
                       '${_cleanlinessValue.toInt()}',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const Text(
                       '1 (Messy) - 10 (Organized)',
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -1116,7 +1120,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   min: 1,
                   max: 10,
                   divisions: 9,
-                  activeColor: const Color(0xFFFF6F40),
+                  activeColor: AppColors.primaryBlue,
                   inactiveColor: Colors.grey[800],
                   onChanged: (value) {
                     setState(() {
@@ -1136,7 +1140,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         padding: const EdgeInsets.only(top: 4.0, left: 8.0),
                         child: Text(
                           state.errorText!,
-                          style: TextStyle(color: Colors.red, fontSize: 12),
+                          style: TextStyle(color: AppColors.error, fontSize: 12),
                         ),
                       );
                     }
@@ -1162,7 +1166,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     return Theme(
                       data: ThemeData.dark().copyWith(
                         colorScheme: const ColorScheme.dark(
-                          primary: Color(0xFFFF6F40),
+                          primary: AppColors.primaryBlue,
                           onPrimary: Colors.white,
                           surface: Colors.grey,
                           onSurface: Colors.white,
@@ -1223,14 +1227,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             // Sleep/Wake Schedule Section
             const Text(
               'Sleep & Wake Schedule',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
             ),
             const SizedBox(height: 8),
             
             // Sleep Time with validation
             TextFormField(
               controller: _sleepTimeController,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppColors.textPrimary),
               readOnly: true,
               validator: _validateTime,
               onTap: () async {
@@ -1241,7 +1245,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     return Theme(
                       data: ThemeData.dark().copyWith(
                         colorScheme: const ColorScheme.dark(
-                          primary: Color(0xFFFF6F40),
+                          primary: AppColors.primaryBlue,
                           onPrimary: Colors.white,
                           surface: Colors.grey,
                           onSurface: Colors.white,
@@ -1261,9 +1265,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               },
               decoration: InputDecoration(
                 labelText: 'Sleep Time *',
-                labelStyle: const TextStyle(color: Colors.white70),
+                labelStyle: const TextStyle(color: AppColors.textSecondary),
                 filled: true,
-                fillColor: Colors.grey[900],
+                fillColor: AppColors.inputBackground,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -1274,17 +1278,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFFF6F40)),
+                  borderSide: const BorderSide(color: AppColors.primaryBlue),
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.red),
+                  borderSide: const BorderSide(color: AppColors.error),
                 ),
                 focusedErrorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.red),
+                  borderSide: const BorderSide(color: AppColors.error),
                 ),
-                errorStyle: const TextStyle(color: Colors.red),
+                errorStyle: const TextStyle(color: AppColors.error),
               ),
             ),
             const SizedBox(height: 16),
@@ -1292,7 +1296,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             // Wake time with validation
             TextFormField(
               controller: _wakeTimeController,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppColors.textPrimary),
               readOnly: true,
               validator: _validateTime,
               onTap: () async {
@@ -1303,7 +1307,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     return Theme(
                       data: ThemeData.dark().copyWith(
                         colorScheme: const ColorScheme.dark(
-                          primary: Color(0xFFFF6F40),
+                          primary: AppColors.primaryBlue,
                           onPrimary: Colors.white,
                           surface: Colors.grey,
                           onSurface: Colors.white,
@@ -1323,9 +1327,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               },
               decoration: InputDecoration(
                 labelText: 'Wake Time *',
-                labelStyle: const TextStyle(color: Colors.white70),
+                labelStyle: const TextStyle(color: AppColors.textSecondary),
                 filled: true,
-                fillColor: Colors.grey[900],
+                fillColor: AppColors.inputBackground,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -1336,17 +1340,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFFF6F40)),
+                  borderSide: const BorderSide(color: AppColors.primaryBlue),
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.red),
+                  borderSide: const BorderSide(color: AppColors.error),
                 ),
                 focusedErrorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.red),
+                  borderSide: const BorderSide(color: AppColors.error),
                 ),
-                errorStyle: const TextStyle(color: Colors.red),
+                errorStyle: const TextStyle(color: AppColors.error),
               ),
             ),
             const SizedBox(height: 20),
@@ -1418,7 +1422,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             // Preference toggles
             const Text(
               'Lifestyle Preferences',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
             ),
             const SizedBox(height: 8),
             _buildToggleSwitch(
@@ -1466,7 +1470,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const Text(
               'Contact Information',
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -1474,7 +1478,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 6),
             const Text(
               'How potential roommates can reach you',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
             const SizedBox(height: 24),
             
@@ -1504,7 +1508,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         SizedBox(width: 8),
                         Text(
                           'Validating username format...',
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                         ),
                       ],
                     ),
@@ -1513,7 +1517,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   padding: const EdgeInsets.only(top: 4.0, left: 12.0),
                   child: Text(
                     'Format: Letters, numbers, underscore (_) and periods (.)',
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                   ),
                 ),
               ],
@@ -1523,13 +1527,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             // Snapchat field with validation
             TextFormField(
               controller: _snapchatController,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppColors.textPrimary),
               validator: _validateSnapchat,
               decoration: InputDecoration(
                 labelText: 'Snapchat (Optional)',
-                labelStyle: const TextStyle(color: Colors.white70),
+                labelStyle: const TextStyle(color: AppColors.textSecondary),
                 filled: true,
-                fillColor: Colors.grey[900],
+                fillColor: AppColors.inputBackground,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -1540,17 +1544,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFFF6F40)),
+                  borderSide: const BorderSide(color: AppColors.primaryBlue),
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.red),
+                  borderSide: const BorderSide(color: AppColors.error),
                 ),
                 focusedErrorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.red),
+                  borderSide: const BorderSide(color: AppColors.error),
                 ),
-                errorStyle: const TextStyle(color: Colors.red),
+                errorStyle: const TextStyle(color: AppColors.error),
               ),
             ),
             const SizedBox(height: 16),
@@ -1558,14 +1562,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             // Phone Number field with validation
             TextFormField(
               controller: _phoneNumberController,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppColors.textPrimary),
               keyboardType: TextInputType.phone,
               validator: _validatePhoneNumber,
               decoration: InputDecoration(
                 labelText: 'Phone Number (Optional)',
-                labelStyle: const TextStyle(color: Colors.white70),
+                labelStyle: const TextStyle(color: AppColors.textSecondary),
                 filled: true,
-                fillColor: Colors.grey[900],
+                fillColor: AppColors.inputBackground,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -1576,17 +1580,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFFF6F40)),
+                  borderSide: const BorderSide(color: AppColors.primaryBlue),
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.red),
+                  borderSide: const BorderSide(color: AppColors.error),
                 ),
                 focusedErrorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.red),
+                  borderSide: const BorderSide(color: AppColors.error),
                 ),
-                errorStyle: const TextStyle(color: Colors.red),
+                errorStyle: const TextStyle(color: AppColors.error),
               ),
             ),
             const SizedBox(height: 24),
@@ -1604,12 +1608,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.check_circle, color: Color(0xFFFF6F40), size: 20),
+                      Icon(Icons.check_circle, color: AppColors.primaryBlue, size: 20),
                       SizedBox(width: 8),
                       Text(
                         'Almost done!',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -1619,7 +1623,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   SizedBox(height: 8),
                   Text(
                     'Click Submit to complete your profile setup and start finding your perfect roommate match.',
-                    style: TextStyle(color: Colors.grey[400]),
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
                 ],
               ),
@@ -1642,16 +1646,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }) {
     return TextField(
       controller: controller,
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: AppColors.textPrimary),
       keyboardType: keyboardType,
       readOnly: readOnly,
       maxLines: maxLines,
       onTap: onTap,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
+        labelStyle: const TextStyle(color: AppColors.textSecondary),
         filled: true,
-        fillColor: Colors.grey[900],
+        fillColor: AppColors.inputBackground,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -1662,10 +1666,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Color(0xFFFF6F40)),
+          borderSide: BorderSide(color: AppColors.primaryBlue),
         ),
         helperText: helperText,
-        helperStyle: TextStyle(color: Colors.grey[500]),
+        helperStyle: TextStyle(color: AppColors.textSecondary),
       ),
     );
   }
@@ -1687,14 +1691,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     
     return TextFormField(
       controller: controller,
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: AppColors.textPrimary),
       keyboardType: keyboardType,
       validator: finalValidator,
       decoration: InputDecoration(
         labelText: '$label *',
-        labelStyle: const TextStyle(color: Colors.white70),
+        labelStyle: const TextStyle(color: AppColors.textSecondary),
         filled: true,
-        fillColor: Colors.grey[900],
+        fillColor: AppColors.inputBackground,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -1705,19 +1709,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFFF6F40)),
+          borderSide: const BorderSide(color: AppColors.primaryBlue),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
-        errorStyle: const TextStyle(color: Colors.red),
+        errorStyle: const TextStyle(color: AppColors.error),
         helperText: helperText,
-        helperStyle: TextStyle(color: Colors.grey[500]),
+        helperStyle: TextStyle(color: AppColors.textSecondary),
       ),
     );
   }
@@ -1734,7 +1738,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(color: Colors.white70, fontSize: 16),
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
@@ -1749,7 +1753,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           validator: validator,
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.grey[800],
+            fillColor: AppColors.inputBackground,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,
@@ -1757,7 +1761,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
           dropdownColor: Colors.grey[800],
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: AppColors.textPrimary),
         ),
       ],
     );
@@ -1771,10 +1775,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return SwitchListTile(
       title: Text(
         title,
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(color: AppColors.textPrimary),
       ),
       value: value,
-      activeColor: const Color(0xFFFF6F40),
+      activeColor: AppColors.primaryBlue,
       onChanged: onChanged,
       contentPadding: EdgeInsets.zero,
     );
@@ -1792,7 +1796,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(color: Colors.white70, fontSize: 16),
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
@@ -1806,7 +1810,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           onChanged: onChanged,
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.grey[800],
+            fillColor: AppColors.inputBackground,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,
@@ -1814,7 +1818,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
           dropdownColor: Colors.grey[800],
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: AppColors.textPrimary),
         ),
       ],
     );

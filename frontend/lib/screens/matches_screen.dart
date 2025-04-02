@@ -4,6 +4,7 @@ import '../services/roommate_service.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/detailed_profile_view.dart';
+import '../utils/themes.dart'; // Import our theme system
 
 class MatchesScreen extends StatefulWidget {
   const MatchesScreen({Key? key}) : super(key: key);
@@ -111,7 +112,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
       body: SafeArea(
         child: _isLoading
             ? const Center(
-                child: CircularProgressIndicator(color: Color(0xFFFF6F40)),
+                child: CircularProgressIndicator(color: AppColors.primaryBlue),
               )
             : _hasError
                 ? Center(
@@ -132,7 +133,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                         ElevatedButton(
                           onPressed: _fetchMatches,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF6F40),
+                            backgroundColor: AppColors.primaryBlue,
                             foregroundColor: Colors.white,
                           ),
                           child: const Text('Try Again'),
@@ -179,7 +180,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                               icon: const Icon(Icons.search),
                               label: const Text('Find Roommates'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF6F40),
+                                backgroundColor: AppColors.primaryBlue,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 24,
@@ -192,7 +193,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                       )
                     : RefreshIndicator(
                         onRefresh: _fetchMatches,
-                        color: const Color(0xFFFF6F40),
+                        color: AppColors.primaryBlue,
                         child: ListView.builder(
                           padding: const EdgeInsets.all(16),
                           itemCount: _matches.length,
@@ -218,7 +219,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
             ),
             // Center: chat icon (orange) to indicate current screen
             IconButton(
-              icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFFFF6F40), size: 26),
+              icon: const Icon(Icons.chat_bubble_outline, color: AppColors.primaryBlue, size: 26),
               onPressed: () {
                 // Already on matches screen
               },
@@ -320,7 +321,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                       children: [
                         const Icon(
                           Icons.favorite,
-                          color: Color(0xFFFF6F40),
+                          color: AppColors.primaryBlue,
                           size: 16,
                         ),
                         const SizedBox(width: 4),
@@ -329,7 +330,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                             ? '${match.compatibilityScore!.toInt()}% Compatible'
                             : 'Compatible',
                           style: const TextStyle(
-                            color: Color(0xFFFF6F40),
+                            color: AppColors.primaryBlue,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -349,7 +350,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 },
                 icon: const Icon(
                   Icons.photo_camera, // More Instagram-like camera icon
-                  color: Color(0xFFFF6F40),
+                  color: AppColors.primaryBlue,
                 ),
               ),
             ),
@@ -384,7 +385,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
             
             // Instagram button (replacing chat button)
             ListTile(
-              leading: const Icon(Icons.photo_camera, color: Color(0xFFFF6F40)),
+              leading: const Icon(Icons.photo_camera, color: AppColors.primaryBlue),
               title: const Text(
                 'Open Instagram',
                 style: TextStyle(color: Colors.white),
@@ -594,7 +595,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 borderSide: BorderSide(color: Colors.white30),
               ),
               focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFFF6F40)),
+                borderSide: BorderSide(color: AppColors.primaryBlue),
               ),
             ),
           ),
@@ -619,7 +620,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
               },
               child: const Text(
                 'Open',
-                style: TextStyle(color: Color(0xFFFF6F40)),
+                style: TextStyle(color: AppColors.primaryBlue),
               ),
             ),
           ],
@@ -695,7 +696,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
       children: [
         Icon(
           icon,
-          color: const Color(0xFFFF6F40),
+          color: AppColors.primaryBlue,
           size: 18,
         ),
         const SizedBox(width: 8),

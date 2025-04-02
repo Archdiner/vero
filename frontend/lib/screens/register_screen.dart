@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../utils/config.dart' as utils;
+import '../utils/themes.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -322,7 +323,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : register,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6F40), // brand orange
+                      backgroundColor: AppColors.primaryBlue, // Use theme blue color
                       foregroundColor: Colors.white, // text color
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -374,10 +375,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onTap: () {
                         Navigator.pushReplacementNamed(context, '/login');
                       },
-                      child: const Text(
+                      child: Text(
                         "Log in",
                         style: TextStyle(
-                          color: Color(0xFFFF6F40),
+                          color: AppColors.primaryBlue, // Use theme blue color
                           fontWeight: FontWeight.bold,
                         ),
                       ),

@@ -13,6 +13,7 @@ import 'screens/matches_screen.dart';
 import 'services/auth_service.dart';
 import 'services/supabase_service.dart';
 import 'utils/supabase_config.dart' as supabase_config;
+import 'utils/themes.dart'; // Import our new themes
 import 'package:flutter/foundation.dart';
 
 void main() async {
@@ -107,9 +108,7 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Tinder for Restaurants',
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-      ),
+      theme: AppTheme.darkTheme, // Use our new dark theme with blue accent colors
       initialRoute: _isLoading 
           ? '/splash' 
           : (_isLoggedIn 

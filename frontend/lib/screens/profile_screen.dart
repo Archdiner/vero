@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../utils/config.dart' as utils;
+import '../utils/themes.dart'; // Import our theme system
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -135,7 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       shape: BoxShape.circle,
                       color: Colors.grey[800],
                       border: Border.all(
-                        color: const Color(0xFFFF6F40),
+                        color: AppColors.primaryBlue,
                         width: 2,
                       ),
                       image: _profilePicture != null && _profilePicture!.isNotEmpty
@@ -347,7 +348,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(width: 8),
           Switch(
-            activeColor: const Color(0xFFFF6F40),
+            activeColor: AppColors.primaryBlue,
             value: _isDarkTheme,
             onChanged: (val) {
               setState(() {
@@ -385,7 +386,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   // Right: person icon (gray)
                   IconButton(
-                    icon: const Icon(Icons.person_outline, color: Color(0xFFFF6F40), size: 28),
+                    icon: const Icon(Icons.person_outline, color: AppColors.primaryBlue, size: 28),
                     onPressed: () {
                       Navigator.pushReplacementNamed(context, '/profile');
                     },

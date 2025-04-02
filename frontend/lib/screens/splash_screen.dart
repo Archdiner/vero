@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../utils/themes.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -17,24 +18,24 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   // 6 particles with positions, colors, radii, delay, and pulsePhase.
   final List<_Particle> _particles = [
-    // Left side (orange)
+    // Left side (blue)
     _Particle(
       offset: Offset(-120, -30),
-      color: Colors.orange,
+      color: AppColors.primaryBlue,
       radius: 4,
       delay: 0.0,
       pulsePhase: 0.0,
     ),
     _Particle(
       offset: Offset(-100, 0),
-      color: Colors.orangeAccent,
+      color: AppColors.primaryLightBlue,
       radius: 5,
       delay: 0.15,
       pulsePhase: 0.2,
     ),
     _Particle(
       offset: Offset(-125, 30),
-      color: Colors.orange,
+      color: AppColors.primaryBlue,
       radius: 3,
       delay: 0.3,
       pulsePhase: 0.4,
@@ -152,7 +153,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       Icon(
                         Icons.location_on,
                         size: 80,
-                        color: const Color(0xFFFF6F40), // Orange pin
+                        color: AppColors.primaryBlue, // Use the theme blue color
                       ),
                     ],
                   ),

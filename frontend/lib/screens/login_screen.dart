@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../utils/config.dart' as utils;
 import '../services/auth_service.dart';
+import '../utils/themes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -164,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6F40), // brand orange
+                      backgroundColor: AppColors.primaryBlue, // Use theme blue color
                       foregroundColor: Colors.white, // text color
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -231,10 +232,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.pushReplacementNamed(context, '/register');
                       },
-                      child: const Text(
+                      child: Text(
                         "Register",
                         style: TextStyle(
-                          color: Color(0xFFFF6F40),
+                          color: AppColors.primaryBlue, // Use theme blue color
                           fontWeight: FontWeight.bold,
                         ),
                       ),
