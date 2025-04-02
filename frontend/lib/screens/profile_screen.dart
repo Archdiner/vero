@@ -363,34 +363,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildBottomNavBar() {
     return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // Left: Search icon (white/grey) -> navigate to SwipeScreen.
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.white54),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/swipe');
-            },
-          ),
-          // Center: More icon (gray) – placeholder.
-          IconButton(
-            icon: const Icon(Icons.more_horiz, color: Colors.white54),
-            onPressed: () {
-              // Handle center action if needed.
-            },
-          ),
-          // Right: Profile icon (orange) – already on ProfileScreen.
-          IconButton(
-            icon: const Icon(Icons.person_outline, color: Color(0xFFFF6F40)),
-            onPressed: () {
-              // Already on profile screen.
-            },
-          ),
-        ],
-      ),
-    );
+              color: Colors.transparent,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Left: search icon (orange) to indicate current screen
+                  IconButton(
+                    icon: const Icon(Icons.search, color: Colors.white54, size: 28),
+                    onPressed: () {
+                      // Already on search screen
+                    },
+                  ),
+                  // Center: chat icon
+                  IconButton(
+                    icon: const Icon(Icons.chat_bubble_outline, color: Colors.white54, size: 26),
+                    onPressed: () {
+                      // Navigate to matches screen
+                      Navigator.pushReplacementNamed(context, '/matches');
+                    },
+                  ),
+                  // Right: person icon (gray)
+                  IconButton(
+                    icon: const Icon(Icons.person_outline, color: Color(0xFFFF6F40), size: 28),
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/profile');
+                    },
+                  ),
+                ],
+              ),
+            );
   }
 }
