@@ -14,7 +14,6 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   // Controllers for the text fields
   final TextEditingController fullNameController = TextEditingController();
-  final TextEditingController userNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController verifyPasswordController = TextEditingController();
@@ -23,22 +22,82 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureVerifyPassword = true;
 
+  // Email validation regex pattern
+  final RegExp _emailRegExp = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    caseSensitive: false,
+  );
+
+  // Password validation: at least 8 characters with at least one letter and one number
+  final RegExp _passwordRegExp = RegExp(
+    r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$',
+  );
+
+  String? _validateEmail(String email) {
+    if (email.isEmpty) {
+      return 'Email is required';
+    }
+    if (!_emailRegExp.hasMatch(email)) {
+      return 'Please enter a valid email address';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String password) {
+    if (password.isEmpty) {
+      return 'Password is required';
+    }
+    if (!_passwordRegExp.hasMatch(password)) {
+      return 'Password must be at least 8 characters with at least one letter and one number';
+    }
+    return null;
+  }
+
+  String? _validateFullName(String fullName) {
+    if (fullName.isEmpty) {
+      return 'Full name is required';
+    }
+    if (fullName.length < 2) {
+      return 'Full name must be at least 2 characters';
+    }
+    return null;
+  }
+
   Future<void> register() async {
-    // Check if passwords match
-    if (passwordController.text != verifyPasswordController.text) {
+    // Validate email
+    final emailError = _validateEmail(emailController.text);
+    if (emailError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords do not match")),
+        SnackBar(content: Text(emailError), backgroundColor: Colors.red),
       );
       return;
     }
 
-    // Basic validation
-    if (emailController.text.isEmpty || 
-        passwordController.text.isEmpty || 
-        fullNameController.text.isEmpty || 
-        userNameController.text.isEmpty) {
+    // Validate password
+    final passwordError = _validatePassword(passwordController.text);
+    if (passwordError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill in all fields")),
+        SnackBar(content: Text(passwordError), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // Validate full name
+    final fullNameError = _validateFullName(fullNameController.text);
+    if (fullNameError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(fullNameError), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // Check if passwords match
+    if (passwordController.text != verifyPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Passwords do not match"),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -110,7 +169,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     // Dispose controllers when the widget is removed from the widget tree
     fullNameController.dispose();
-    userNameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     verifyPasswordController.dispose();
@@ -152,47 +210,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Row for Full Name and User Name
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: fullNameController,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Full Name',
-                          labelStyle: const TextStyle(color: Colors.white70),
-                          hintText: 'Write here',
-                          hintStyle: const TextStyle(color: Colors.grey),
-                          filled: true,
-                          fillColor: Colors.grey[900],
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide.none,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
+                // Full Name field
+                TextField(
+                  controller: fullNameController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Full Name',
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    hintText: 'Write here',
+                    hintStyle: const TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Colors.grey[900],
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextField(
-                        controller: userNameController,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'User Name',
-                          labelStyle: const TextStyle(color: Colors.white70),
-                          hintText: 'Write here',
-                          hintStyle: const TextStyle(color: Colors.grey),
-                          filled: true,
-                          fillColor: Colors.grey[900],
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide.none,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
                 const SizedBox(height: 16),
 
