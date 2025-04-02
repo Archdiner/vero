@@ -53,8 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final requestBody = {
         "email": emailController.text.trim(),
         "password": passwordController.text,
-        "fullname": fullNameController.text.trim(),
-        "username": userNameController.text.trim(),
+        "fullname": fullNameController.text.trim()
       };
 
       final response = await http.post(

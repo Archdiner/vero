@@ -550,19 +550,11 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             detail="User with this email already exists"
         )
     
-    existing_user = db.query(User).filter(User.username == user_data.username).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this username already exists"
-        )
-
     # Create new user
     new_user = User(
         email=user_data.email,
         hashed_password=hash_password(user_data.password),
-        fullname = user_data.fullname,
-        username = user_data.username
+        fullname = user_data.fullname
     )
     db.add(new_user)
     db.commit()
@@ -643,7 +635,6 @@ def get_profile(Authorization: str = Header(None), db: Session = Depends(get_db)
         "id": user.id,
         "email": user.email,
         "fullname": user.fullname,
-        "username": user.username,
         "profile_picture": user.profile_picture,
         "instagram": user.instagram,
         "university": user.university,
@@ -697,7 +688,6 @@ def get_auth_profile(Authorization: str = Header(None), db: Session = Depends(ge
         "id": user.id,
         "email": user.email,
         "fullname": user.fullname,
-        "username": user.username,
         "profile_picture": user.profile_picture,
         "instagram": user.instagram,
         "university": user.university,
@@ -752,7 +742,7 @@ def get_user_name(Authorization: str = Header(None), db: Session = Depends(get_d
             )
 
         # Split the fullname and get the first name
-        first_name = user.fullname.split()[0] if user.fullname else user.username
+        first_name = user.fullname.split()[0]
         return {"first_name": first_name}
 
     except Exception:
@@ -951,7 +941,6 @@ def get_user_profile(
     user_data = {
         "id": requested_user.id,
         "fullname": requested_user.fullname,
-        "username": requested_user.username,
         "profile_picture": requested_user.profile_picture,
         "instagram": requested_user.instagram,
         "university": requested_user.university,
