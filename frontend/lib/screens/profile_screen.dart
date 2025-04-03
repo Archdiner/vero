@@ -195,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icons.person_outline,
             title: 'Personal information',
             onTap: () {
-              // Navigate to personal info screen
+              Navigator.pushReplacementNamed(context, '/update_profile');
             },
           ),
           _buildSettingsItem(

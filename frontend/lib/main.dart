@@ -10,6 +10,7 @@ import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/matches_screen.dart';
+import 'screens/update_profile_screen.dart';
 import 'services/auth_service.dart';
 import 'services/supabase_service.dart';
 import 'utils/supabase_config.dart' as supabase_config;
@@ -124,6 +125,7 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
         '/onboarding': (context) => OnboardingScreen(),
+        '/update_profile': (context) => UpdateProfileScreen()
       },
       onGenerateRoute: (RouteSettings settings) {
         if (settings.name == '/swipe') {

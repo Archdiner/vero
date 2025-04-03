@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
 from db import get_db, engine
 from models import User, RoommateMatch, MatchStatus, Base, UserPreferences
-from schemas import UserCreate, UserLogin, UserResponse, Token, UserOnboarding
+from schemas import UserCreate, UserLogin, UserResponse, Token, UserOnboarding, UserProfileUpdate
 from utils.auth_utils import hash_password, verify_password, create_access_token, decode_access_token
 from utils.match_utils import compute_compatibility_score, update_matches, update_user_preferences
 import jwt
@@ -644,6 +644,75 @@ def get_profile(Authorization: str = Header(None), db: Session = Depends(get_db)
         "year_of_study": user.year_of_study,
         "bio": user.bio
     }
+
+@app.post("/update_profile")
+def update_profile(
+    update_data: UserProfileUpdate,
+    Authorization: str = Header(None),
+    db: Session = Depends(get_db)
+):
+    # Validate the token
+    if not Authorization or not Authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid token"
+        )
+    token = Authorization.split("Bearer ")[1]
+    try:
+        payload = decode_access_token(token)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired"
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload"
+        )
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Update fields if provided; since they're optional, if nothing is provided, nothing is updated.
+    if update_data.fullname is not None:
+        user.fullname = update_data.fullname
+    if update_data.email is not None:
+        user.email = update_data.email
+    
+    # Handle password update if new_password is provided
+    if update_data.new_password is not None:
+        if not update_data.old_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Old password is required to update password"
+            )
+        # Verify the old password
+        if not verify_password(update_data.old_password, user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Old password is incorrect"
+            )
+        # Update the password (hashing the new password)
+        user.hashed_password = hash_password(update_data.new_password)
+    
+    db.commit()
+    db.refresh(user)
+    
+    return {"message": "Profile updated successfully"}
+
+
 
 @app.get("/auth/profile")
 def get_auth_profile(Authorization: str = Header(None), db: Session = Depends(get_db)):
