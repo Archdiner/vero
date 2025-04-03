@@ -18,6 +18,12 @@ class UserResponse(BaseModel):
     class Config:
         orm_mode = True
 
+class UserProfileUpdate(BaseModel):
+    fullname: Optional[str] = None
+    email: Optional[EmailStr] = None
+    old_password: Optional[str] = None
+    new_password: Optional[str] = None
+
 class Token(BaseModel):
     access_token: str
     token_type: str
