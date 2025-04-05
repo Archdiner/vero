@@ -21,6 +21,12 @@ class UserResponse(BaseModel):
 class UserProfileUpdate(BaseModel):
     fullname: Optional[str] = None
     email: Optional[EmailStr] = None
+    age: Optional[int] = None
+    year_of_study: Optional[int] = None
+    instagram: Optional[str] = None
+    snapchat: Optional[str] = None
+    phone_number: Optional[str] = None
+    gender: Optional[str] = None
     old_password: Optional[str] = None
     new_password: Optional[str] = None
 
