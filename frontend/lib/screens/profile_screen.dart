@@ -195,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icons.person_outline,
             title: 'Personal information',
             onTap: () {
-              Navigator.pushReplacementNamed(context, '/update_profile');
+              Navigator.pushNamed(context, '/update_profile');
             },
           ),
           _buildSettingsItem(
@@ -373,7 +373,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   IconButton(
                     icon: const Icon(Icons.search, color: Colors.white54, size: 28),
                     onPressed: () {
-                      // Already on search screen
+                      Navigator.pushReplacementNamed(context, '/swipe');
                     },
                   ),
                   // Center: chat icon
@@ -388,7 +388,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   IconButton(
                     icon: const Icon(Icons.person_outline, color: AppColors.primaryBlue, size: 28),
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/profile');
+                      // Already on profile screen
                     },
                   ),
                 ],

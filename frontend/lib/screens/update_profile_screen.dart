@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../utils/config.dart' as utils;
-import '../utils/themes.dart';
+import '../utils/themes.dart'; // Import your theme file
 
 class UpdateProfileScreen extends StatefulWidget {
   const UpdateProfileScreen({Key? key}) : super(key: key);
@@ -60,7 +60,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   }
 
   Future<void> updateProfile() async {
-    // If new password is provided, validate that old password is filled and that new password equals confirmation.
+    // If new password is provided, validate that old password is filled and that new passwords match.
     if (newPasswordController.text.isNotEmpty) {
       if (oldPasswordController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -112,17 +112,16 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Profile updated successfully")),
         );
-        // Optionally navigate away or refresh data.
       } else {
         final data = json.decode(response.body);
         final errorMsg = data['detail'] ?? 'Update failed';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
+          SnackBar(content: Text(errorMsg), backgroundColor: AppColors.error),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${e.toString()}"), backgroundColor: Colors.red),
+        SnackBar(content: Text("Error: ${e.toString()}"), backgroundColor: AppColors.error),
       );
     } finally {
       setState(() {
@@ -147,10 +146,16 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        // Use Cupertino's back button style with "Settings" label.
-        leading: CupertinoNavigationBarBackButton(
-          previousPageTitle: "Settings",
-          onPressed: () => Navigator.pushReplacementNamed(context, '/profile'),
+        leadingWidth: 60,
+        leading: TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(
+            "Back",
+            style: TextStyle(
+              color: AppColors.primaryBlue,
+              fontSize: 16,
+            ),
+          ),
         ),
         title: const Text("Update Profile", style: TextStyle(color: AppColors.textPrimary)),
         elevation: 0,
@@ -169,9 +174,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   labelText: 'Full Name',
                   labelStyle: const TextStyle(color: AppColors.textSecondary),
                   hintText: 'Enter your full name',
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintStyle: const TextStyle(color: AppColors.textDisabled),
                   filled: true,
-                  fillColor: Colors.grey[900],
+                  fillColor: AppColors.inputBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -188,9 +193,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   labelText: 'Email',
                   labelStyle: const TextStyle(color: AppColors.textSecondary),
                   hintText: 'Enter your email',
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintStyle: const TextStyle(color: AppColors.textDisabled),
                   filled: true,
-                  fillColor: Colors.grey[900],
+                  fillColor: AppColors.inputBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -207,9 +212,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   labelText: 'Old Password',
                   labelStyle: const TextStyle(color: AppColors.textSecondary),
                   hintText: 'Enter your old password',
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintStyle: const TextStyle(color: AppColors.textDisabled),
                   filled: true,
-                  fillColor: Colors.grey[900],
+                  fillColor: AppColors.inputBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -226,9 +231,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   labelText: 'New Password',
                   labelStyle: const TextStyle(color: AppColors.textSecondary),
                   hintText: 'Enter your new password',
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintStyle: const TextStyle(color: AppColors.textDisabled),
                   filled: true,
-                  fillColor: Colors.grey[900],
+                  fillColor: AppColors.inputBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -245,9 +250,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   labelText: 'Confirm New Password',
                   labelStyle: const TextStyle(color: AppColors.textSecondary),
                   hintText: 'Re-enter your new password',
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintStyle: const TextStyle(color: AppColors.textDisabled),
                   filled: true,
-                  fillColor: Colors.grey[900],
+                  fillColor: AppColors.inputBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -274,6 +279,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                 ),
