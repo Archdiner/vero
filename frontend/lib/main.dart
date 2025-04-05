@@ -16,11 +16,33 @@ import 'services/supabase_service.dart';
 import 'utils/supabase_config.dart' as supabase_config;
 import 'utils/themes.dart'; // Import our new themes
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() async {
+void main() {
+  // Initialize Flutter bindings synchronously - this is required
+  // to avoid the white screen on startup
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Supabase
+  // First show a black screen to avoid white flash
+  runApp(
+    MaterialApp(
+      home: Container(color: Colors.black),
+      debugShowCheckedModeBanner: false,
+    )
+  );
+  
+  // Then on the next frame, start the actual app - avoids white screen flash
+  Future.microtask(() {
+    // Start the app immediately 
+    runApp(const TinderForRestaurants());
+
+    // Initialize Supabase in the background after app has started
+    _initializeSupabaseInBackground();
+  });
+}
+
+// Keep Supabase initialization completely separate and in background
+Future<void> _initializeSupabaseInBackground() async {
   try {
     final supabaseService = SupabaseService();
     await supabaseService.initialize(
@@ -35,8 +57,6 @@ void main() async {
       print('Error initializing Supabase: $e');
     }
   }
-  
-  runApp(const TinderForRestaurants());
 }
 
 class TinderForRestaurants extends StatefulWidget {
@@ -47,75 +67,35 @@ class TinderForRestaurants extends StatefulWidget {
 }
 
 class _TinderForRestaurantsState extends State<TinderForRestaurants> {
-  final AuthService _authService = AuthService();
-  bool _isLoading = true;
-  bool _isLoggedIn = false;
-  bool _hasCompletedOnboarding = false;
-
+  // Use a navigator key to better control transitions
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  
   @override
   void initState() {
     super.initState();
-    print('App started, checking login status...');
-    _checkLoginStatus();
-  }
-
-  Future<void> _checkLoginStatus() async {
-    try {
-      print('Checking login status...');
-      setState(() {
-        _isLoading = true;
-      });
-
-      final isLoggedIn = await _authService.isLoggedIn();
-      print('User is logged in: $isLoggedIn');
-      
-      if (!isLoggedIn) {
-        if (mounted) {
-          setState(() {
-            _isLoggedIn = false;
-            _hasCompletedOnboarding = false;
-            _isLoading = false;
-          });
-        }
-        return;
-      }
-      
-      // Only check onboarding status if the user is logged in
-      final hasCompletedOnboarding = await _authService.hasCompletedOnboarding();
-      print('Onboarding completed: $hasCompletedOnboarding');
-      
-      if (mounted) {
-        setState(() {
-          _isLoggedIn = isLoggedIn;
-          _hasCompletedOnboarding = hasCompletedOnboarding;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('Error checking login status: $e');
-      if (mounted) {
-        setState(() {
-          _isLoggedIn = false;
-          _hasCompletedOnboarding = false;
-          _isLoading = false;
-        });
-      }
-    }
+    print('App started');
   }
 
   @override
   Widget build(BuildContext context) {
-    print('Building app with loading: $_isLoading, logged in: $_isLoggedIn, onboarding completed: $_hasCompletedOnboarding');
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Tinder for Restaurants',
-      theme: AppTheme.darkTheme, // Use our new dark theme with blue accent colors
-      initialRoute: _isLoading 
-          ? '/splash' 
-          : (_isLoggedIn 
-              ? '/swipe'  // Always go to swipe screen if logged in
-              : '/auth'),
-      // Remove '/swipe' from here so onGenerateRoute handles it.
+      theme: AppTheme.darkTheme, // Use our dark theme with blue accent colors
+      
+      // Use navigator key to better control transitions
+      navigatorKey: _navigatorKey,
+      
+      // Always start with splash screen - it handles auth checking
+      initialRoute: '/splash',
+      
+      // Performance optimizations to avoid white screen
+      themeMode: ThemeMode.dark, // Force dark mode for faster initial render
+      
+      // Additional settings to speed up initial render
+      color: Colors.black, // Fill background color immediately
+      
+      // Routes configuration
       routes: {
         '/splash': (context) => SplashScreen(),
         '/auth': (context) => AuthScreen(),
@@ -127,6 +107,8 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
         '/onboarding': (context) => OnboardingScreen(),
         '/update_profile': (context) => UpdateProfileScreen()
       },
+      
+      // Route generation with no transitions for faster navigation
       onGenerateRoute: (RouteSettings settings) {
         if (settings.name == '/swipe') {
           return PageRouteBuilder(

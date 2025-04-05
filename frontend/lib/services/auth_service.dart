@@ -63,7 +63,7 @@ class AuthService {
   }
 
   // Check if user is logged in
-  Future<bool> isLoggedIn() async {
+  Future<bool> isLoggedIn({bool skipTokenVerification = false}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_tokenKey);
@@ -79,6 +79,12 @@ class AuthService {
         print('Missing required login data');
         await logout();
         return false;
+      }
+
+      // Skip token verification if requested (for faster startup)
+      if (skipTokenVerification) {
+        print('Skipping token verification (using cached credentials)');
+        return true;
       }
 
       // Verify token with backend
