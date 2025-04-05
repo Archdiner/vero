@@ -685,26 +685,37 @@ def update_profile(
             detail="User not found"
         )
     
-    # Update fields if provided; since they're optional, if nothing is provided, nothing is updated.
+    # Update profile fields if provided.
     if update_data.fullname is not None:
         user.fullname = update_data.fullname
     if update_data.email is not None:
         user.email = update_data.email
+    if update_data.age is not None:
+        user.age = update_data.age
+    if update_data.year_of_study is not None:
+        user.year_of_study = update_data.year_of_study
+    if update_data.instagram is not None:
+        user.instagram = update_data.instagram
+    if update_data.snapchat is not None:
+        user.snapchat = update_data.snapchat
+    if update_data.phone_number is not None:
+        user.phone_number = update_data.phone_number
+    if update_data.gender is not None:
+        # Optionally, you could enforce lowercase to match your enum values.
+        user.gender = update_data.gender.lower()
     
-    # Handle password update if new_password is provided
+    # Handle password update if new_password is provided.
     if update_data.new_password is not None:
         if not update_data.old_password:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Old password is required to update password"
             )
-        # Verify the old password
         if not verify_password(update_data.old_password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Old password is incorrect"
             )
-        # Update the password (hashing the new password)
         user.hashed_password = hash_password(update_data.new_password)
     
     db.commit()

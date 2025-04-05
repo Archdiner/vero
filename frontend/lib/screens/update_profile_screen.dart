@@ -16,10 +16,18 @@ class UpdateProfileScreen extends StatefulWidget {
 class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   final TextEditingController fullNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
+  final TextEditingController ageController = TextEditingController();
+  final TextEditingController yearOfStudyController = TextEditingController();
+  final TextEditingController instagramController = TextEditingController();
+  final TextEditingController snapController = TextEditingController();
+  final TextEditingController phoneNumberController = TextEditingController();
+  
   final TextEditingController oldPasswordController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmNewPasswordController = TextEditingController();
-
+  
+  String? selectedGender; // For gender dropdown
+  
   bool _isLoading = false;
 
   @override
@@ -46,6 +54,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
         setState(() {
           fullNameController.text = data['fullname'] ?? '';
           emailController.text = data['email'] ?? '';
+          ageController.text = data['age'] != null ? data['age'].toString() : '';
+          yearOfStudyController.text = data['year_of_study'] != null ? data['year_of_study'].toString() : '';
+          instagramController.text = data['instagram'] ?? '';
+          snapController.text = data['snapchat'] ?? '';
+          phoneNumberController.text = data['phone_number'] ?? '';
+          selectedGender = data['gender'] ?? null;
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -60,7 +74,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   }
 
   Future<void> updateProfile() async {
-    // If new password is provided, validate that old password is filled and that new passwords match.
+    // Validate password change fields if new password is provided.
     if (newPasswordController.text.isNotEmpty) {
       if (oldPasswordController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -93,6 +107,24 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       "email": emailController.text.trim(),
     };
 
+    if (ageController.text.isNotEmpty) {
+      requestBody["age"] = int.tryParse(ageController.text.trim());
+    }
+    if (yearOfStudyController.text.isNotEmpty) {
+      requestBody["year_of_study"] = int.tryParse(yearOfStudyController.text.trim());
+    }
+    if (instagramController.text.isNotEmpty) {
+      requestBody["instagram"] = instagramController.text.trim();
+    }
+    if (snapController.text.isNotEmpty) {
+      requestBody["snapchat"] = snapController.text.trim();
+    }
+    if (phoneNumberController.text.isNotEmpty) {
+      requestBody["phone_number"] = phoneNumberController.text.trim();
+    }
+    if (selectedGender != null && selectedGender!.isNotEmpty) {
+      requestBody["gender"] = selectedGender;
+    }
     if (newPasswordController.text.isNotEmpty) {
       requestBody["old_password"] = oldPasswordController.text;
       requestBody["new_password"] = newPasswordController.text;
@@ -134,6 +166,11 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   void dispose() {
     fullNameController.dispose();
     emailController.dispose();
+    ageController.dispose();
+    yearOfStudyController.dispose();
+    instagramController.dispose();
+    snapController.dispose();
+    phoneNumberController.dispose();
     oldPasswordController.dispose();
     newPasswordController.dispose();
     confirmNewPasswordController.dispose();
@@ -146,7 +183,8 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        leadingWidth: 60,
+        leadingWidth: 80,
+        // Do not change this button; leave it as is.
         leading: TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
@@ -203,6 +241,145 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              // Row for Age and Gender
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: ageController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Age',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        hintText: 'Enter your age',
+                        hintStyle: const TextStyle(color: AppColors.textDisabled),
+                        filled: true,
+                        fillColor: AppColors.inputBackground,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: selectedGender,
+                      items: const [
+                        DropdownMenuItem(value: 'male', child: Text('Male')),
+                        DropdownMenuItem(value: 'female', child: Text('Female')),
+                        DropdownMenuItem(value: 'other', child: Text('Other')),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          selectedGender = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Gender',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        filled: true,
+                        fillColor: AppColors.inputBackground,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Row for Year of Study and Phone Number
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: yearOfStudyController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Year of Study',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        hintText: 'Enter your year of study',
+                        hintStyle: const TextStyle(color: AppColors.textDisabled),
+                        filled: true,
+                        fillColor: AppColors.inputBackground,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextField(
+                      controller: phoneNumberController,
+                      keyboardType: TextInputType.phone,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Phone Number',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        hintText: 'Enter your phone number',
+                        hintStyle: const TextStyle(color: AppColors.textDisabled),
+                        filled: true,
+                        fillColor: AppColors.inputBackground,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Row for Instagram and Snapchat
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: instagramController,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Instagram',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        hintText: 'Enter your Instagram username',
+                        hintStyle: const TextStyle(color: AppColors.textDisabled),
+                        filled: true,
+                        fillColor: AppColors.inputBackground,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextField(
+                      controller: snapController,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Snapchat',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        hintText: 'Enter your Snapchat username',
+                        hintStyle: const TextStyle(color: AppColors.textDisabled),
+                        filled: true,
+                        fillColor: AppColors.inputBackground,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               // Old Password field
               TextField(
                 controller: oldPasswordController,
@@ -222,42 +399,49 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              // New Password field
-              TextField(
-                controller: newPasswordController,
-                obscureText: true,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'New Password',
-                  labelStyle: const TextStyle(color: AppColors.textSecondary),
-                  hintText: 'Enter your new password',
-                  hintStyle: const TextStyle(color: AppColors.textDisabled),
-                  filled: true,
-                  fillColor: AppColors.inputBackground,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+              // Row for New Password and Confirm New Password fields
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: newPasswordController,
+                      obscureText: true,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'New Password',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        hintText: 'Enter new password',
+                        hintStyle: const TextStyle(color: AppColors.textDisabled),
+                        filled: true,
+                        fillColor: AppColors.inputBackground,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Confirm New Password field
-              TextField(
-                controller: confirmNewPasswordController,
-                obscureText: true,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Confirm New Password',
-                  labelStyle: const TextStyle(color: AppColors.textSecondary),
-                  hintText: 'Re-enter your new password',
-                  hintStyle: const TextStyle(color: AppColors.textDisabled),
-                  filled: true,
-                  fillColor: AppColors.inputBackground,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextField(
+                      controller: confirmNewPasswordController,
+                      obscureText: true,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Confirm New Password',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        hintText: 'Re-enter new password',
+                        hintStyle: const TextStyle(color: AppColors.textDisabled),
+                        filled: true,
+                        fillColor: AppColors.inputBackground,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
               const SizedBox(height: 32),
               // Save Changes button
