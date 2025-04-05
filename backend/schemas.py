@@ -71,3 +71,19 @@ class UserOnboarding(BaseModel):
     room_type_preference: Optional[str] = None
     religious_preference: Optional[str] = None
     dietary_restrictions: Optional[str] = None
+
+class PreferencesUpdate(BaseModel):
+    budget_range: Optional[int] = None 
+    move_in_date: Optional[datetime] = None
+    smoking_preference: Optional[bool] = None
+    drinking_preference: Optional[bool] = None
+    pet_preference: Optional[bool] = None
+    music_preference: Optional[bool] = None
+    cleanliness_level: Optional[int] = None
+    social_preference: Optional[str] = None
+    sleep_time: Optional[str] = None
+    wake_time: Optional[str] = None
+    guest_policy: Optional[str] = None
+    room_type_preference: Optional[str] = None
+    religious_preference: Optional[str] = None
+    dietary_restrictions: Optional[str] = None

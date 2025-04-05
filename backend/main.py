@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
 from db import get_db, engine
 from models import User, RoommateMatch, MatchStatus, Base, UserPreferences
-from schemas import UserCreate, UserLogin, UserResponse, Token, UserOnboarding, UserProfileUpdate
+from schemas import UserCreate, UserLogin, UserResponse, Token, UserOnboarding, UserProfileUpdate, PreferencesUpdate
 from utils.auth_utils import hash_password, verify_password, create_access_token, decode_access_token
 from utils.match_utils import compute_compatibility_score, update_matches, update_user_preferences
 import jwt
@@ -630,20 +630,8 @@ def get_profile(Authorization: str = Header(None), db: Session = Depends(get_db)
             detail="User not found"
         )
 
-    # Return expanded user information including profile picture
-    return {
-        "id": user.id,
-        "email": user.email,
-        "fullname": user.fullname,
-        "profile_picture": user.profile_picture,
-        "instagram": user.instagram,
-        "university": user.university,
-        "age": user.age,
-        "gender": user.gender.value if user.gender else None,
-        "major": user.major,
-        "year_of_study": user.year_of_study,
-        "bio": user.bio
-    }
+    # Return user information
+    return user
 
 @app.post("/update_profile")
 def update_profile(
@@ -720,9 +708,79 @@ def update_profile(
     
     db.commit()
     db.refresh(user)
+
+    update_matches(user_id, db)
     
     return {"message": "Profile updated successfully"}
 
+
+@app.post("/update_preferences")
+def update_preferences(
+    pref_update: PreferencesUpdate,
+    Authorization: str = Header(None),
+    db: Session = Depends(get_db)
+):
+    # Validate token
+    if not Authorization or not Authorization.startswith("Bearer "):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing or invalid token")
+    token = Authorization.split("Bearer ")[1]
+    try:
+        payload = decode_access_token(token)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    # Update preferences if provided
+    if pref_update.budget_range is not None:
+        user.budget_range = pref_update.budget_range
+    if pref_update.move_in_date is not None:
+        user.move_in_date = pref_update.move_in_date
+    if pref_update.smoking_preference is not None:
+        user.smoking_preference = pref_update.smoking_preference
+    if pref_update.drinking_preference is not None:
+        user.drinking_preference = pref_update.drinking_preference
+    if pref_update.pet_preference is not None:
+        user.pet_preference = pref_update.pet_preference
+    if pref_update.music_preference is not None:
+        user.music_preference = pref_update.music_preference
+    if pref_update.cleanliness_level is not None:
+        user.cleanliness_level = pref_update.cleanliness_level
+    if pref_update.social_preference is not None:
+        user.social_preference = pref_update.social_preference.lower()
+    if pref_update.sleep_time is not None:
+        try:
+            user.sleep_time = datetime.strptime(pref_update.sleep_time, "%H:%M").time()
+        except ValueError:
+            # If the input is in HH:MM:SS format, take only the first 5 characters.
+            try:
+                user.sleep_time = datetime.strptime(pref_update.sleep_time[:5], "%H:%M").time()
+            except Exception:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid sleep time format")
+
+    if pref_update.guest_policy is not None:
+        user.guest_policy = pref_update.guest_policy
+    if pref_update.room_type_preference is not None:
+        user.room_type_preference = pref_update.room_type_preference
+    if pref_update.religious_preference is not None:
+        user.religious_preference = pref_update.religious_preference
+    if pref_update.dietary_restrictions is not None:
+        user.dietary_restrictions = pref_update.dietary_restrictions
+
+    db.commit()
+    db.refresh(user)
+
+    update_matches(user_id, db)
+    
+    return {"message": "Preferences updated successfully"}
 
 
 @app.get("/auth/profile")
