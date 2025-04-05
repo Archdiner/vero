@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../utils/themes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -15,6 +16,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   late AnimationController _bubbleController;
   late AnimationController _pulseController;
   final AuthService _authService = AuthService();
+  bool _contentVisible = false; // Track if content is visible
 
   // 6 particles with positions, colors, radii, delay, and pulsePhase.
   final List<_Particle> _particles = [
@@ -68,53 +70,74 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   void initState() {
     super.initState();
 
-    // 2s bubble-up animation
+    // Make content visible immediately
+    setState(() {
+      _contentVisible = true;
+    });
+
+    // Start animations with shorter durations 
     _bubbleController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 1200),
     )..forward();
 
-    // Continuous pulse animation (e.g., 2s cycle)
+    // Continuous pulse animation
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
 
-    // Check login status and navigate
-    _checkLoginAndNavigate();
+    // Start login check as soon as we've rendered the first frame
+    _checkLoginAfterFirstFrame();
+  }
+
+  // Use this method to ensure the splash screen is visible before checking login
+  void _checkLoginAfterFirstFrame() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkLoginAndNavigate();
+    });
   }
 
   Future<void> _checkLoginAndNavigate() async {
     try {
-      // Wait for the splash animation
-      await Future.delayed(const Duration(milliseconds: 2500));
+      // Show splash for a minimal time (800ms)
+      await Future.delayed(const Duration(milliseconds: 800));
       
       if (!mounted) return;
 
-      final isLoggedIn = await _authService.isLoggedIn();
-      print('Splash screen: Login status checked, isLoggedIn: $isLoggedIn');
+      // Simple token check
+      final prefs = await SharedPreferences.getInstance();
+      final hasToken = prefs.containsKey('access_token');
       
       if (!mounted) return;
 
-      if (isLoggedIn) {
-        // Check if user has completed onboarding
-        final hasCompletedOnboarding = await _authService.hasCompletedOnboarding();
-        print('Splash screen: Onboarding completed: $hasCompletedOnboarding');
-        
-        if (hasCompletedOnboarding) {
-          Navigator.pushReplacementNamed(context, '/swipe');
-        } else {
-          Navigator.pushReplacementNamed(context, '/onboarding');
-        }
+      // Navigate immediately based on token
+      if (hasToken) {
+        Navigator.pushReplacementNamed(context, '/swipe');
+        _verifyTokenInBackground();
       } else {
         Navigator.pushReplacementNamed(context, '/auth');
       }
     } catch (e) {
-      print('Error checking login status in splash screen: $e');
+      print('Error in splash screen: $e');
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/auth');
       }
     }
+  }
+  
+  // Verify token validity after user is already in the app
+  void _verifyTokenInBackground() {
+    Future.microtask(() async {
+      try {
+        final isValid = await _authService.isLoggedIn(skipTokenVerification: false);
+        if (!isValid && mounted) {
+          Navigator.pushReplacementNamed(context, '/auth');
+        }
+      } catch (e) {
+        print('Background token verification error: $e');
+      }
+    });
   }
 
   @override
@@ -126,51 +149,53 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
+    // Return a very simple widget structure that renders instantly
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Particles
-          for (final p in _particles)
-            _AnimatedParticle(
-              particle: p,
-              bubbleController: _bubbleController,
-              pulseController: _pulseController,
-            ),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Background color (renders instantly)
+            Container(color: Colors.black),
+            
+            // Particles - only show if content is visible
+            if (_contentVisible)
+              for (final p in _particles)
+                _AnimatedParticle(
+                  particle: p,
+                  bubbleController: _bubbleController,
+                  pulseController: _pulseController,
+                ),
 
-          // Centered Logo + "Vero"
-          Align(
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 80,
-                  height: 80,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Icon(
-                        Icons.location_on,
-                        size: 80,
-                        color: AppColors.primaryBlue, // Use the theme blue color
-                      ),
-                    ],
+            // Centered Logo + "Vero" - always show immediately
+            Align(
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 80,
+                    height: 80,
+                    child: Icon(
+                      Icons.location_on,
+                      size: 80,
+                      color: AppColors.primaryBlue,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Vero',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Vero',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -278,3 +303,4 @@ class _AnimatedParticle extends StatelessWidget {
     );
   }
 }
+

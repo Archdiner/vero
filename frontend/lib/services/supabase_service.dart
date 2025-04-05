@@ -32,16 +32,19 @@ class SupabaseService {
       _initialized = true;
       print('Supabase initialized successfully');
       
-      // Ensure the storage bucket exists
-      await _ensureStorageBucketExists();
+      // Skip bucket creation entirely - it's not necessary for startup
+      // The bucket should be created by the backend team
     } catch (e) {
       print('Error initializing Supabase: $e');
-      rethrow;
+      // Don't rethrow, allow app to continue even if Supabase fails
+      // This prevents app from crashing if there's no internet
     }
   }
   
-  // Ensure that the profile images bucket exists
-  Future<void> _ensureStorageBucketExists() async {
+  // Only call this method when actually uploading an image
+  Future<void> ensureBucketExists() async {
+    if (!_initialized) return;
+    
     try {
       final bucketName = supabase_config.PROFILE_IMAGES_BUCKET;
       
@@ -65,7 +68,6 @@ class SupabaseService {
     } catch (e) {
       print('Error ensuring storage bucket exists: $e');
       // Don't rethrow, we want to continue even if this fails
-      // The bucket might already exist or be created by the server admin
     }
   }
 
@@ -84,11 +86,15 @@ class SupabaseService {
     required String userId,
   }) async {
     if (!_initialized) {
-      throw Exception('Supabase has not been initialized yet. Call initialize() first.');
+      print('Supabase not initialized, skipping upload');
+      return null;
     }
 
     try {
       print('Starting image upload to Supabase...');
+      
+      // Ensure bucket exists before upload
+      await ensureBucketExists();
       
       // Generate a unique name for the image
       final uuid = const Uuid();
