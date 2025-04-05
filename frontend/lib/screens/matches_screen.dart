@@ -34,14 +34,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
 
       final matches = await _roommateService.fetchMatches();
       
-      // Debug: Print the received matches data with preferences
-      for (var match in matches) {
-        print('Match data: ${match.fullName}, University: ${match.university}, Instagram: ${match.instagramUsername}, Score: ${match.compatibilityScore}');
-        print('Preferences data: Cleanliness: ${match.cleanlinessLevel}, SleepTime: ${match.sleepTime}, WakeTime: ${match.wakeTime}');
-        print('More preferences: Smoking: ${match.smokingPreference}, Drinking: ${match.drinkingPreference}, Pets: ${match.petPreference}');
-        print('Has any preferences: ${_hasAnyPreferences(match)}');
-      }
-      
       if (mounted) {
         setState(() {
           _matches = matches;
