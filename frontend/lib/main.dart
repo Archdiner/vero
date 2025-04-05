@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
@@ -15,34 +17,38 @@ import 'screens/update_preferences_screen.dart';
 import 'services/auth_service.dart';
 import 'services/supabase_service.dart';
 import 'utils/supabase_config.dart' as supabase_config;
-import 'utils/themes.dart'; // Import our new themes
-import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'utils/themes.dart'; // Provides AppTheme and AppColors
 
-void main() {
-  // Initialize Flutter bindings synchronously - this is required
-  // to avoid the white screen on startup
+/// Global theme notifier to switch between dark and light modes.
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.dark);
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // First show a black screen to avoid white flash
+
+  // Show a black screen initially to avoid a white flash.
   runApp(
     MaterialApp(
       home: Container(color: Colors.black),
       debugShowCheckedModeBanner: false,
-    )
+    ),
   );
-  
-  // Then on the next frame, start the actual app - avoids white screen flash
-  Future.microtask(() {
-    // Start the app immediately 
-    runApp(const TinderForRestaurants());
 
-    // Initialize Supabase in the background after app has started
+  // On the next microtask, load preferences and start the app.
+  Future.microtask(() async {
+    // Load saved theme preference.
+    final prefs = await SharedPreferences.getInstance();
+    bool isDark = prefs.getBool('isDarkTheme') ?? true;
+    themeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
+
+    // Initialize Supabase in the background.
     _initializeSupabaseInBackground();
+
+    // Run the main app.
+    runApp(const TinderForRestaurants());
   });
 }
 
-// Keep Supabase initialization completely separate and in background
+/// Initialize Supabase in the background.
 Future<void> _initializeSupabaseInBackground() async {
   try {
     final supabaseService = SupabaseService();
@@ -60,81 +66,65 @@ Future<void> _initializeSupabaseInBackground() async {
   }
 }
 
-class TinderForRestaurants extends StatefulWidget {
+class TinderForRestaurants extends StatelessWidget {
   const TinderForRestaurants({super.key});
 
   @override
-  _TinderForRestaurantsState createState() => _TinderForRestaurantsState();
-}
-
-class _TinderForRestaurantsState extends State<TinderForRestaurants> {
-  // Use a navigator key to better control transitions
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-  
-  @override
-  void initState() {
-    super.initState();
-    print('App started');
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Tinder for Restaurants',
-      theme: AppTheme.darkTheme, // Use our dark theme with blue accent colors
-      
-      // Use navigator key to better control transitions
-      navigatorKey: _navigatorKey,
-      
-      // Always start with splash screen - it handles auth checking
-      initialRoute: '/splash',
-      
-      // Performance optimizations to avoid white screen
-      themeMode: ThemeMode.dark, // Force dark mode for faster initial render
-      
-      // Additional settings to speed up initial render
-      color: Colors.black, // Fill background color immediately
-      
-      // Routes configuration
-      routes: {
-        '/splash': (context) => SplashScreen(),
-        '/auth': (context) => AuthScreen(),
-        '/home': (context) => HomeScreen(),
-        '/favourites': (context) => FavouritesScreen(),
-        '/details': (context) => RestaurantDetailsScreen(),
-        '/login': (context) => LoginScreen(),
-        '/register': (context) => RegisterScreen(),
-        '/onboarding': (context) => OnboardingScreen(),
-        '/update_profile': (context) => UpdateProfileScreen(),
-        '/update_preferences': (context) => UpdatePreferencesScreen()
-      },
-      
-      // Route generation with no transitions for faster navigation
-      onGenerateRoute: (RouteSettings settings) {
-        if (settings.name == '/swipe') {
-          return PageRouteBuilder(
-            settings: settings,
-            pageBuilder: (context, animation, secondaryAnimation) => SwipeScreen(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          );
-        } else if (settings.name == '/profile') {
-          return PageRouteBuilder(
-            settings: settings,
-            pageBuilder: (context, animation, secondaryAnimation) => ProfileScreen(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          );
-        } else if (settings.name == '/matches') {
-          return PageRouteBuilder(
-            settings: settings,
-            pageBuilder: (context, animation, secondaryAnimation) => MatchesScreen(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          );
-        }
-        return null; // For other routes, use default routing.
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentMode, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Tinder for Restaurants',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: currentMode,
+          initialRoute: '/splash',
+          routes: {
+            '/splash': (context) => SplashScreen(),
+            '/auth': (context) => AuthScreen(),
+            '/home': (context) => HomeScreen(),
+            '/favourites': (context) => FavouritesScreen(),
+            '/details': (context) => RestaurantDetailsScreen(),
+            '/login': (context) => LoginScreen(),
+            '/register': (context) => RegisterScreen(),
+            '/onboarding': (context) => OnboardingScreen(),
+            '/update_profile': (context) => UpdateProfileScreen(),
+            '/update_preferences': (context) => UpdatePreferencesScreen(),
+            '/matches': (context) => MatchesScreen(),
+            '/swipe': (context) => SwipeScreen(),
+            '/profile': (context) => ProfileScreen(),
+          },
+          onGenerateRoute: (RouteSettings settings) {
+            if (settings.name == '/swipe') {
+              return PageRouteBuilder(
+                settings: settings,
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    SwipeScreen(),
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
+              );
+            } else if (settings.name == '/profile') {
+              return PageRouteBuilder(
+                settings: settings,
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    ProfileScreen(),
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
+              );
+            } else if (settings.name == '/matches') {
+              return PageRouteBuilder(
+                settings: settings,
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    MatchesScreen(),
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
+              );
+            }
+            return null; // Use default routing for other routes.
+          },
+        );
       },
     );
   }
