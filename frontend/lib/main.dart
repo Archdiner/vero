@@ -33,7 +33,7 @@ Future<void> main() async {
     ),
   );
 
-  // On the next microtask, load preferences and start the app.
+  // On the next microtask, load preferences, initialize Supabase, and start the app.
   Future.microtask(() async {
     // Load saved theme preference.
     final prefs = await SharedPreferences.getInstance();
@@ -66,8 +66,24 @@ Future<void> _initializeSupabaseInBackground() async {
   }
 }
 
-class TinderForRestaurants extends StatelessWidget {
+class TinderForRestaurants extends StatefulWidget {
   const TinderForRestaurants({super.key});
+
+  @override
+  _TinderForRestaurantsState createState() => _TinderForRestaurantsState();
+}
+
+class _TinderForRestaurantsState extends State<TinderForRestaurants> {
+  // Navigator key for better control over transitions.
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (kDebugMode) {
+      print('App started');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +96,9 @@ class TinderForRestaurants extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: currentMode,
+          navigatorKey: _navigatorKey,
           initialRoute: '/splash',
+          color: Colors.black,
           routes: {
             '/splash': (context) => SplashScreen(),
             '/auth': (context) => AuthScreen(),
