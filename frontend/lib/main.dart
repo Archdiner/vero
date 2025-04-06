@@ -91,10 +91,7 @@ class TinderForRestaurants extends StatelessWidget {
             '/register': (context) => RegisterScreen(),
             '/onboarding': (context) => OnboardingScreen(),
             '/update_profile': (context) => UpdateProfileScreen(),
-            '/update_preferences': (context) => UpdatePreferencesScreen(),
-            '/matches': (context) => MatchesScreen(),
-            '/swipe': (context) => SwipeScreen(),
-            '/profile': (context) => ProfileScreen(),
+            '/update_preferences': (context) => UpdatePreferencesScreen()
           },
           onGenerateRoute: (RouteSettings settings) {
             if (settings.name == '/swipe') {
