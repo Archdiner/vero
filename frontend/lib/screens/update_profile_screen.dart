@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../utils/config.dart' as utils;
 import '../utils/themes.dart'; // Import your theme file
+import '../main.dart'; // For accessing global objects if needed
 
 class UpdateProfileScreen extends StatefulWidget {
   const UpdateProfileScreen({Key? key}) : super(key: key);
@@ -21,13 +22,13 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   final TextEditingController instagramController = TextEditingController();
   final TextEditingController snapController = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
-  
+
   final TextEditingController oldPasswordController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmNewPasswordController = TextEditingController();
-  
+
   String? selectedGender; // For gender dropdown
-  
+
   bool _isLoading = false;
 
   @override
@@ -179,23 +180,28 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: brightness == Brightness.dark ? Colors.black : Colors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: brightness == Brightness.dark ? Colors.black : AppColors.primaryBlue,
         leadingWidth: 80,
-        // Do not change this button; leave it as is.
+        // Back button: white in light mode, blue in dark mode.
         leading: TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
             "Back",
             style: TextStyle(
-              color: AppColors.primaryBlue,
+              color: brightness == Brightness.light ? Colors.white : AppColors.primaryBlue,
               fontSize: 16,
             ),
           ),
         ),
-        title: const Text("Update Profile", style: TextStyle(color: AppColors.textPrimary)),
+        title: const Text(
+          "Update Profile",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold,),
+        ),
         elevation: 0,
       ),
       body: SafeArea(
@@ -204,63 +210,31 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Full Name field
-              TextField(
+              _buildTextField(
                 controller: fullNameController,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Full Name',
-                  labelStyle: const TextStyle(color: AppColors.textSecondary),
-                  hintText: 'Enter your full name',
-                  hintStyle: const TextStyle(color: AppColors.textDisabled),
-                  filled: true,
-                  fillColor: AppColors.inputBackground,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
+                label: 'Full Name',
+                hint: 'Enter your full name',
+                brightness: brightness,
               ),
               const SizedBox(height: 16),
-              // Email field
-              TextField(
+              _buildTextField(
                 controller: emailController,
+                label: 'Email',
+                hint: 'Enter your email',
+                brightness: brightness,
                 keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  labelStyle: const TextStyle(color: AppColors.textSecondary),
-                  hintText: 'Enter your email',
-                  hintStyle: const TextStyle(color: AppColors.textDisabled),
-                  filled: true,
-                  fillColor: AppColors.inputBackground,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
               ),
               const SizedBox(height: 16),
               // Row for Age and Gender
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: _buildTextField(
                       controller: ageController,
+                      label: 'Age',
+                      hint: 'Enter your age',
+                      brightness: brightness,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: AppColors.textPrimary),
-                      decoration: InputDecoration(
-                        labelText: 'Age',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
-                        hintText: 'Enter your age',
-                        hintStyle: const TextStyle(color: AppColors.textDisabled),
-                        filled: true,
-                        fillColor: AppColors.inputBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -279,14 +253,22 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                       },
                       decoration: InputDecoration(
                         labelText: 'Gender',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        labelStyle: TextStyle(
+                          color: brightness == Brightness.light
+                              ? Colors.black54
+                              : AppColors.textSecondary,
+                        ),
                         filled: true,
-                        fillColor: AppColors.inputBackground,
+                        fillColor: brightness == Brightness.light ? Colors.white : AppColors.inputBackground,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
                       ),
+                      style: TextStyle(
+                        color: brightness == Brightness.light ? Colors.black87 : AppColors.textPrimary,
+                      ),
+                      dropdownColor: brightness == Brightness.dark ? Colors.grey[800] : Colors.white,
                     ),
                   ),
                 ],
@@ -296,42 +278,22 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: _buildTextField(
                       controller: yearOfStudyController,
+                      label: 'Year of Study',
+                      hint: 'Enter your year of study',
+                      brightness: brightness,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: AppColors.textPrimary),
-                      decoration: InputDecoration(
-                        labelText: 'Year of Study',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
-                        hintText: 'Enter your year of study',
-                        hintStyle: const TextStyle(color: AppColors.textDisabled),
-                        filled: true,
-                        fillColor: AppColors.inputBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: TextField(
+                    child: _buildTextField(
                       controller: phoneNumberController,
+                      label: 'Phone Number',
+                      hint: 'Enter your phone number',
+                      brightness: brightness,
                       keyboardType: TextInputType.phone,
-                      style: const TextStyle(color: AppColors.textPrimary),
-                      decoration: InputDecoration(
-                        labelText: 'Phone Number',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
-                        hintText: 'Enter your phone number',
-                        hintStyle: const TextStyle(color: AppColors.textDisabled),
-                        filled: true,
-                        fillColor: AppColors.inputBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
                     ),
                   ),
                 ],
@@ -341,104 +303,54 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: _buildTextField(
                       controller: instagramController,
-                      style: const TextStyle(color: AppColors.textPrimary),
-                      decoration: InputDecoration(
-                        labelText: 'Instagram',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
-                        hintText: 'Enter your Instagram username',
-                        hintStyle: const TextStyle(color: AppColors.textDisabled),
-                        filled: true,
-                        fillColor: AppColors.inputBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
+                      label: 'Instagram',
+                      hint: 'Enter your Instagram username',
+                      brightness: brightness,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: TextField(
+                    child: _buildTextField(
                       controller: snapController,
-                      style: const TextStyle(color: AppColors.textPrimary),
-                      decoration: InputDecoration(
-                        labelText: 'Snapchat',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
-                        hintText: 'Enter your Snapchat username',
-                        hintStyle: const TextStyle(color: AppColors.textDisabled),
-                        filled: true,
-                        fillColor: AppColors.inputBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
+                      label: 'Snapchat',
+                      hint: 'Enter your Snapchat username',
+                      brightness: brightness,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               // Old Password field
-              TextField(
+              _buildTextField(
                 controller: oldPasswordController,
+                label: 'Old Password',
+                hint: 'Enter your old password',
+                brightness: brightness,
                 obscureText: true,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Old Password',
-                  labelStyle: const TextStyle(color: AppColors.textSecondary),
-                  hintText: 'Enter your old password',
-                  hintStyle: const TextStyle(color: AppColors.textDisabled),
-                  filled: true,
-                  fillColor: AppColors.inputBackground,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
               ),
               const SizedBox(height: 16),
               // Row for New Password and Confirm New Password fields
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: _buildTextField(
                       controller: newPasswordController,
+                      label: 'New Password',
+                      hint: 'Enter new password',
+                      brightness: brightness,
                       obscureText: true,
-                      style: const TextStyle(color: AppColors.textPrimary),
-                      decoration: InputDecoration(
-                        labelText: 'New Password',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
-                        hintText: 'Enter new password',
-                        hintStyle: const TextStyle(color: AppColors.textDisabled),
-                        filled: true,
-                        fillColor: AppColors.inputBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: TextField(
+                    child: _buildTextField(
                       controller: confirmNewPasswordController,
+                      label: 'Confirm New Password',
+                      hint: 'Re-enter new password',
+                      brightness: brightness,
                       obscureText: true,
-                      style: const TextStyle(color: AppColors.textPrimary),
-                      decoration: InputDecoration(
-                        labelText: 'Confirm New Password',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
-                        hintText: 'Re-enter new password',
-                        hintStyle: const TextStyle(color: AppColors.textDisabled),
-                        filled: true,
-                        fillColor: AppColors.inputBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
                     ),
                   ),
                 ],
@@ -457,19 +369,57 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                     ),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: AppColors.textPrimary)
-                      : const Text(
+                      ? CircularProgressIndicator(
+                          color: brightness == Brightness.light ? Colors.white : AppColors.textPrimary,
+                        )
+                      : Text(
                           'Save Changes',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: AppColors.textPrimary,
+                            color: brightness == Brightness.light ? Colors.white : AppColors.textPrimary,
                           ),
                         ),
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // Helper widget to build text fields with correct colors for dark/light mode.
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required Brightness brightness,
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      style: TextStyle(
+        color: brightness == Brightness.light ? Colors.black87 : AppColors.textPrimary,
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(
+          color: brightness == Brightness.light ? Colors.black54 : AppColors.textSecondary,
+        ),
+        hintText: hint,
+        hintStyle: TextStyle(
+          color: brightness == Brightness.light ? Colors.black26 : AppColors.textDisabled,
+        ),
+        filled: true,
+        // Use a light grey fill color in light mode for more visible input fields.
+        fillColor: brightness == Brightness.light ? Colors.grey[200] : AppColors.inputBackground,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
       ),
     );

@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import '../utils/config.dart' as utils;
 import '../services/auth_service.dart';
 import '../utils/themes.dart';
+// Import main.dart to access the global themeNotifier
+import '../main.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -18,6 +20,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   final AuthService _authService = AuthService();
   bool _isLoading = false;
+  bool _isDarkTheme = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize local theme flag from the global themeNotifier.
+    _isDarkTheme = themeNotifier.value == ThemeMode.dark;
+  }
 
   Future<void> login() async {
     setState(() {
@@ -41,7 +51,9 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Login failed. Please check your credentials.')),
+            const SnackBar(
+              content: Text('Login failed. Please check your credentials.'),
+            ),
           );
         }
       }
@@ -68,10 +80,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Use the theme's scaffoldBackgroundColor instead of a hardcoded black.
     return Scaffold(
-      // Make the background black (like your Figma)
-      backgroundColor: Colors.black,
-      // Remove the default AppBar; we'll design our own
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -79,11 +90,11 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top "Login" text or you can skip it if you only want "Welcome Back!"
+                // Top "Login" text
                 Text(
                   "Login",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onBackground,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -94,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   "Welcome Back!",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onBackground,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
@@ -105,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   "Please enter the information below to access your account!",
                   style: TextStyle(
-                    color: Colors.white70,
+                    color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
                     fontSize: 14,
                   ),
                 ),
@@ -114,15 +125,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Email text field
                 TextField(
                   controller: emailController,
-                  // Make entered text white
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onBackground,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    labelStyle: const TextStyle(color: Colors.white70),
+                    labelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                    ),
                     hintText: 'Write here',
                     hintStyle: const TextStyle(color: Colors.grey),
                     filled: true,
-                    fillColor: Colors.grey[900],
+                    fillColor: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[900]
+                        : Colors.grey[200],
                     border: OutlineInputBorder(
                       borderSide: BorderSide.none,
                       borderRadius: BorderRadius.circular(12),
@@ -134,20 +150,26 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Password text field
                 TextField(
                   controller: passwordController,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onBackground,
+                  ),
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    labelStyle: const TextStyle(color: Colors.white70),
+                    labelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                    ),
                     hintText: 'Write here',
                     hintStyle: const TextStyle(color: Colors.grey),
                     filled: true,
-                    fillColor: Colors.grey[900],
+                    fillColor: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[900]
+                        : Colors.grey[200],
                     border: OutlineInputBorder(
                       borderSide: BorderSide.none,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    // Example suffix icon (eye icon):
+                    // Example suffix icon (eye icon)
                     suffixIcon: IconButton(
                       onPressed: () {
                         // Toggle password visibility if you want
@@ -190,10 +212,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       // Implement forgot password flow
                     },
-                    child: const Text(
+                    child: Text(
                       'Forgot Password?',
                       style: TextStyle(
-                        color: Colors.white70,
+                        color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
                       ),
                     ),
                   ),
@@ -201,18 +223,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
 
                 // "Continue with" row (Google, Apple, etc.)
-                // In your Figma, you might have icons or custom buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Google button
                     IconButton(
-                      icon: const Icon(Icons.g_mobiledata, color: Colors.white),
+                      icon: Icon(Icons.g_mobiledata, color: Theme.of(context).iconTheme.color),
                       onPressed: () {},
                     ),
                     // Apple button
                     IconButton(
-                      icon: const Icon(Icons.apple, color: Colors.white),
+                      icon: Icon(Icons.apple, color: Theme.of(context).iconTheme.color),
                       onPressed: () {},
                     ),
                   ],
@@ -223,9 +244,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       "Don't have an account?",
-                      style: TextStyle(color: Colors.white70),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                      ),
                     ),
                     const SizedBox(width: 4),
                     GestureDetector(
