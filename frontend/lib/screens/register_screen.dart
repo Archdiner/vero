@@ -179,9 +179,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Make the background black (like your Figma)
-      backgroundColor: Colors.black,
-      // Remove the default AppBar
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -193,7 +191,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Text(
                   "Register",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onBackground,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -204,7 +202,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Text(
                   "Welcome to Vero!",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onBackground,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
@@ -214,14 +212,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Full Name field
                 TextField(
                   controller: fullNameController,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onBackground,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Full Name',
-                    labelStyle: const TextStyle(color: Colors.white70),
+                    labelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                    ),
                     hintText: 'Write here',
                     hintStyle: const TextStyle(color: Colors.grey),
                     filled: true,
-                    fillColor: Colors.grey[900],
+                    fillColor: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[900]
+                        : Colors.grey[200],
                     border: OutlineInputBorder(
                       borderSide: BorderSide.none,
                       borderRadius: BorderRadius.circular(12),
@@ -230,18 +234,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Email
+                // Email field
                 TextField(
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onBackground,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    labelStyle: const TextStyle(color: Colors.white70),
+                    labelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                    ),
                     hintText: 'Write here',
                     hintStyle: const TextStyle(color: Colors.grey),
                     filled: true,
-                    fillColor: Colors.grey[900],
+                    fillColor: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[900]
+                        : Colors.grey[200],
                     border: OutlineInputBorder(
                       borderSide: BorderSide.none,
                       borderRadius: BorderRadius.circular(12),
@@ -250,18 +260,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Password
+                // Password field
                 TextField(
                   controller: passwordController,
                   obscureText: _obscurePassword,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onBackground,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    labelStyle: const TextStyle(color: Colors.white70),
+                    labelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                    ),
                     hintText: 'Write here',
                     hintStyle: const TextStyle(color: Colors.grey),
                     filled: true,
-                    fillColor: Colors.grey[900],
+                    fillColor: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[900]
+                        : Colors.grey[200],
                     border: OutlineInputBorder(
                       borderSide: BorderSide.none,
                       borderRadius: BorderRadius.circular(12),
@@ -273,9 +289,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         });
                       },
                       icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
                         color: Colors.grey,
                       ),
                     ),
@@ -283,18 +297,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Verify Password
+                // Verify Password field
                 TextField(
                   controller: verifyPasswordController,
                   obscureText: _obscureVerifyPassword,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onBackground,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Verify Password',
-                    labelStyle: const TextStyle(color: Colors.white70),
+                    labelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                    ),
                     hintText: 'Write here',
                     hintStyle: const TextStyle(color: Colors.grey),
                     filled: true,
-                    fillColor: Colors.grey[900],
+                    fillColor: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[900]
+                        : Colors.grey[200],
                     border: OutlineInputBorder(
                       borderSide: BorderSide.none,
                       borderRadius: BorderRadius.circular(12),
@@ -306,9 +326,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         });
                       },
                       icon: Icon(
-                        _obscureVerifyPassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                        _obscureVerifyPassword ? Icons.visibility_off : Icons.visibility,
                         color: Colors.grey,
                       ),
                     ),
@@ -324,7 +342,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onPressed: _isLoading ? null : register,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBlue, // Use theme blue color
-                      foregroundColor: Colors.white, // text color
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -347,13 +365,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.g_mobiledata, color: Colors.white),
+                      icon: Icon(Icons.g_mobiledata, color: Theme.of(context).iconTheme.color),
                       onPressed: () {
                         // Handle Google sign-up logic
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.apple, color: Colors.white),
+                      icon: Icon(Icons.apple, color: Theme.of(context).iconTheme.color),
                       onPressed: () {
                         // Handle Apple sign-up logic
                       },
@@ -366,9 +384,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       "Already have an account?",
-                      style: TextStyle(color: Colors.white70),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                      ),
                     ),
                     const SizedBox(width: 4),
                     GestureDetector(
@@ -378,7 +398,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Text(
                         "Log in",
                         style: TextStyle(
-                          color: AppColors.primaryBlue, // Use theme blue color
+                          color: AppColors.primaryBlue,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
