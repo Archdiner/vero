@@ -87,16 +87,16 @@ class _MatchesScreenState extends State<MatchesScreen> {
         title: Text(
           'Your Matches',
           style: TextStyle(
-            color: brightness == Brightness.dark ? Colors.white : Colors.black,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
         iconTheme: IconThemeData(
-          color: brightness == Brightness.dark ? Colors.white : Colors.black,
+          color: Colors.white,
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: brightness == Brightness.dark ? Colors.white : Colors.black),
+            icon: Icon(Icons.refresh, color: Colors.white),
             onPressed: _fetchMatches,
           ),
         ],
@@ -315,8 +315,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
                         SizedBox(width: 4),
                         Text(
                           match.compatibilityScore != null
-                            ? '${match.compatibilityScore!.toInt()}% Compatible'
-                            : 'Compatible',
+                              ? '${match.compatibilityScore!.toInt()}% Compatible'
+                              : 'Compatible',
                           style: TextStyle(
                             color: AppColors.primaryBlue,
                             fontSize: 12,
@@ -406,9 +406,22 @@ class _MatchesScreenState extends State<MatchesScreen> {
       ),
     );
   }
-  
+
+  // ONLY changed text colors in light mode for the detailed profile
   void _showDetailedProfile(UserProfile match) {
-    final brightness = Theme.of(context).brightness; // capture brightness again
+    final brightness = Theme.of(context).brightness;
+    // Create a custom text theme only for light mode to make white text -> black, light grey -> dark grey
+    final customTextTheme = brightness == Brightness.light
+        ? Theme.of(context).textTheme.copyWith(
+            // "bodyLarge" is roughly the old "bodyText1"
+            bodyLarge: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.black),
+            // "bodyMedium" is roughly the old "bodyText2"
+            bodyMedium: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black87),
+            // "titleLarge" is roughly the old "headline6"
+            titleLarge: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black),
+          )
+        : Theme.of(context).textTheme;
+
     print('Showing detailed profile for: ${match.fullName}');
     print('Preferences data: Cleanliness: ${match.cleanlinessLevel}, SleepTime: ${match.sleepTime}, WakeTime: ${match.wakeTime}');
     print('More preferences: Smoking: ${match.smokingPreference}, Drinking: ${match.drinkingPreference}, Pets: ${match.petPreference}');
@@ -420,27 +433,39 @@ class _MatchesScreenState extends State<MatchesScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
-      builder: (context) => DetailedProfileView(
-        userProfile: match,
-        onInstagramTap: (username) => _openInstagramProfile(match),
-        actionButtons: Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showUnmatchConfirmation(match);
-                },
-                icon: Icon(Icons.close, color: Colors.white),
-                label: Text("Unmatch", style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      // Override the theme in light mode to make text black/dark grey
+      builder: (context) => Theme(
+        data: Theme.of(context).copyWith(textTheme: customTextTheme),
+        child: DetailedProfileView(
+          userProfile: match,
+          onInstagramTap: (username) => _openInstagramProfile(match),
+          actionButtons: Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showUnmatchConfirmation(match);
+                  },
+                  icon: Icon(
+                    Icons.close,
+                    color: Colors.white,
+                  ),
+                  label: Text(
+                    "Unmatch",
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
