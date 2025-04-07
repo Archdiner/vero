@@ -78,32 +78,32 @@ class _MatchesScreenState extends State<MatchesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: brightness == Brightness.dark ? Colors.black : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text(
+        backgroundColor: brightness == Brightness.dark ? Colors.black : AppColors.primaryBlue,
+        title: Text(
           'Your Matches',
           style: TextStyle(
-            color: Colors.white,
+            color: brightness == Brightness.dark ? Colors.white : Colors.black,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
+        iconTheme: IconThemeData(
+          color: brightness == Brightness.dark ? Colors.white : Colors.black,
         ),
         actions: [
-          // Add a refresh button
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: Icon(Icons.refresh, color: brightness == Brightness.dark ? Colors.white : Colors.black),
             onPressed: _fetchMatches,
-            color: Colors.white,
           ),
         ],
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(
+            ? Center(
                 child: CircularProgressIndicator(color: AppColors.primaryBlue),
               )
             : _hasError
@@ -111,24 +111,24 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.error_outline,
                           color: Colors.red,
                           size: 48,
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
+                        SizedBox(height: 16),
+                        Text(
                           'Failed to load matches',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(color: brightness == Brightness.dark ? Colors.white : Colors.black),
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24),
                         ElevatedButton(
                           onPressed: _fetchMatches,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryBlue,
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text('Try Again'),
+                          child: Text('Try Again'),
                         ),
                       ],
                     ),
@@ -138,43 +138,43 @@ class _MatchesScreenState extends State<MatchesScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.people_outline,
-                              color: Colors.white54,
+                              color: brightness == Brightness.dark ? Colors.white54 : Colors.black54,
                               size: 72,
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
+                            SizedBox(height: 16),
+                            Text(
                               'No matches yet',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: brightness == Brightness.dark ? Colors.white : Colors.black,
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            const Padding(
+                            SizedBox(height: 8),
+                            Padding(
                               padding: EdgeInsets.symmetric(horizontal: 32),
                               child: Text(
                                 'When you and another person both like each other, they\'ll show up here',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Colors.white54,
+                                  color: brightness == Brightness.dark ? Colors.white54 : Colors.black54,
                                   fontSize: 16,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 32),
+                            SizedBox(height: 32),
                             ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.pushReplacementNamed(context, '/swipe');
                               },
-                              icon: const Icon(Icons.search),
-                              label: const Text('Find Roommates'),
+                              icon: Icon(Icons.search),
+                              label: Text('Find Roommates'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryBlue,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
+                                padding: EdgeInsets.symmetric(
                                   horizontal: 24,
                                   vertical: 12,
                                 ),
@@ -187,38 +187,35 @@ class _MatchesScreenState extends State<MatchesScreen> {
                         onRefresh: _fetchMatches,
                         color: AppColors.primaryBlue,
                         child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
+                          padding: EdgeInsets.all(16),
                           itemCount: _matches.length,
                           itemBuilder: (context, index) {
                             final match = _matches[index];
-                            return _buildMatchCard(match);
+                            return _buildMatchCard(match, brightness);
                           },
                         ),
                       ),
       ),
       bottomNavigationBar: Container(
         color: Colors.transparent,
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: EdgeInsets.symmetric(vertical: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // Left: search icon (gray)
             IconButton(
-              icon: const Icon(Icons.search, color: Colors.white54, size: 28),
+              icon: Icon(Icons.search, color: brightness == Brightness.dark ? Colors.white54 : Colors.black54, size: 28),
               onPressed: () {
                 Navigator.pushReplacementNamed(context, '/swipe');
               },
             ),
-            // Center: chat icon (orange) to indicate current screen
             IconButton(
-              icon: const Icon(Icons.chat_bubble_outline, color: AppColors.primaryBlue, size: 26),
+              icon: Icon(Icons.chat_bubble_outline, color: AppColors.primaryBlue, size: 26),
               onPressed: () {
                 // Already on matches screen
               },
             ),
-            // Right: person icon (gray)
             IconButton(
-              icon: const Icon(Icons.person_outline, color: Colors.white54, size: 28),
+              icon: Icon(Icons.person_outline, color: brightness == Brightness.dark ? Colors.white54 : Colors.black54, size: 28),
               onPressed: () {
                 Navigator.pushReplacementNamed(context, '/profile');
               },
@@ -229,26 +226,23 @@ class _MatchesScreenState extends State<MatchesScreen> {
     );
   }
 
-  Widget _buildMatchCard(UserProfile match) {
-    // Calculate how long ago the match was created
+  Widget _buildMatchCard(UserProfile match, Brightness brightness) {
     String matchTime = _formatMatchDate(match.matchedAt);
 
     return Card(
       elevation: 4,
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      color: const Color(0xFF1E1E1E),
+      color: brightness == Brightness.dark ? Color(0xFF1E1E1E) : Colors.white,
       child: InkWell(
         onTap: () {
-          _showMatchOptions(match);
+          _showMatchOptions(match, brightness);
         },
         child: Row(
           children: [
-            // Add padding to the left of the image
-            const SizedBox(width: 8),
-            // Profile image
+            SizedBox(width: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
@@ -262,66 +256,68 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   return Container(
                     width: 100,
                     height: 100,
-                    color: Colors.grey[800],
-                    child: const Icon(Icons.person, color: Colors.white54, size: 40),
+                    color: brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[300],
+                    child: Icon(
+                      Icons.person,
+                      color: brightness == Brightness.dark ? Colors.white54 : Colors.black45,
+                      size: 40,
+                    ),
                   );
                 },
               ),
             ),
-            // User info
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       match.fullName,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: brightness == Brightness.dark ? Colors.white : Colors.black,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    // Fix university display with null check
+                    SizedBox(height: 4),
                     Text(
                       '${match.age} • ${match.university ?? 'Unknown University'}',
-                      style: const TextStyle(color: Colors.white70),
+                      style: TextStyle(
+                        color: brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+                      ),
                     ),
                     if (match.major != null && match.major!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         match.major!,
-                        style: const TextStyle(color: Colors.white70),
+                        style: TextStyle(
+                          color: brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+                        ),
                       ),
                     ],
-                    
-                    // Display match date
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       'Matched $matchTime',
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: brightness == Brightness.dark ? Colors.white54 : Colors.black54,
                         fontSize: 12,
                       ),
                     ),
-                    
-                    // Display compatibility score if available
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.favorite,
                           color: AppColors.primaryBlue,
                           size: 16,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           match.compatibilityScore != null
                             ? '${match.compatibilityScore!.toInt()}% Compatible'
                             : 'Compatible',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.primaryBlue,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -333,15 +329,14 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 ),
               ),
             ),
-            // Instagram button (replacing chat button)
             Padding(
-              padding: const EdgeInsets.only(right: 12),
+              padding: EdgeInsets.only(right: 12),
               child: IconButton(
                 onPressed: () {
                   _openInstagramProfile(match);
                 },
-                icon: const Icon(
-                  Icons.photo_camera, // More Instagram-like camera icon
+                icon: Icon(
+                  Icons.photo_camera,
                   color: AppColors.primaryBlue,
                 ),
               ),
@@ -352,59 +347,52 @@ class _MatchesScreenState extends State<MatchesScreen> {
     );
   }
   
-  void _showMatchOptions(UserProfile match) {
+  void _showMatchOptions(UserProfile match, Brightness brightness) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
-      shape: const RoundedRectangleBorder(
+      backgroundColor: brightness == Brightness.dark ? Color(0xFF1E1E1E) : Colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: EdgeInsets.all(20.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Match name
             Text(
               match.fullName,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: brightness == Brightness.dark ? Colors.white : Colors.black,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 20),
-            
-            // Instagram button (replacing chat button)
+            SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.photo_camera, color: AppColors.primaryBlue),
-              title: const Text(
+              leading: Icon(Icons.photo_camera, color: AppColors.primaryBlue),
+              title: Text(
                 'Open Instagram',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: brightness == Brightness.dark ? Colors.white : Colors.black),
               ),
               onTap: () {
                 Navigator.pop(context);
                 _openInstagramProfile(match);
               },
             ),
-            
-            // View Profile button
             ListTile(
-              leading: const Icon(Icons.person, color: Colors.white70),
-              title: const Text(
+              leading: Icon(Icons.person, color: brightness == Brightness.dark ? Colors.white70 : Colors.black54),
+              title: Text(
                 'View Profile',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: brightness == Brightness.dark ? Colors.white : Colors.black),
               ),
               onTap: () {
                 Navigator.pop(context);
                 _showDetailedProfile(match);
               },
             ),
-            
-            // Unmatch button
             ListTile(
-              leading: const Icon(Icons.close, color: Colors.red),
-              title: const Text(
+              leading: Icon(Icons.close, color: Colors.red),
+              title: Text(
                 'Unmatch',
                 style: TextStyle(color: Colors.red),
               ),
@@ -420,15 +408,15 @@ class _MatchesScreenState extends State<MatchesScreen> {
   }
   
   void _showDetailedProfile(UserProfile match) {
-    // Debug output to check if preferences exist
+    final brightness = Theme.of(context).brightness; // capture brightness again
     print('Showing detailed profile for: ${match.fullName}');
     print('Preferences data: Cleanliness: ${match.cleanlinessLevel}, SleepTime: ${match.sleepTime}, WakeTime: ${match.wakeTime}');
     print('More preferences: Smoking: ${match.smokingPreference}, Drinking: ${match.drinkingPreference}, Pets: ${match.petPreference}');
     
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
-      shape: const RoundedRectangleBorder(
+      backgroundColor: brightness == Brightness.dark ? Color(0xFF1E1E1E) : Colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
@@ -436,7 +424,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
         userProfile: match,
         onInstagramTap: (username) => _openInstagramProfile(match),
         actionButtons: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: EdgeInsets.symmetric(vertical: 20),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -445,11 +433,11 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   Navigator.pop(context);
                   _showUnmatchConfirmation(match);
                 },
-                icon: const Icon(Icons.close, color: Colors.white),
-                label: const Text("Unmatch", style: TextStyle(color: Colors.white)),
+                icon: Icon(Icons.close, color: Colors.white),
+                label: Text("Unmatch", style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
               ),
             ],
@@ -460,27 +448,28 @@ class _MatchesScreenState extends State<MatchesScreen> {
   }
   
   void _showUnmatchConfirmation(UserProfile match) {
+    final brightness = Theme.of(context).brightness;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E),
-          title: const Text(
+          backgroundColor: brightness == Brightness.dark ? Color(0xFF1E1E1E) : Colors.white,
+          title: Text(
             'Unmatch',
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: brightness == Brightness.dark ? Colors.white : Colors.black),
           ),
           content: Text(
             'Are you sure you want to unmatch with ${match.fullName}?',
-            style: const TextStyle(color: Colors.white70),
+            style: TextStyle(color: brightness == Brightness.dark ? Colors.white70 : Colors.black54),
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text(
+              child: Text(
                 'Cancel',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: brightness == Brightness.dark ? Colors.white : Colors.black),
               ),
             ),
             TextButton(
@@ -488,7 +477,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 Navigator.pop(context);
                 _unmatchUser(match);
               },
-              child: const Text(
+              child: Text(
                 'Unmatch',
                 style: TextStyle(color: Colors.red),
               ),
@@ -501,22 +490,19 @@ class _MatchesScreenState extends State<MatchesScreen> {
   
   void _unmatchUser(UserProfile match) async {
     try {
-      // Use the RoommateService to unmatch with this user
       final success = await _roommateService.unmatchUser(match.id);
       
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Unmatched from ${match.fullName}'),
-            duration: const Duration(seconds: 2),
+            duration: Duration(seconds: 2),
           ),
         );
-        
-        // Refresh the matches list
         _fetchMatches();
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Failed to unmatch. Please try again.'),
             duration: Duration(seconds: 2),
           ),
@@ -526,7 +512,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
       print('Error unmatching user: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('An error occurred while unmatching.'),
             duration: Duration(seconds: 2),
           ),
@@ -535,56 +521,51 @@ class _MatchesScreenState extends State<MatchesScreen> {
     }
   }
 
-  // Add method to handle opening Instagram
   void _openInstagramProfile(UserProfile match) {
-    // Debug the match data
     print('Opening Instagram for ${match.fullName}. Instagram: ${match.instagramUsername}, University: ${match.university}');
     
     if (match.instagramUsername != null && match.instagramUsername!.isNotEmpty) {
-      // Launch Instagram URL using the username
       final instagramUrl = 'https://instagram.com/${match.instagramUsername}';
       _launchURL(instagramUrl);
     } else {
-      // Show a specific message about this user if Instagram is not available
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${match.fullName}\'s Instagram not available'),
           action: SnackBarAction(
             label: 'Add Manually',
             onPressed: () {
-              // This would ideally open an UI to manually add the Instagram
               _showInstagramInputDialog(match);
             },
           ),
-          duration: const Duration(seconds: 4),
+          duration: Duration(seconds: 4),
         ),
       );
     }
   }
   
-  // Method to show a dialog to manually input Instagram username
   void _showInstagramInputDialog(UserProfile match) {
+    final brightness = Theme.of(context).brightness;
     final TextEditingController _controller = TextEditingController();
     
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E),
+          backgroundColor: brightness == Brightness.dark ? Color(0xFF1E1E1E) : Colors.white,
           title: Text(
             'Add ${match.fullName}\'s Instagram',
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: brightness == Brightness.dark ? Colors.white : Colors.black),
           ),
           content: TextField(
             controller: _controller,
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
+            style: TextStyle(color: brightness == Brightness.dark ? Colors.white : Colors.black),
+            decoration: InputDecoration(
               hintText: 'Enter Instagram username',
-              hintStyle: TextStyle(color: Colors.white54),
+              hintStyle: TextStyle(color: brightness == Brightness.dark ? Colors.white54 : Colors.black54),
               prefixText: '@',
-              prefixStyle: TextStyle(color: Colors.white70),
+              prefixStyle: TextStyle(color: brightness == Brightness.dark ? Colors.white70 : Colors.black54),
               enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.white30),
+                borderSide: BorderSide(color: brightness == Brightness.dark ? Colors.white30 : Colors.black26),
               ),
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: AppColors.primaryBlue),
@@ -596,21 +577,20 @@ class _MatchesScreenState extends State<MatchesScreen> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text(
+              child: Text(
                 'Cancel',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: brightness == Brightness.dark ? Colors.white : Colors.black),
               ),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 if (_controller.text.isNotEmpty) {
-                  // Launch Instagram with the manually entered username
                   final instagramUrl = 'https://instagram.com/${_controller.text.trim()}';
                   _launchURL(instagramUrl);
                 }
               },
-              child: const Text(
+              child: Text(
                 'Open',
                 style: TextStyle(color: AppColors.primaryBlue),
               ),
@@ -621,7 +601,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
     );
   }
 
-  // Method to launch URLs
   void _launchURL(String url) async {
     try {
       final Uri uri = Uri.parse(url);
@@ -632,7 +611,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
       print('Error launching URL: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Could not open Instagram'),
             duration: Duration(seconds: 2),
           ),
@@ -641,7 +620,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
     }
   }
 
-  // Helper method to check if user has any preference data to display
   bool _hasAnyPreferences(UserProfile match) {
     return match.cleanlinessLevel != null ||
         match.sleepTime != null ||
@@ -658,31 +636,25 @@ class _MatchesScreenState extends State<MatchesScreen> {
         match.budgetRange != null;
   }
   
-  // Helper method to format sleep and wake times
   String _formatSleepSchedule(String? sleepTime, String? wakeTime) {
     String schedule = '';
-    
     if (sleepTime != null && sleepTime.isNotEmpty) {
       schedule += 'Sleep: $sleepTime';
     }
-    
     if (wakeTime != null && wakeTime.isNotEmpty) {
       if (schedule.isNotEmpty) {
         schedule += ' • ';
       }
       schedule += 'Wake: $wakeTime';
     }
-    
     return schedule.isNotEmpty ? schedule : 'Not specified';
   }
   
-  // Helper method to capitalize social preference
   String _capitalizeSocialPreference(String value) {
     if (value.isEmpty) return '';
     return value[0].toUpperCase() + value.substring(1);
   }
   
-  // Helper method to build a preference item
   Widget _buildPreferenceItem(String label, String value, IconData icon) {
     return Row(
       children: [
@@ -691,21 +663,21 @@ class _MatchesScreenState extends State<MatchesScreen> {
           color: AppColors.primaryBlue,
           size: 18,
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
                 ),
               ),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -717,4 +689,4 @@ class _MatchesScreenState extends State<MatchesScreen> {
       ],
     );
   }
-} 
+}
