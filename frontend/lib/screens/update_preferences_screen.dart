@@ -221,22 +221,26 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: brightness == Brightness.dark ? Colors.black : Colors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: brightness == Brightness.dark ? Colors.black : AppColors.primaryBlue,
         leadingWidth: 80,
         leading: TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
             "Back",
             style: TextStyle(
-              color: AppColors.primaryBlue,
+              color: brightness == Brightness.light ? Colors.white : AppColors.primaryBlue,
               fontSize: 16,
             ),
           ),
         ),
-        title: const Text("Update Preferences", style: TextStyle(color: AppColors.textPrimary)),
+        title: Text(
+          "Update Preferences",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold,),
+        ),
         elevation: 0,
       ),
       body: SafeArea(
@@ -248,7 +252,10 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
               // Budget Range slider (alone)
               Text(
                 'Maximum Monthly Budget',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                style: TextStyle(
+                  color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 8),
               Row(
@@ -257,14 +264,16 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                   Text(
                     '\$${_budgetValue.toInt()}',
                     style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
                     'Up to \$5000',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(
+                      color: brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54,
+                    ),
                   ),
                 ],
               ),
@@ -274,7 +283,7 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                 max: 5000,
                 divisions: 50,
                 activeColor: AppColors.primaryBlue,
-                inactiveColor: Colors.grey[800],
+                inactiveColor: brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[300],
                 onChanged: (value) {
                   setState(() {
                     _budgetValue = value;
@@ -285,7 +294,10 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
               // Cleanliness Level slider (alone)
               Text(
                 'Room Tidiness Level',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                style: TextStyle(
+                  color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 8),
               Row(
@@ -294,14 +306,16 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                   Text(
                     '${_cleanlinessValue.toInt()}',
                     style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Text(
+                  Text(
                     '1 (Messy) - 10 (Organized)',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(
+                      color: brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54,
+                    ),
                   ),
                 ],
               ),
@@ -311,7 +325,7 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                 max: 10,
                 divisions: 9,
                 activeColor: AppColors.primaryBlue,
-                inactiveColor: Colors.grey[800],
+                inactiveColor: brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[300],
                 onChanged: (value) {
                   setState(() {
                     _cleanlinessValue = value;
@@ -326,7 +340,9 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                     child: SwitchListTile(
                       title: Text(
                         'Smoking',
-                        style: TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                        ),
                       ),
                       value: _smokingPreference,
                       activeColor: AppColors.primaryBlue,
@@ -341,7 +357,9 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                     child: SwitchListTile(
                       title: Text(
                         'Drinking',
-                        style: TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                        ),
                       ),
                       value: _drinkingPreference,
                       activeColor: AppColors.primaryBlue,
@@ -361,7 +379,9 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                     child: SwitchListTile(
                       title: Text(
                         'Pet Friendly',
-                        style: TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                        ),
                       ),
                       value: _petPreference,
                       activeColor: AppColors.primaryBlue,
@@ -376,7 +396,9 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                     child: SwitchListTile(
                       title: Text(
                         'Music Preference',
-                        style: TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                        ),
                       ),
                       value: _musicPreference,
                       activeColor: AppColors.primaryBlue,
@@ -397,15 +419,21 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                     child: TextField(
                       controller: _moveInDateController,
                       readOnly: true,
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(
+                        color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                      ),
                       onTap: _pickMoveInDate,
                       decoration: InputDecoration(
                         labelText: 'Move In Date',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        labelStyle: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54,
+                        ),
                         hintText: 'Select date',
-                        hintStyle: const TextStyle(color: AppColors.textDisabled),
+                        hintStyle: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textDisabled : Colors.black26,
+                        ),
                         filled: true,
-                        fillColor: AppColors.inputBackground,
+                        fillColor: brightness == Brightness.dark ? AppColors.inputBackground : Colors.grey[200],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -430,17 +458,21 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                       },
                       decoration: InputDecoration(
                         labelText: 'Guest Policy',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        labelStyle: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54,
+                        ),
                         filled: true,
-                        fillColor: AppColors.inputBackground,
+                        fillColor: brightness == Brightness.dark ? AppColors.inputBackground : Colors.grey[200],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
-                      dropdownColor: Colors.grey[800],
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      dropdownColor: brightness == Brightness.dark ? Colors.grey[800] : Colors.white,
+                      style: TextStyle(
+                        color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                      ),
                     ),
                   ),
                 ],
@@ -452,16 +484,22 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _sleepTimeController,
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(
+                        color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                      ),
                       readOnly: true,
                       onTap: () => _pickTime(_sleepTimeController),
                       decoration: InputDecoration(
                         labelText: 'Sleep Time',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        labelStyle: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54,
+                        ),
                         hintText: 'HH:MM',
-                        hintStyle: const TextStyle(color: AppColors.textDisabled),
+                        hintStyle: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textDisabled : Colors.black26,
+                        ),
                         filled: true,
-                        fillColor: AppColors.inputBackground,
+                        fillColor: brightness == Brightness.dark ? AppColors.inputBackground : Colors.grey[200],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -473,16 +511,22 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _wakeTimeController,
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(
+                        color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                      ),
                       readOnly: true,
                       onTap: () => _pickTime(_wakeTimeController),
                       decoration: InputDecoration(
                         labelText: 'Wake Time',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        labelStyle: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54,
+                        ),
                         hintText: 'HH:MM',
-                        hintStyle: const TextStyle(color: AppColors.textDisabled),
+                        hintStyle: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textDisabled : Colors.black26,
+                        ),
                         filled: true,
-                        fillColor: AppColors.inputBackground,
+                        fillColor: brightness == Brightness.dark ? AppColors.inputBackground : Colors.grey[200],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -514,24 +558,27 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                       },
                       decoration: InputDecoration(
                         labelText: 'Dietary Restrictions',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        labelStyle: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54,
+                        ),
                         filled: true,
-                        fillColor: AppColors.inputBackground,
+                        fillColor: brightness == Brightness.dark ? AppColors.inputBackground : Colors.grey[200],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
-                      dropdownColor: Colors.grey[800],
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      dropdownColor: brightness == Brightness.dark ? Colors.grey[800] : Colors.white,
+                      style: TextStyle(
+                        color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _selectedSocialPreference,
-                      // Use lowercase values to match loaded data
                       items: const [
                         DropdownMenuItem(value: 'introvert', child: Text('Introvert')),
                         DropdownMenuItem(value: 'extrovert', child: Text('Extrovert')),
@@ -544,17 +591,21 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                       },
                       decoration: InputDecoration(
                         labelText: 'Social Preference',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        labelStyle: TextStyle(
+                          color: brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54,
+                        ),
                         filled: true,
-                        fillColor: AppColors.inputBackground,
+                        fillColor: brightness == Brightness.dark ? AppColors.inputBackground : Colors.grey[200],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
-                      dropdownColor: Colors.grey[800],
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      dropdownColor: brightness == Brightness.dark ? Colors.grey[800] : Colors.white,
+                      style: TextStyle(
+                        color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                      ),
                     ),
                   ),
                 ],
@@ -573,13 +624,15 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
                     ),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: AppColors.textPrimary)
-                      : const Text(
+                      ? CircularProgressIndicator(
+                          color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+                        )
+                      : Text(
                           'Save Changes',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: AppColors.textPrimary,
+                            color: brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
                           ),
                         ),
                 ),
@@ -604,23 +657,23 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
   }) {
     return TextField(
       controller: controller,
-      style: const TextStyle(color: AppColors.textPrimary),
+      style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87),
       keyboardType: keyboardType,
       readOnly: readOnly,
       maxLines: maxLines,
       onTap: onTap,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: AppColors.textSecondary),
+        labelStyle: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54),
         filled: true,
-        fillColor: AppColors.inputBackground,
+        fillColor: Theme.of(context).brightness == Brightness.dark ? AppColors.inputBackground : Colors.grey[200],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         helperText: helperText,
-        helperStyle: TextStyle(color: AppColors.textSecondary),
+        helperStyle: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54),
       ),
     );
   }
@@ -637,14 +690,17 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54,
+            fontSize: 16,
+          ),
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           value: value,
           items: items.map((String item) {
             return DropdownMenuItem<String>(
-              value: item.toLowerCase(), // Ensure value is lowercase
+              value: item.toLowerCase(),
               child: Text(item),
             );
           }).toList(),
@@ -652,15 +708,17 @@ class _UpdatePreferencesScreenState extends State<UpdatePreferencesScreen> {
           validator: validator,
           decoration: InputDecoration(
             filled: true,
-            fillColor: AppColors.inputBackground,
+            fillColor: Theme.of(context).brightness == Brightness.dark ? AppColors.inputBackground : Colors.grey[200],
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
-          dropdownColor: Colors.grey[800],
-          style: const TextStyle(color: AppColors.textPrimary),
+          dropdownColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.white,
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark ? AppColors.textPrimary : Colors.black87,
+          ),
         ),
       ],
     );
