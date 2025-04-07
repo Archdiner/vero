@@ -17,6 +17,11 @@ class DetailedProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Determine brightness and define our text colors
+    final brightness = Theme.of(context).brightness;
+    final primaryTextColor = brightness == Brightness.dark ? Colors.white : Colors.black;
+    final secondaryTextColor = brightness == Brightness.dark ? Colors.white70 : Colors.black54;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.5,
@@ -47,8 +52,12 @@ class DetailedProfileView extends StatelessWidget {
                         return Container(
                           width: 120,
                           height: 120,
-                          color: Colors.grey[800],
-                          child: const Icon(Icons.person, color: Colors.white54, size: 40),
+                          color: brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[300],
+                          child: Icon(
+                            Icons.person,
+                            color: brightness == Brightness.dark ? Colors.white54 : Colors.black45,
+                            size: 40,
+                          ),
                         );
                       },
                     ),
@@ -61,8 +70,8 @@ class DetailedProfileView extends StatelessWidget {
                       children: [
                         Text(
                           "${userProfile.fullName}, ${userProfile.age}",
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: primaryTextColor,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -70,8 +79,8 @@ class DetailedProfileView extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           userProfile.university ?? 'Unknown University',
-                          style: const TextStyle(
-                            color: Colors.white70,
+                          style: TextStyle(
+                            color: secondaryTextColor,
                             fontSize: 16,
                           ),
                         ),
@@ -79,8 +88,8 @@ class DetailedProfileView extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             "Year ${userProfile.yearOfStudy}",
-                            style: const TextStyle(
-                              color: Colors.white70,
+                            style: TextStyle(
+                              color: secondaryTextColor,
                               fontSize: 14,
                             ),
                           ),
@@ -89,13 +98,12 @@ class DetailedProfileView extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             userProfile.major!,
-                            style: const TextStyle(
-                              color: Colors.white70,
+                            style: TextStyle(
+                              color: secondaryTextColor,
                               fontSize: 14,
                             ),
                           ),
                         ],
-                        
                         // Display compatibility score
                         if (userProfile.compatibilityScore != null) ...[
                           const SizedBox(height: 8),
@@ -109,7 +117,7 @@ class DetailedProfileView extends StatelessWidget {
                               const SizedBox(width: 4),
                               Text(
                                 '${userProfile.compatibilityScore!.toInt()}% Compatible',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.primaryBlue,
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -128,10 +136,10 @@ class DetailedProfileView extends StatelessWidget {
               
               // Bio section
               if (userProfile.bio != null && userProfile.bio!.isNotEmpty) ...[
-                const Text(
+                Text(
                   "About Me",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: primaryTextColor,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -139,23 +147,25 @@ class DetailedProfileView extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   userProfile.bio!,
-                  style: const TextStyle(color: Colors.white70, fontSize: 15),
+                  style: TextStyle(
+                    color: secondaryTextColor,
+                    fontSize: 15,
+                  ),
                 ),
                 const SizedBox(height: 24),
               ],
               
               // Contact Options
               if (userProfile.instagramUsername != null && userProfile.instagramUsername!.isNotEmpty) ...[
-                const Text(
+                Text(
                   "Contact Options",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: primaryTextColor,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 12),
-                
                 // Instagram option
                 ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -163,13 +173,13 @@ class DetailedProfileView extends StatelessWidget {
                     Icons.photo_camera,
                     color: AppColors.primaryBlue,
                   ),
-                  title: const Text(
+                  title: Text(
                     'Instagram',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: primaryTextColor),
                   ),
                   subtitle: Text(
                     '@${userProfile.instagramUsername}',
-                    style: const TextStyle(color: Colors.white70),
+                    style: TextStyle(color: secondaryTextColor),
                   ),
                   onTap: () {
                     if (onInstagramTap != null) {
@@ -188,10 +198,10 @@ class DetailedProfileView extends StatelessWidget {
               // Preferences & Lifestyle section - only show if we have at least some preference data
               if (_hasAnyPreferenceData(userProfile)) ...[
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   "Preferences & Lifestyle",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: primaryTextColor,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -204,6 +214,8 @@ class DetailedProfileView extends StatelessWidget {
                     'Cleanliness Level',
                     '${userProfile.cleanlinessLevel}/10',
                     Icons.cleaning_services,
+                    primaryTextColor,
+                    secondaryTextColor,
                   ),
                   
                 if (userProfile.cleanlinessLevel != null)
@@ -214,6 +226,8 @@ class DetailedProfileView extends StatelessWidget {
                     'Sleep Schedule',
                     _formatSleepSchedule(userProfile.sleepTime, userProfile.wakeTime),
                     Icons.bedtime,
+                    primaryTextColor,
+                    secondaryTextColor,
                   ),
                   
                 if (userProfile.sleepTime != null || userProfile.wakeTime != null)
@@ -224,6 +238,8 @@ class DetailedProfileView extends StatelessWidget {
                     'Smoking',
                     userProfile.smokingPreference! ? 'Smoker' : 'Non-smoker',
                     Icons.smoking_rooms,
+                    primaryTextColor,
+                    secondaryTextColor,
                   ),
                   
                 if (userProfile.smokingPreference != null)
@@ -234,6 +250,8 @@ class DetailedProfileView extends StatelessWidget {
                     'Drinking',
                     userProfile.drinkingPreference! ? 'Drinker' : 'Non-drinker',
                     Icons.local_bar,
+                    primaryTextColor,
+                    secondaryTextColor,
                   ),
                   
                 if (userProfile.drinkingPreference != null)
@@ -244,6 +262,8 @@ class DetailedProfileView extends StatelessWidget {
                     'Pets',
                     userProfile.petPreference! ? 'Pet friendly' : 'No pets',
                     Icons.pets,
+                    primaryTextColor,
+                    secondaryTextColor,
                   ),
                   
                 if (userProfile.petPreference != null)
@@ -254,6 +274,8 @@ class DetailedProfileView extends StatelessWidget {
                     'Music',
                     userProfile.musicPreference! ? 'Enjoys music' : 'Prefers quiet',
                     Icons.music_note,
+                    primaryTextColor,
+                    secondaryTextColor,
                   ),
                   
                 if (userProfile.musicPreference != null)
@@ -264,6 +286,8 @@ class DetailedProfileView extends StatelessWidget {
                     'Social Type',
                     _capitalizeSocialPreference(userProfile.socialPreference!),
                     Icons.people,
+                    primaryTextColor,
+                    secondaryTextColor,
                   ),
                   
                 if (userProfile.socialPreference != null)
@@ -274,6 +298,8 @@ class DetailedProfileView extends StatelessWidget {
                     'Guest Policy',
                     userProfile.guestPolicy!,
                     Icons.group_add,
+                    primaryTextColor,
+                    secondaryTextColor,
                   ),
                   
                 if (userProfile.guestPolicy != null && userProfile.guestPolicy!.isNotEmpty)
@@ -284,6 +310,8 @@ class DetailedProfileView extends StatelessWidget {
                     'Room Type',
                     userProfile.roomTypePreference!,
                     Icons.bedroom_parent,
+                    primaryTextColor,
+                    secondaryTextColor,
                   ),
                   
                 if (userProfile.roomTypePreference != null && userProfile.roomTypePreference!.isNotEmpty)
@@ -294,6 +322,8 @@ class DetailedProfileView extends StatelessWidget {
                     'Religious Preference',
                     userProfile.religiousPreference!,
                     Icons.church,
+                    primaryTextColor,
+                    secondaryTextColor,
                   ),
                   
                 if (userProfile.religiousPreference != null && userProfile.religiousPreference!.isNotEmpty)
@@ -304,6 +334,8 @@ class DetailedProfileView extends StatelessWidget {
                     'Dietary Restrictions',
                     userProfile.dietaryRestrictions!,
                     Icons.restaurant,
+                    primaryTextColor,
+                    secondaryTextColor,
                   ),
                   
                 if (userProfile.dietaryRestrictions != null && userProfile.dietaryRestrictions!.isNotEmpty)
@@ -314,6 +346,8 @@ class DetailedProfileView extends StatelessWidget {
                     'Budget',
                     '\$${userProfile.budgetRange}',
                     Icons.attach_money,
+                    primaryTextColor,
+                    secondaryTextColor,
                   ),
               ],
             ],
@@ -365,7 +399,7 @@ class DetailedProfileView extends StatelessWidget {
   }
   
   // Helper method to build a preference item
-  Widget _buildPreferenceItem(String label, String value, IconData icon) {
+  Widget _buildPreferenceItem(String label, String value, IconData icon, Color primaryTextColor, Color secondaryTextColor) {
     return Row(
       children: [
         Icon(
@@ -380,15 +414,15 @@ class DetailedProfileView extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white70,
+                style: TextStyle(
+                  color: secondaryTextColor,
                   fontSize: 12,
                 ),
               ),
               Text(
                 value,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: primaryTextColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -418,4 +452,4 @@ class DetailedProfileView extends StatelessWidget {
       );
     }
   }
-} 
+}
