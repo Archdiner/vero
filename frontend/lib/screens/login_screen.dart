@@ -21,6 +21,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
   bool _isDarkTheme = true;
+  // New state variable to control password visibility.
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -43,7 +45,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (success) {
         print('Login successful, navigating to swipe screen');
-        
         if (mounted) {
           // Always navigate to swipe screen after successful login
           Navigator.pushReplacementNamed(context, '/swipe');
@@ -147,13 +148,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Password text field
+                // Password text field with visibility toggle
                 TextField(
                   controller: passwordController,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onBackground,
                   ),
-                  obscureText: true,
+                  // Use the state variable _obscurePassword
+                  obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: TextStyle(
@@ -169,12 +171,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderSide: BorderSide.none,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    // Example suffix icon (eye icon)
+                    // Suffix icon toggles password visibility.
                     suffixIcon: IconButton(
                       onPressed: () {
-                        // Toggle password visibility if you want
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
                       },
-                      icon: const Icon(Icons.visibility_off, color: Colors.grey),
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ),
