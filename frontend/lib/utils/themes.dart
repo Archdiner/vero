@@ -1,42 +1,43 @@
 import 'package:flutter/material.dart';
 
-/// A class that defines the color schemes for the app
+/// A class that defines the color schemes for the Roomio app
 class AppColors {
-  // Primary colors - blue theme
-  static const Color primaryBlue = Color(0xFF1E88E5); // Main brand blue
-  static const Color primaryLightBlue = Color(0xFF64B5F6); // Lighter blue for accents
-  static const Color primaryDarkBlue = Color(0xFF0D47A1); // Darker blue for emphasis
-  
-  // Neutral colors
-  static const Color background = Colors.black;
-  static const Color surface = Color(0xFF212121);
-  static const Color cardBackground = Color(0xFF333333);
-  
+  // Primary blue tones (branded)
+  static const Color primaryBlue = Color(0xFF4A90E2); // Sky blue
+  static const Color primaryLightBlue = Color(0xFFB3D4FC); // Accent/light blue
+  static const Color primaryDarkBlue = Color(0xFF2C3E50); // Deep indigo/blue-gray
+
+  // Accent colors (optional, for success/warning/feedback)
+  static const Color success = Color(0xFF2ECC71); // Soft green
+  static const Color error = Color(0xFFFF6B6B); // Coral/red
+  static const Color warning = Color(0xFFFFB74D); // Orange
+  static const Color info = Color(0xFF81D4FA); // Light blue
+
+  // Neutral backgrounds
+  static const Color background = Color(0xFF121212); // App background (black-ish)
+  static const Color surface = Color(0xFF1E1E1E);     // Containers/surfaces
+  static const Color cardBackground = Color(0xFF2A2A2A); // Cards
+
   // Text colors
   static const Color textPrimary = Colors.white;
-  static const Color textSecondary = Colors.white70;
+  static const Color textSecondary = Color(0xFFB0BEC5); // Muted gray-blue
   static const Color textDisabled = Colors.white38;
-  
-  // Feedback colors
-  static const Color success = Color(0xFF4CAF50);
-  static const Color error = Color(0xFFE57373);
-  static const Color warning = Color(0xFFFFB74D);
-  static const Color info = Color(0xFF81D4FA);
-  
-  // Other UI elements
+
+  // Other UI
   static const Color divider = Color(0xFF424242);
-  static const Color inputBackground = Color(0xFF424242);
-  static const Color iconColor = Colors.white70;
+  static const Color inputBackground = Color(0xFF2F2F2F);
+  static const Color iconColor = Color(0xFFB0BEC5); // Matches textSecondary
 }
 
 /// Primary theme data for the app
 class AppTheme {
-  // Light theme
   static ThemeData get lightTheme {
     return ThemeData(
+      brightness: Brightness.light,
       primaryColor: AppColors.primaryBlue,
       primaryColorLight: AppColors.primaryLightBlue,
       primaryColorDark: AppColors.primaryDarkBlue,
+      scaffoldBackgroundColor: Colors.white,
       colorScheme: ColorScheme.light(
         primary: AppColors.primaryBlue,
         secondary: AppColors.primaryLightBlue,
@@ -47,14 +48,11 @@ class AppTheme {
         onBackground: Colors.black87,
         onSurface: Colors.black87,
       ),
-      // Additional theme configurations
-      scaffoldBackgroundColor: Colors.white,
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         fillColor: Colors.grey[200],
         filled: true,
@@ -64,7 +62,6 @@ class AppTheme {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
-      // Button theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryBlue,
@@ -78,13 +75,13 @@ class AppTheme {
     );
   }
 
-  // Dark theme (default for this app)
   static ThemeData get darkTheme {
     return ThemeData(
       brightness: Brightness.dark,
       primaryColor: AppColors.primaryBlue,
       primaryColorLight: AppColors.primaryLightBlue,
       primaryColorDark: AppColors.primaryDarkBlue,
+      scaffoldBackgroundColor: AppColors.background,
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primaryBlue,
         secondary: AppColors.primaryLightBlue,
@@ -95,14 +92,11 @@ class AppTheme {
         onBackground: Colors.white,
         onSurface: Colors.white,
       ),
-      // Additional theme configurations
-      scaffoldBackgroundColor: AppColors.background,
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         fillColor: AppColors.inputBackground,
         filled: true,
@@ -114,7 +108,6 @@ class AppTheme {
         labelStyle: const TextStyle(color: AppColors.textSecondary),
         hintStyle: const TextStyle(color: AppColors.textDisabled),
       ),
-      // Button theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryBlue,
@@ -125,20 +118,17 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
       ),
-      // Text theme
       textTheme: const TextTheme(
         bodyLarge: TextStyle(color: AppColors.textPrimary),
         bodyMedium: TextStyle(color: AppColors.textPrimary),
         titleLarge: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
         titleMedium: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
       ),
-      // Text button theme
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primaryBlue,
         ),
       ),
-      // Card theme
       cardTheme: CardTheme(
         color: AppColors.cardBackground,
         elevation: 4,
@@ -146,13 +136,13 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
         ),
       ),
-      // Icon theme
       iconTheme: const IconThemeData(
         color: AppColors.iconColor,
       ),
     );
   }
 }
+
 
 // Extension methods for easier theme access in widgets
 extension ThemeExtension on BuildContext {

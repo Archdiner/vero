@@ -76,6 +76,27 @@ class _MatchesScreenState extends State<MatchesScreen> {
     }
   }
 
+  // Helper method to get compatibility color
+  Color _getCompatibilityColor(double? score) {
+    if (score == null) return Colors.grey;
+    if (score >= 70) return Color(0xFF2ECC71); // Green
+    if (score >= 50) return Color(0xFFFFB74D); // Orange
+    return Color(0xFFFF6B6B); // Red
+  }
+
+  // Helper method to get university color
+  Color _getUniversityColor(String? university) {
+    if (university == null) return Colors.grey;
+    switch (university.toLowerCase()) {
+      case 'cornell university':
+        return Color(0xFFB31B1B); // Cornell Red
+      case 'columbia university':
+        return Color(0xFF1F45FC); // Columbia Blue
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
@@ -83,23 +104,24 @@ class _MatchesScreenState extends State<MatchesScreen> {
     return Scaffold(
       backgroundColor: brightness == Brightness.dark ? Colors.black : Colors.white,
       appBar: AppBar(
-        backgroundColor: brightness == Brightness.dark ? Colors.black : AppColors.primaryBlue,
-        title: Text(
-          'Your Matches',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+        backgroundColor: brightness == Brightness.dark ? Colors.black : Colors.white,
+        elevation: 0,
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: brightness == Brightness.dark ? Colors.white12 : Colors.black12,
+              child: Icon(Icons.chat_bubble_outline, color: brightness == Brightness.dark ? Colors.white : Colors.black),
+            ),
+            SizedBox(width: 12),
+            Text(
+              'Your Matches',
+              style: TextStyle(
+                color: brightness == Brightness.dark ? Colors.white : Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
-        iconTheme: IconThemeData(
-          color: Colors.white,
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, color: Colors.white),
-            onPressed: _fetchMatches,
-          ),
-        ],
       ),
       body: SafeArea(
         child: _isLoading
@@ -228,121 +250,191 @@ class _MatchesScreenState extends State<MatchesScreen> {
 
   Widget _buildMatchCard(UserProfile match, Brightness brightness) {
     String matchTime = _formatMatchDate(match.matchedAt);
+    final compatibilityColor = _getCompatibilityColor(match.compatibilityScore);
+    final universityColor = _getUniversityColor(match.university);
 
-    return Card(
-      elevation: 4,
+    return Container(
       margin: EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
       ),
-      color: brightness == Brightness.dark ? Color(0xFF1E1E1E) : Colors.white,
-      child: InkWell(
-        onTap: () {
-          _showMatchOptions(match, brightness);
-        },
-        child: Row(
-          children: [
-            SizedBox(width: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                match.profilePicture.isNotEmpty
-                    ? match.profilePicture
-                    : 'https://via.placeholder.com/100?text=No+Image',
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 100,
-                    height: 100,
-                    color: brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[300],
-                    child: Icon(
-                      Icons.person,
-                      color: brightness == Brightness.dark ? Colors.white54 : Colors.black45,
-                      size: 40,
-                    ),
-                  );
-                },
+      child: Row(
+        children: [
+          // Compatibility indicator bar
+          Container(
+            width: 6,
+            height: 130,
+            decoration: BoxDecoration(
+              color: compatibilityColor,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
               ),
             ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      match.fullName,
-                      style: TextStyle(
-                        color: brightness == Brightness.dark ? Colors.white : Colors.black,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+          ),
+          Expanded(
+            child: Card(
+              elevation: 4,
+              margin: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
+              ),
+              color: brightness == Brightness.dark ? Color(0xFF1E1E1E) : Colors.white,
+              child: SizedBox(
+                height: 130,
+                child: InkWell(
+                  onTap: () {
+                    _showMatchOptions(match, brightness);
+                  },
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            match.profilePicture.isNotEmpty
+                                ? match.profilePicture
+                                : 'https://via.placeholder.com/100?text=No+Image',
+                            width: 90,
+                            height: 90,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 90,
+                                height: 90,
+                                color: brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[300],
+                                child: Icon(
+                                  Icons.person,
+                                  color: brightness == Brightness.dark ? Colors.white54 : Colors.black45,
+                                  size: 40,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      '${match.age} • ${match.university ?? 'Unknown University'}',
-                      style: TextStyle(
-                        color: brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(0, 12, 12, 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                match.fullName,
+                                                style: TextStyle(
+                                                  color: brightness == Brightness.dark ? Colors.white : Colors.black,
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Text(
+                                              '${match.age ?? ""}',
+                                              style: TextStyle(
+                                                color: brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Text(
+                                        match.compatibilityScore != null
+                                            ? '${match.compatibilityScore!.toInt()}% Compatible'
+                                            : 'N/A',
+                                        style: TextStyle(
+                                          color: compatibilityColor,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 6),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: universityColor,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      match.university ?? 'Unknown University',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (match.major != null && match.major!.isNotEmpty) ...[
+                                    SizedBox(height: 4),
+                                    Text(
+                                      match.major!,
+                                      style: TextStyle(
+                                        color: brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+                                        fontSize: 14,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              Text(
+                                'Matched $matchTime',
+                                style: TextStyle(
+                                  color: brightness == Brightness.dark ? Colors.white54 : Colors.black54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    if (match.major != null && match.major!.isNotEmpty) ...[
-                      SizedBox(height: 4),
-                      Text(
-                        match.major!,
-                        style: TextStyle(
-                          color: brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+                      Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(right: 12),
+                          child: IconButton(
+                            onPressed: () {
+                              _openInstagramProfile(match);
+                            },
+                            icon: Icon(
+                              Icons.camera_alt_outlined,
+                              color: AppColors.primaryBlue,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: BoxConstraints(),
+                          ),
                         ),
                       ),
                     ],
-                    SizedBox(height: 4),
-                    Text(
-                      'Matched $matchTime',
-                      style: TextStyle(
-                        color: brightness == Brightness.dark ? Colors.white54 : Colors.black54,
-                        fontSize: 12,
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.favorite,
-                          color: AppColors.primaryBlue,
-                          size: 16,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          match.compatibilityScore != null
-                              ? '${match.compatibilityScore!.toInt()}% Compatible'
-                              : 'Compatible',
-                          style: TextStyle(
-                            color: AppColors.primaryBlue,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: IconButton(
-                onPressed: () {
-                  _openInstagramProfile(match);
-                },
-                icon: Icon(
-                  Icons.photo_camera,
-                  color: AppColors.primaryBlue,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
