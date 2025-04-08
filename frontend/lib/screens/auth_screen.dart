@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import '../utils/themes.dart'; // Import the theme system
+
+import '../widgets/furniture_pattern_background.dart';
 
 class AuthScreen extends StatelessWidget {
   const AuthScreen({super.key});
@@ -10,170 +10,130 @@ class AuthScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final brightness = Theme.of(context).brightness;
     
-    // Define dynamic colors based on brightness:
-    final scaffoldBg = brightness == Brightness.dark ? Colors.black : Colors.white;
-    final bgColor = scaffoldBg; // use the same for gradient
-    final placeholderColor =
-        brightness == Brightness.dark ? Colors.grey[600] : Colors.grey[300];
-    // For text: in dark mode use the AppColors; in light mode, use black or dark grey.
-    final dynamicTextPrimary =
-        brightness == Brightness.dark ? AppColors.textPrimary : Colors.black;
-    final dynamicTextSecondary =
-        brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54;
+    // Define colors using the exact hex values
+    final scaffoldBg = const Color(0xFF0F1A24);  // Dark blue background #0F1A24
+    final dynamicTextPrimary = Colors.white;  // Always white text for better contrast
+    final dynamicTextSecondary = Colors.white.withOpacity(0.8);  // Slightly transparent white
     
     return Scaffold(
       backgroundColor: scaffoldBg,
       body: Stack(
         children: [
-          // 1) Mosaic
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: size.height * 0.8,
-            child: MasonryGridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-              ),
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              padding: const EdgeInsets.all(16),
-              itemCount: 9,
-              itemBuilder: (context, index) {
-                final columnIndex = index % 3;
-                final rowIndex = index ~/ 3;
-
-                double tileHeight;
-                if (columnIndex == 0) {
-                  tileHeight = (rowIndex % 2 == 0) ? 180 : 230;
-                } else if (columnIndex == 1) {
-                  tileHeight = (rowIndex % 2 == 0) ? 230 : 180;
-                } else {
-                  tileHeight = (rowIndex % 2 == 0) ? 180 : 230;
-                }
-
-                return SizedBox(
-                  height: tileHeight,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      // Use dynamic placeholder color
-                      color: placeholderColor,
-                      child: Icon(
-                        Icons.image_outlined,
-                        color: dynamicTextSecondary,
-                        size: 40,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
+          // 1. Background Pattern
+          const FurniturePatternBackground(
+            opacity: 0.2,  // Increased opacity for better visibility
+            spacing: 70,    // Tighter spacing
+            iconColor: Color(0xFF293542), // Muted blue-grey #293542
           ),
 
-          // 2) Multi-stop gradient overlay
-          Positioned.fill(
+          // 2. Gradient Overlay - Starts halfway down the screen
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: size.height * 0.6, // Covers bottom 60% of screen
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.transparent,
-                    bgColor.withOpacity(0.26),
-                    bgColor.withOpacity(0.54),
-                    bgColor.withOpacity(0.87),
-                    bgColor,
+                    scaffoldBg.withOpacity(0.0),
+                    scaffoldBg.withOpacity(0.5),
+                    scaffoldBg.withOpacity(0.9),
+                    scaffoldBg,
                   ],
-                  stops: const [
-                    0.15,
-                    0.3,
-                    0.45,
-                    0.65,
-                    1.0,
-                  ],
+                  stops: const [0.0, 0.3, 0.6, 1.0],
                 ),
               ),
             ),
           ),
 
-          // 3) Foreground text & button
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 60,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.location_on,
-                  size: 50,
-                  color: AppColors.primaryBlue,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Welcome To Vero',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: dynamicTextPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                  child: Text(
-                    'Discover the best restaurants near you in just a few taps! Whether you\'re craving a quick bite, a cozy café, or a fine dining experience.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: dynamicTextSecondary,
-                      fontSize: 14,
+          // 3. Main Content
+          SingleChildScrollView(
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 70), // Reduced from 48
+                    Image.asset(
+                      'logo_images/white_logo.png',
+                      height: 75,
                     ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                        foregroundColor: dynamicTextPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                    const SizedBox(height: 16), // Reduced from 24
+                    Text(
+                      'Welcome to Roomly',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: dynamicTextPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 16), // Reduced from 16
+                    Text(
+                      'Find the perfect roommate — fast. Whether you\'re looking for a study buddy, a night owl, or someoe who respects your fridge space, we\'ve got covered.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 19,
+                        color: dynamicTextSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+
+                    // Illustration
+                    const SizedBox(height: 100),
+                    SizedBox(
+                      height: size.height * 0.25, // Constrained to 25% of screen height
+                      child: Image.asset(
+                        'logo_images/roommates.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    // No bottom padding
+
+                    // Buttons Section
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: scaffoldBg,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, '/register');
+                        },
+                        child: const Text(
+                          'Find a Roommate',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/register');
+                    ),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushReplacementNamed(context, '/login');
                       },
-                      child: const Text(
-                        'Sign up',
+                      child: Text(
+                        'Already have an account? Log in',
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
+                          color: dynamicTextSecondary,
                           fontSize: 16,
                         ),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 70),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushReplacementNamed(context, '/login');
-                  },
-                  child: Text(
-                    'Already have an account? Log in',
-                    style: TextStyle(
-                      color: dynamicTextSecondary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
+              ),
             ),
           ),
         ],
@@ -181,3 +141,40 @@ class AuthScreen extends StatelessWidget {
     );
   }
 }
+
+class BackgroundPatternPainter extends CustomPainter {
+  final Color color;
+  
+  BackgroundPatternPainter({required this.color});
+  
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+      
+    const spacing = 80.0;  // Reduced spacing between icons
+    const iconSize = 20.0; // Smaller icons
+    
+    for (var x = 0.0; x < size.width; x += spacing) {
+      for (var y = 0.0; y < size.height; y += spacing) {
+        // Draw small squares for a subtle pattern
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(
+              center: Offset(x + (spacing / 2), y + (spacing / 2)),
+              width: iconSize,
+              height: iconSize,
+            ),
+            const Radius.circular(4),
+          ),
+          paint,
+        );
+      }
+    }
+  }
+  
+  @override
+  bool shouldRepaint(BackgroundPatternPainter oldDelegate) => false;
+}
+
