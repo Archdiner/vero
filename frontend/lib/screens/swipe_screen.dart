@@ -159,21 +159,23 @@ class _SwipeScreenState extends State<SwipeScreen> {
   }
   
   void _showMatchDialog(UserProfile matchedUser) {
+    // ADDED: Get brightness for dynamic colors in dialog
+    final brightness = Theme.of(context).brightness;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: Colors.transparent,
+          backgroundColor: brightness == Brightness.dark ? Colors.transparent : Colors.transparent,
           elevation: 0,
           child: Container(
             width: double.infinity,
             height: 500,
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
+              color: brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white, // CHANGED: dynamic background
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppColors.primaryBlue, // Blue border instead of orange
+                color: AppColors.primaryBlue, // remains the same
                 width: 2,
               ),
             ),
@@ -189,7 +191,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       const Text(
                         'It\'s a Match!',
                         style: TextStyle(
-                          color: AppColors.primaryBlue, // Blue text
+                          color: AppColors.primaryBlue, // remains the same
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                         ),
@@ -198,8 +200,8 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       Text(
                         'You and ${matchedUser.fullName} have liked each other',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white70,
+                        style: TextStyle(
+                          color: brightness == Brightness.dark ? Colors.white70 : Colors.black54, // CHANGED
                           fontSize: 16,
                         ),
                       ),
@@ -222,7 +224,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white,
+                                color: brightness == Brightness.dark ? Colors.white : Colors.black, // CHANGED
                                 width: 2,
                               ),
                               image: _currentUserProfile['profile_picture'] != null
@@ -233,13 +235,13 @@ class _SwipeScreenState extends State<SwipeScreen> {
                                   : null,
                             ),
                             child: _currentUserProfile['profile_picture'] == null
-                                ? const Icon(Icons.person, color: Colors.white, size: 50)
+                                ? Icon(Icons.person, color: brightness == Brightness.dark ? Colors.white : Colors.black, size: 50) // CHANGED
                                 : null,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             _userName.split(' ').first,
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: brightness == Brightness.dark ? Colors.white : Colors.black), // CHANGED
                           ),
                         ],
                       ),
@@ -247,7 +249,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                       // Heart icon between avatars
                       const Icon(
                         Icons.favorite,
-                        color: AppColors.primaryBlue, // Blue heart instead of orange
+                        color: AppColors.primaryBlue, // unchanged
                         size: 40,
                       ),
                       
@@ -260,7 +262,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white,
+                                color: brightness == Brightness.dark ? Colors.white : Colors.black, // CHANGED
                                 width: 2,
                               ),
                               image: matchedUser.profilePicture.isNotEmpty
@@ -271,13 +273,13 @@ class _SwipeScreenState extends State<SwipeScreen> {
                                   : null,
                             ),
                             child: matchedUser.profilePicture.isEmpty
-                                ? const Icon(Icons.person, color: Colors.white, size: 50)
+                                ? Icon(Icons.person, color: brightness == Brightness.dark ? Colors.white : Colors.black, size: 50) // CHANGED
                                 : null,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             matchedUser.fullName.split(' ').first,
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: brightness == Brightness.dark ? Colors.white : Colors.black), // CHANGED
                           ),
                         ],
                       ),
@@ -307,8 +309,8 @@ class _SwipeScreenState extends State<SwipeScreen> {
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryBlue, // Blue button instead of orange
-                            foregroundColor: Colors.white,
+                            backgroundColor: AppColors.primaryBlue, // unchanged
+                            foregroundColor: Colors.white, // keep white for contrast on blue
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -331,16 +333,19 @@ class _SwipeScreenState extends State<SwipeScreen> {
                             Navigator.pop(context); // Close dialog
                           },
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.white, width: 1),
+                            foregroundColor: brightness == Brightness.dark ? Colors.white : Colors.black, // CHANGED
+                            side: BorderSide(color: brightness == Brightness.dark ? Colors.white : Colors.black, width: 1), // CHANGED
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Keep Swiping',
-                            style: TextStyle(fontSize: 16),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: brightness == Brightness.dark ? Colors.white : Colors.black, // CHANGED
+                            ),
                           ),
                         ),
                       ),
@@ -357,8 +362,10 @@ class _SwipeScreenState extends State<SwipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ADDED: Obtain brightness for dynamic colors
+    final brightness = Theme.of(context).brightness;
     return Scaffold(
-      backgroundColor: Colors.black, // dark background
+      backgroundColor: brightness == Brightness.dark ? Colors.black : Colors.white, // CHANGED
       body: SafeArea(
         child: Column(
           children: [
@@ -398,7 +405,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                               color: Colors.grey[800],
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.primaryBlue, // Blue border instead of orange
+                                color: AppColors.primaryBlue,
                                 width: 2,
                               ),
                               image: _currentUserProfile['profile_picture'] != null && 
@@ -408,13 +415,12 @@ class _SwipeScreenState extends State<SwipeScreen> {
                                     fit: BoxFit.cover,
                                     onError: (exception, stackTrace) {
                                       print('Error loading profile image: $exception');
-                                    }
-                                  )
+                                    })
                                 : null,
                             ),
                             child: _currentUserProfile['profile_picture'] == null || 
                                   _currentUserProfile['profile_picture'].toString().isEmpty
-                                ? const Icon(Icons.person, color: Colors.white)
+                                ? Icon(Icons.person, color: brightness == Brightness.dark ? Colors.white : Colors.black)
                                 : null,
                           ),
                         ),
@@ -429,8 +435,8 @@ class _SwipeScreenState extends State<SwipeScreen> {
                           _userName.isEmpty 
                             ? "Hello there!" 
                             : "Hello ${_userName.split(' ').first}!",
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: brightness == Brightness.dark ? Colors.white : Colors.black, // CHANGED
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -438,8 +444,8 @@ class _SwipeScreenState extends State<SwipeScreen> {
                         const SizedBox(height: 2),
                         Text(
                           _currentUserProfile['university'] ?? "Find your roommate",
-                          style: const TextStyle(
-                            color: Colors.white54,
+                          style: TextStyle(
+                            color: brightness == Brightness.dark ? Colors.white54 : Colors.black54, // CHANGED
                             fontSize: 12,
                           ),
                         ),
@@ -449,63 +455,11 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   // Notification icon
                   IconButton(
                     onPressed: () {},
-                    icon: const Icon(Icons.notifications_none, color: Colors.white),
+                    icon: Icon(Icons.notifications_none, color: brightness == Brightness.dark ? Colors.white : Colors.black), // CHANGED
                   ),
                 ],
               ),
             ),
-
-            // ===== SEARCH BAR + FILTER ICON =====
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Container(
-                height: 60,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 16),
-                    const Icon(Icons.search, color: Colors.white54),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        style: const TextStyle(color: Colors.white),
-                        decoration: const InputDecoration(
-                          hintText: "Search for roommates",
-                          hintStyle: TextStyle(color: Colors.white54),
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                    // Orange square with the filter icon
-                    Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryBlue, // Blue box instead of orange
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.filter_list, color: Colors.white),
-                        onPressed: () {
-                          // TODO: Add filtering functionality later
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Filtering feature coming soon!'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
 
             // ===== SWIPE STACK =====
             Expanded(
@@ -515,11 +469,11 @@ class _SwipeScreenState extends State<SwipeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _isFetching
-                              ? const CircularProgressIndicator(color: AppColors.primaryBlue) // Blue progress indicator
-                              : const Icon(
+                              ? const CircularProgressIndicator(color: AppColors.primaryBlue)
+                              : Icon(
                                   Icons.search_off,
                                   size: 64,
-                                  color: Colors.white54,
+                                  color: brightness == Brightness.dark ? Colors.white54 : Colors.black54, // CHANGED
                                 ),
                           const SizedBox(height: 16),
                           Text(
@@ -528,10 +482,10 @@ class _SwipeScreenState extends State<SwipeScreen> {
                                 : _offset > 0
                                     ? "No more profiles to show"
                                     : "No profiles available",
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: brightness == Brightness.dark ? Colors.white : Colors.black, // CHANGED
                               fontSize: 18,
-                              fontWeight: FontWeight.bold
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                           if (!_isFetching) ...[
@@ -543,7 +497,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                                     ? "You've seen all available roommates. Check back later for new matches!"
                                     : "There are no potential roommates matching your criteria at this time.",
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: Colors.white70),
+                                style: TextStyle(color: brightness == Brightness.dark ? Colors.white70 : Colors.black54), // CHANGED
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -557,7 +511,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                               icon: const Icon(Icons.refresh),
                               label: const Text("Try Again"),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryBlue, // Blue button
+                                backgroundColor: AppColors.primaryBlue,
                                 foregroundColor: Colors.white,
                               ),
                             ),
@@ -583,7 +537,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Left: search icon (orange) to indicate current screen
+                  // Left: search icon (blue) to indicate current screen
                   IconButton(
                     icon: const Icon(Icons.search, color: AppColors.primaryBlue, size: 28),
                     onPressed: () {
@@ -592,7 +546,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   ),
                   // Center: chat icon
                   IconButton(
-                    icon: const Icon(Icons.chat_bubble_outline, color: Colors.white54, size: 26),
+                    icon: Icon(Icons.chat_bubble_outline, color: brightness == Brightness.dark ? Colors.white54 : Colors.black54, size: 26), // CHANGED
                     onPressed: () {
                       // Navigate to matches screen
                       Navigator.pushReplacementNamed(context, '/matches');
@@ -600,7 +554,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                   ),
                   // Right: person icon (gray)
                   IconButton(
-                    icon: const Icon(Icons.person_outline, color: Colors.white54, size: 28),
+                    icon: Icon(Icons.person_outline, color: brightness == Brightness.dark ? Colors.white54 : Colors.black54, size: 28), // CHANGED
                     onPressed: () {
                       Navigator.pushReplacementNamed(context, '/profile');
                     },
@@ -619,12 +573,14 @@ class _SwipeScreenState extends State<SwipeScreen> {
     BoxConstraints constraints,
     UserProfile userProfile,
   ) {
-    // Slightly smaller so it doesn't get chopped
+    // Adjusted card size to better fill the available space after removing the search bar
     final cardWidth = constraints.maxWidth * 0.9;
-    final cardHeight = constraints.maxHeight * 0.85;
+    final cardHeight = constraints.maxHeight * 0.90;
+    final brightness = Theme.of(context).brightness;
 
     return Align(
-      alignment: Alignment.center,
+      // Changed alignment to topCenter so the card sits higher with less white space above
+      alignment: Alignment.topCenter,
       child: Stack(
         clipBehavior: Clip.none, // allow buttons to overflow
         children: [
@@ -656,7 +612,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                           colors: [
                             Colors.black.withOpacity(0.8),
                             Colors.transparent,
-                            Colors.black.withOpacity(0.3), // light overlay at the top
+                            Colors.black.withOpacity(0.3),
                           ],
                           stops: const [0.0, 0.5, 1.0],
                         ),
@@ -676,7 +632,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryBlue, // Blue chip instead of orange
+                            color: AppColors.primaryBlue,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -692,7 +648,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                             Expanded(
                               child: Text(
                                 "${userProfile.fullName}, ${userProfile.age}",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 26,
                                   fontWeight: FontWeight.bold,
@@ -731,14 +687,14 @@ class _SwipeScreenState extends State<SwipeScreen> {
                             children: [
                               const Icon(
                                 Icons.favorite,
-                                color: AppColors.primaryBlue, // Blue icon instead of orange
+                                color: AppColors.primaryBlue,
                                 size: 16,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '${userProfile.compatibilityScore!.toInt()}% Compatible',
                                 style: const TextStyle(
-                                  color: AppColors.primaryBlue, // Blue text instead of orange
+                                  color: AppColors.primaryBlue,
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -771,7 +727,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                     width: 130,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2C2C2C), // dark gray
+                      color: brightness == Brightness.dark ? const Color(0xFF2C2C2C) : Colors.grey[300],
                       borderRadius: BorderRadius.circular(25),
                       boxShadow: [
                         BoxShadow(
@@ -789,7 +745,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
                         Text(
                           "NOPE",
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.primaryBlue,
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -852,13 +808,13 @@ class _SwipeScreenState extends State<SwipeScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
+                  color: brightness == Brightness.dark ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white, width: 1.5),
+                  border: Border.all(color: brightness == Brightness.dark ? Colors.white : Colors.black, width: 1.5),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.info_outline,
-                  color: Colors.white,
+                  color: brightness == Brightness.dark ? Colors.white : Colors.black,
                   size: 24,
                 ),
               ),
@@ -884,9 +840,11 @@ class _SwipeScreenState extends State<SwipeScreen> {
   }
   
   void _showDetailedProfile(BuildContext context, UserProfile userProfile) {
+    final brightness = Theme.of(context).brightness;
+    
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: brightness == Brightness.dark ? Color(0xFF1E1E1E) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
