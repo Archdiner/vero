@@ -6,6 +6,7 @@ import '../utils/config.dart' as utils;
 import '../utils/themes.dart'; // Import our theme system
 // Import main.dart to access the global themeNotifier
 import '../main.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -219,7 +220,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icons.notifications_none,
             title: 'Notifications',
             onTap: () {
-              // Navigate to notifications screen
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Coming soon!'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
           ),
           _buildThemeToggleItem(),
@@ -230,17 +236,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildSectionHeader('Support'),
           const SizedBox(height: 8),
           _buildSettingsItem(
-            icon: Icons.help_outline,
-            title: 'Contact us',
-            onTap: () {
-              // Navigate to contact page
-            },
-          ),
+  icon: Icons.mail_outline,
+  title: 'Email us',
+  onTap: () async {
+      final Uri emailLaunchUri = Uri(
+        scheme: 'mailto',
+        path: 'admin@gulfintelai.com',
+        query: Uri.encodeQueryComponent('subject=Contact Inquiry&body=Hello, I would like to get in touch with you.'),
+      );
+
+      // Check if the device can launch the email app
+      if (await canLaunchUrl(emailLaunchUri)) {
+        await launchUrl(emailLaunchUri);
+      } else {
+        // Handle error if email client cannot be opened
+        print('Could not launch email client');
+      }
+    },
+  ),
           _buildSettingsItem(
             icon: Icons.star_border,
             title: 'Rate us',
             onTap: () {
-              // Launch app store rating page
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Coming soon!'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
           ),
 
@@ -253,14 +276,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icons.info_outline,
             title: 'CGU',
             onTap: () {
-              // Terms & conditions
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Coming soon!'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
           ),
           _buildSettingsItem(
             icon: Icons.privacy_tip_outlined,
             title: 'Privacy Policy',
             onTap: () {
-              // Privacy policy page
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Coming soon!'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
           ),
 
