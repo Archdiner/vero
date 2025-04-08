@@ -465,58 +465,71 @@ class _SwipeScreenState extends State<SwipeScreen> {
             Expanded(
               child: _potentialMatches.isEmpty
                   ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _isFetching
-                              ? const CircularProgressIndicator(color: AppColors.primaryBlue)
-                              : Icon(
-                                  Icons.search_off,
-                                  size: 64,
-                                  color: brightness == Brightness.dark ? Colors.white54 : Colors.black54, // CHANGED
-                                ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _isFetching 
-                                ? "Finding roommates..." 
-                                : _offset > 0
-                                    ? "No more profiles to show"
-                                    : "No profiles available",
-                            style: TextStyle(
-                              color: brightness == Brightness.dark ? Colors.white : Colors.black, // CHANGED
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _isFetching
+                                ? const CircularProgressIndicator(color: AppColors.primaryBlue)
+                                : Icon(
+                                    Icons.search_off,
+                                    size: 64,
+                                    color: brightness == Brightness.dark ? Colors.white54 : Colors.black54,
+                                  ),
+                            const SizedBox(height: 24),
+                            Text(
+                              _isFetching 
+                                  ? "Finding roommates..." 
+                                  : _offset > 0
+                                      ? "No more profiles to show"
+                                      : "No profiles available",
+                              style: TextStyle(
+                                color: brightness == Brightness.dark ? Colors.white : Colors.black,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                          ),
-                          if (!_isFetching) ...[
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 32),
-                              child: Text(
+                            if (!_isFetching) ...[
+                              const SizedBox(height: 16),
+                              Text(
                                 _offset > 0
                                     ? "You've seen all available roommates. Check back later for new matches!"
                                     : "There are no potential roommates matching your criteria at this time.",
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: brightness == Brightness.dark ? Colors.white70 : Colors.black54), // CHANGED
+                                style: TextStyle(
+                                  color: brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+                                  fontSize: 15,
+                                  height: 1.4,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                // Try to fetch again
-                                _offset = 0;
-                                _potentialMatches = [];
-                                _fetchPotentialMatches();
-                              },
-                              icon: const Icon(Icons.refresh),
-                              label: const Text("Try Again"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryBlue,
-                                foregroundColor: Colors.white,
+                              const SizedBox(height: 32),
+                              SizedBox(
+                                width: min(200, MediaQuery.of(context).size.width * 0.5),
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    // Try to fetch again
+                                    _offset = 0;
+                                    _potentialMatches = [];
+                                    _fetchPotentialMatches();
+                                  },
+                                  icon: const Icon(Icons.refresh, size: 20),
+                                  label: const Text("Try Again"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryBlue,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(25),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     )
                   : SwipableStack(
@@ -610,11 +623,12 @@ class _SwipeScreenState extends State<SwipeScreen> {
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                           colors: [
-                            Colors.black.withOpacity(0.8),
+                            Colors.black.withOpacity(0.9),  // Stronger black at bottom
+                            Colors.black.withOpacity(0.5),  // Medium opacity in middle
+                            Colors.black.withOpacity(0.3),  // Subtle overlay at top
                             Colors.transparent,
-                            Colors.black.withOpacity(0.3),
                           ],
-                          stops: const [0.0, 0.5, 1.0],
+                          stops: const [0.0, 0.4, 0.75, 1.0],
                         ),
                       ),
                     ),
