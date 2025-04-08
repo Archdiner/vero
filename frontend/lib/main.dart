@@ -3,10 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth_screen.dart';
-import 'screens/home_screen.dart';
 import 'screens/swipe_screen.dart';
-import 'screens/favourites_screen.dart';
-import 'screens/restaurant_details_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
@@ -102,9 +99,6 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
           routes: {
             '/splash': (context) => SplashScreen(),
             '/auth': (context) => AuthScreen(),
-            '/home': (context) => HomeScreen(),
-            '/favourites': (context) => FavouritesScreen(),
-            '/details': (context) => RestaurantDetailsScreen(),
             '/login': (context) => LoginScreen(),
             '/register': (context) => RegisterScreen(),
             '/onboarding': (context) => OnboardingScreen(),
