@@ -8,9 +8,21 @@ class AuthScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
+    final brightness = Theme.of(context).brightness;
+    
+    // Define dynamic colors based on brightness:
+    final scaffoldBg = brightness == Brightness.dark ? Colors.black : Colors.white;
+    final bgColor = scaffoldBg; // use the same for gradient
+    final placeholderColor =
+        brightness == Brightness.dark ? Colors.grey[600] : Colors.grey[300];
+    // For text: in dark mode use the AppColors; in light mode, use black or dark grey.
+    final dynamicTextPrimary =
+        brightness == Brightness.dark ? AppColors.textPrimary : Colors.black;
+    final dynamicTextSecondary =
+        brightness == Brightness.dark ? AppColors.textSecondary : Colors.black54;
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: scaffoldBg,
       body: Stack(
         children: [
           // 1) Mosaic
@@ -46,11 +58,11 @@ class AuthScreen extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      // Make placeholders lighter to see the gradient better
-                      color: Colors.grey[600],
-                      child: const Icon(
+                      // Use dynamic placeholder color
+                      color: placeholderColor,
+                      child: Icon(
                         Icons.image_outlined,
-                        color: AppColors.textSecondary,
+                        color: dynamicTextSecondary,
                         size: 40,
                       ),
                     ),
@@ -68,17 +80,17 @@ class AuthScreen extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.transparent,   // 0 -> 0.2
-                    AppColors.background.withOpacity(0.26),       // 0.2 -> 0.35
-                    AppColors.background.withOpacity(0.54),       // 0.35 -> 0.5
-                    AppColors.background.withOpacity(0.87),       // 0.5 -> 0.7
-                    AppColors.background,         // 0.7 -> 1.0
+                    Colors.transparent,
+                    bgColor.withOpacity(0.26),
+                    bgColor.withOpacity(0.54),
+                    bgColor.withOpacity(0.87),
+                    bgColor,
                   ],
                   stops: const [
-                    0.15,  // Start fading at 20% down
-                    0.3, // then darker
-                    0.45,  
-                    0.65,  // fully black by 70%
+                    0.15,
+                    0.3,
+                    0.45,
+                    0.65,
                     1.0,
                   ],
                 ),
@@ -100,22 +112,22 @@ class AuthScreen extends StatelessWidget {
                   color: AppColors.primaryBlue,
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Welcome To Vero',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: dynamicTextPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
                   child: Text(
                     'Discover the best restaurants near you in just a few taps! Whether you\'re craving a quick bite, a cozy café, or a fine dining experience.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: dynamicTextSecondary,
                       fontSize: 14,
                     ),
                   ),
@@ -129,7 +141,7 @@ class AuthScreen extends StatelessWidget {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
-                        foregroundColor: AppColors.textPrimary,
+                        foregroundColor: dynamicTextPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
@@ -152,10 +164,10 @@ class AuthScreen extends StatelessWidget {
                   onTap: () {
                     Navigator.pushReplacementNamed(context, '/login');
                   },
-                  child: const Text(
+                  child: Text(
                     'Already have an account? Log in',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: dynamicTextSecondary,
                       fontSize: 14,
                     ),
                   ),
