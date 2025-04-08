@@ -9,22 +9,57 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   final AuthService _authService = AuthService();
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
 
   @override
   void initState() {
     super.initState();
-    // Check login status after the first frame is rendered
+    
+    // Initialize animations
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
+    ));
+
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Interval(0.0, 0.65, curve: Curves.easeOut),
+    ));
+
+    // Start the animation
+    _controller.forward();
+
+    // Check login status after animations
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkLoginAndNavigate();
     });
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   Future<void> _checkLoginAndNavigate() async {
     try {
-      // Show splash for a minimal time (800ms)
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Show splash for a longer time (2000ms = 2 seconds)
+      await Future.delayed(const Duration(milliseconds: 2000));
       
       if (!mounted) return;
 
@@ -67,11 +102,22 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF87CEEB), // Light blue background
       body: Center(
-        child: Image.asset(
-          'logo_images/1.png', // Using the first logo image
-          width: 200, // Adjust size as needed
-          height: 200,
-          fit: BoxFit.contain,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Opacity(
+              opacity: _opacityAnimation.value,
+              child: Transform.scale(
+                scale: _scaleAnimation.value,
+                child: Image.asset(
+                  'logo_images/1.png',
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
