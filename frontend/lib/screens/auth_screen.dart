@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../utils/themes.dart';
 import '../widgets/furniture_pattern_background.dart';
 
 class AuthScreen extends StatelessWidget {
@@ -98,7 +98,7 @@ class AuthScreen extends StatelessWidget {
                       height: 56,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
+                          backgroundColor: AppColors.buttonBlue,
                           foregroundColor: scaffoldBg,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),

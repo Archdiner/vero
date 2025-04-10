@@ -171,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               "Login",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 24,
+                                fontSize: 28,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -189,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: 24,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       "Please enter the information below to access your account!",
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.7),
-                        fontSize: 16,
+                        fontSize: 18,
                       ),
                     ),
                     const SizedBox(height: 48),
