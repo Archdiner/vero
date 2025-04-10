@@ -173,12 +173,6 @@ class AuthService {
 
   // Check if user has completed onboarding
   Future<bool> hasCompletedOnboarding() async {
-    // Temporary fix: always return true to bypass onboarding check
-    print('Bypassing onboarding check, returning true');
-    return true;
-    
-    // Original implementation commented out for reference
-    /*
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = await _getToken();
@@ -194,7 +188,7 @@ class AuthService {
 
       // If not in local storage, verify with backend
       final response = await http.get(
-        Uri.parse('$baseUrl/profile'),
+        Uri.parse('$baseUrl/auth/profile'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -231,7 +225,6 @@ class AuthService {
       print('Error checking onboarding status: $e');
       return false;
     }
-    */
   }
 
   // Mark onboarding as completed
