@@ -39,6 +39,3 @@ android/app/debug.keystore
 venv/
 __pycache__/
 *.pyc
-
-# localhost fix
-frontend/lib/utils/config.dart
