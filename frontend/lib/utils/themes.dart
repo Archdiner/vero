@@ -6,6 +6,7 @@ class AppColors {
   static const Color primaryBlue = Color(0xFF4A90E2); // Sky blue
   static const Color primaryLightBlue = Color(0xFFB3D4FC); // Accent/light blue
   static const Color primaryDarkBlue = Color(0xFF2C3E50); // Deep indigo/blue-gray
+  static const Color buttonBlue = Color(0xFF2979FF); // New button color
 
   // Accent colors (optional, for success/warning/feedback)
   static const Color success = Color(0xFF2ECC71); // Soft green
