@@ -135,9 +135,6 @@ def compute_compatibility_score(user1: User, user2: User) -> float:
     if user1.budget_range is not None and user2.budget_range is not None:
         add_numeric_factor(user1.budget_range, user2.budget_range, max_diff=1000, weight=0.05)
 
-    if user1.move_in_date and user2.move_in_date:
-        add_date_factor(user1.move_in_date, user2.move_in_date, max_diff_days=30, weight=0.05)
-
     # Calculate and return the weighted score
     if total_weight > 0:
         return min(1.0, score_sum / total_weight) * 100  # Convert to percentage (0-100)

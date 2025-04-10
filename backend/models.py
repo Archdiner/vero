@@ -80,7 +80,6 @@ class User(Base):
     major = Column(String, nullable=True)
     year_of_study = Column(Integer, nullable=True)
     budget_range = Column(Integer, nullable=True, index=True)
-    move_in_date = Column(DateTime, nullable=True)  # now nullable
     smoking_preference = Column(Boolean, nullable=True, index=True)
     drinking_preference = Column(Boolean, nullable=True, index=True)
     pet_preference = Column(Boolean, nullable=True, index=True)
@@ -92,6 +91,7 @@ class User(Base):
     phone_number = Column(String, nullable=True)
     bio = Column(String, unique=False, nullable=True)
     music_preference = Column(Boolean, nullable=True, index=True)
+    onboarding_complete = Column(Boolean, nullable=False, default=False, index=True)  # New column
     
     # New fields for enhanced matching
     guest_policy = Column(String, nullable=True)
