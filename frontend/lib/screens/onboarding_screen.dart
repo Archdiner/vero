@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import '../utils/config.dart' as utils;
 import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
+import '../widgets/furniture_pattern_background.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -45,7 +46,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _majorController = TextEditingController();
   final TextEditingController _budgetRangeController = TextEditingController();
-  final TextEditingController _moveInDateController = TextEditingController();
   final TextEditingController _cleanlinessLevelController = TextEditingController();
   final TextEditingController _snapchatController = TextEditingController();
   final TextEditingController _bedtimeController = TextEditingController();
@@ -246,7 +246,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _ageController.dispose();
     _majorController.dispose();
     _budgetRangeController.dispose();
-    _moveInDateController.dispose();
     _cleanlinessLevelController.dispose();
     _snapchatController.dispose();
     _bedtimeController.dispose();
@@ -498,9 +497,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         'major': _majorController.text,
         'profile_picture': _imageUrl,
         'bio': _bioController.text,
-        'move_in_date': _moveInDateController.text.isNotEmpty
-            ? _moveInDateController.text
-            : null,
         'budget_range': int.parse(_budgetRangeController.text),
         'cleanliness_level': int.parse(_cleanlinessLevelController.text),
         'social_preference': _selectedSocialPreference,
@@ -661,116 +657,202 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scaffoldBg = const Color(0xFF0F1A24);  // Dark blue background
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: const Text(
-          'Create Your Profile',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        elevation: 0,
-      ),
-      body: Column(
+      backgroundColor: scaffoldBg,
+      body: Stack(
         children: [
-          // Progress indicator
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Background Pattern
+          const FurniturePatternBackground(
+            opacity: 0.2,
+            spacing: 70,
+            iconColor: Color(0xFF293542),
+          ),
+
+          // Gradient Overlay
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: size.height * 0.6,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    scaffoldBg.withOpacity(0.0),
+                    scaffoldBg.withOpacity(0.5),
+                    scaffoldBg.withOpacity(0.9),
+                    scaffoldBg,
+                  ],
+                  stops: const [0.0, 0.3, 0.6, 1.0],
+                ),
+              ),
+            ),
+          ),
+
+          // Main Content
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Column(
                   children: [
-                    Text(
-                      _pageHeaders[_currentPage],
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    // Header Section
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 24),
+                          // Back Button and Title in Row
+                          Row(
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(left: 4),
+                                height: 36,
+                                width: 36,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                                  onPressed: () => Navigator.pushReplacementNamed(context, '/auth'),
+                                ),
+                              ),
+                              const Expanded(
+                                child: Center(
+                                  child: Text(
+                                    "Create Your Profile",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 36),
+                            ],
+                          ),
+                          const SizedBox(height: 32),
+
+                          // Progress indicator
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _pageHeaders[_currentPage],
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Step ${_currentPage + 1}/$_totalPages',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.7),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                LinearProgressIndicator(
+                                  value: (_currentPage + 1) / _totalPages,
+                                  backgroundColor: Colors.grey[800],
+                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.buttonBlue),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      'Step ${_currentPage + 1}/$_totalPages',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
+
+                    // Page content with Expanded
+                    Expanded(
+                      child: PageView(
+                        controller: _pageController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        onPageChanged: (index) {
+                          setState(() {
+                            _currentPage = index;
+                          });
+                        },
+                        children: [
+                          _buildBasicInfoPage(),
+                          _buildEducationPage(),
+                          _buildLivingPreferencesPage(),
+                          _buildContactInfoPage(),
+                        ],
+                      ),
+                    ),
+
+                    // Navigation buttons
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Back button (hidden on first page)
+                          _currentPage > 0
+                              ? TextButton(
+                                  onPressed: _previousPage,
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  child: const Text('Back'),
+                                )
+                              : const SizedBox(width: 80),
+                          // Next/Submit button
+                          SizedBox(
+                            width: 120,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _nextPage,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.buttonBlue,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      _currentPage == _totalPages - 1 ? 'Submit' : 'Next',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: (_currentPage + 1) / _totalPages,
-                  backgroundColor: Colors.grey[800],
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ],
-            ),
-          ),
-          // Page content
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
-              onPageChanged: (index) {
-                setState(() {
-                  _currentPage = index;
-                });
+                );
               },
-              children: [
-                _buildBasicInfoPage(),
-                _buildEducationPage(),
-                _buildLivingPreferencesPage(),
-                _buildContactInfoPage(),
-              ],
-            ),
-          ),
-          // Navigation buttons
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Back button (hidden on first page)
-                _currentPage > 0
-                    ? TextButton(
-                        onPressed: _previousPage,
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Back'),
-                      )
-                    : const SizedBox(width: 80),
-                // Next/Submit button
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _nextPage,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          _currentPage == _totalPages - 1 ? 'Submit' : 'Next',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                ),
-              ],
             ),
           ),
         ],
@@ -787,27 +869,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Let\'s get to know you',
               style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 20,
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'This information helps us create your profile',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 18,
+              ),
             ),
             const SizedBox(height: 24),
             
             // Profile image picker
             Column(
               children: [
-                const Text(
+                Text(
                   'Profile Picture',
-                  style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Stack(
@@ -819,9 +907,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         width: 120,
                         height: 120,
                         decoration: BoxDecoration(
-                          color: Colors.grey[800],
+                          color: Colors.white.withOpacity(0.1),
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.primaryBlue, width: 2),
+                          border: Border.all(color: AppColors.buttonBlue, width: 2),
                           image: _imageUrl != null
                               ? DecorationImage(
                                   image: NetworkImage(_imageUrl!),
@@ -850,8 +938,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: AppColors.primaryBlue,
+                      decoration: BoxDecoration(
+                        color: AppColors.buttonBlue,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -865,22 +953,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 if (_isUploadingImage)
                   const Padding(
                     padding: EdgeInsets.only(top: 8.0),
-                    child: CircularProgressIndicator(),
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                    ),
                   ),
                 if (_imageUrl != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       'Image uploaded',
-                      style: TextStyle(color: AppColors.success),
+                      style: TextStyle(
+                        color: AppColors.success,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
               ],
             ),
             const SizedBox(height: 24),
             
-            // Age field with validation
-            _buildRequiredTextField(
+            // Age field
+            _buildTextField(
               controller: _ageController,
               label: 'Age',
               keyboardType: TextInputType.number,
@@ -889,7 +982,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 16),
             
             // Gender dropdown
-            _buildRequiredDropdown(
+            _buildDropdown(
               label: 'Gender',
               value: _selectedGender,
               items: const ['Male', 'Female', 'Other'],
@@ -897,12 +990,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 setState(() {
                   _selectedGender = value;
                 });
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select your gender';
-                }
-                return null;
               },
             ),
             const SizedBox(height: 16),
@@ -944,7 +1031,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 24),
             
             // University dropdown
-            _buildRequiredDropdown(
+            _buildDropdown(
               label: 'University',
               value: _selectedUniversity,
               items: const ['Columbia University', 'Cornell University'],
@@ -952,12 +1039,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 setState(() {
                   _selectedUniversity = value;
                 });
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select your university';
-                }
-                return null;
               },
             ),
             const SizedBox(height: 16),
@@ -970,7 +1051,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 16),
             
             // Year of Study dropdown
-            _buildRequiredDropdown(
+            _buildDropdown(
               label: 'Year of Study',
               value: _selectedYearOfStudy,
               items: const ['1', '2', '3', '4', '5'],
@@ -978,12 +1059,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 setState(() {
                   _selectedYearOfStudy = value;
                 });
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select your year of study';
-                }
-                return null;
               },
             ),
           ],
@@ -1125,7 +1200,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   onChanged: (value) {
                     setState(() {
                       _cleanlinessValue = value;
-                      // Optionally update your controller if needed for the request body
                       _cleanlinessLevelController.text = value.toInt().toString();
                     });
                   },
@@ -1151,42 +1225,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 16),
             
-            // Move In Date with DatePicker
-            _buildTextField(
-              controller: _moveInDateController,
-              label: 'Move In Date (Optional)',
-              readOnly: true,
-              onTap: () async {
-                DateTime? pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2023),
-                  lastDate: DateTime(2025, 12, 31),
-                  builder: (context, child) {
-                    return Theme(
-                      data: ThemeData.dark().copyWith(
-                        colorScheme: const ColorScheme.dark(
-                          primary: AppColors.primaryBlue,
-                          onPrimary: Colors.white,
-                          surface: Colors.grey,
-                          onSurface: Colors.white,
-                        ),
-                      ),
-                      child: child!,
-                    );
-                  },
-                );
-                if (pickedDate != null) {
-                  setState(() {
-                    _moveInDateController.text = pickedDate.toIso8601String().split('T')[0];
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: 20),
-            
             // Social Preference dropdown
-            _buildRequiredDropdown(
+            _buildDropdown(
               label: 'Social Preference',
               value: _selectedSocialPreference,
               items: const ['Introvert', 'Extrovert', 'Ambivert'],
@@ -1195,16 +1235,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   _selectedSocialPreference = value;
                 });
               },
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select your social preference';
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 16),
 
-            _buildRequiredDropdown(
+            _buildDropdown(
               label: 'Music Preference',
               value: _selectedMusicPreference,
               items: const ['Headphones', 'Speakers'],
@@ -1214,12 +1248,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   // Map the selection to a boolean: 'Headphones' = false, 'Speakers' = true
                   _musicPreference = (value == 'Speakers');
                 });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please select your music preference';
-                }
-                return null;
               },
             ),
             const SizedBox(height: 16),
@@ -1356,7 +1384,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 20),
             
             // Guest Policy dropdown
-            _buildRequiredDropdown(
+            _buildDropdown(
               label: 'Guest Policy',
               value: _selectedGuestPolicy,
               items: const ['Frequent', 'Occasional', 'Rare', 'None'],
@@ -1365,17 +1393,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   _selectedGuestPolicy = value;
                 });
               },
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select your guest policy preference';
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 16),
             
             // Room Type Preference dropdown
-            _buildRequiredDropdown(
+            _buildDropdown(
               label: 'Room Type Preference',
               value: _selectedRoomType,
               items: const ['2-person', '3-person', '4-person', '5-person', 'Any'],
@@ -1383,12 +1405,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 setState(() {
                   _selectedRoomType = value;
                 });
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select your preferred room type';
-                }
-                return null;
               },
             ),
             const SizedBox(height: 16),
@@ -1486,7 +1502,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildRequiredTextField(
+                _buildTextField(
                   controller: _instagramController,
                   label: 'Instagram Username',
                   validator: _validateInstagram,
@@ -1643,94 +1659,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     int maxLines = 1,
     VoidCallback? onTap,
     String? helperText,
-  }) {
-    return TextField(
-      controller: controller,
-      style: const TextStyle(color: AppColors.textPrimary),
-      keyboardType: keyboardType,
-      readOnly: readOnly,
-      maxLines: maxLines,
-      onTap: onTap,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: AppColors.textSecondary),
-        filled: true,
-        fillColor: AppColors.inputBackground,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[800]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primaryBlue),
-        ),
-        helperText: helperText,
-        helperStyle: TextStyle(color: AppColors.textSecondary),
-      ),
-    );
-  }
-
-  Widget _buildRequiredTextField({
-    required TextEditingController controller,
-    required String label,
-    TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
-    String? helperText,
-  }) {
-    // Ensure there's a default validator if none is provided
-    final finalValidator = validator ?? (value) {
-      if (value == null || value.isEmpty) {
-        return '$label is required';
-      }
-      return null;
-    };
-    
-    return TextFormField(
-      controller: controller,
-      style: const TextStyle(color: AppColors.textPrimary),
-      keyboardType: keyboardType,
-      validator: finalValidator,
-      decoration: InputDecoration(
-        labelText: '$label *',
-        labelStyle: const TextStyle(color: AppColors.textSecondary),
-        filled: true,
-        fillColor: AppColors.inputBackground,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[800]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primaryBlue),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.error),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.error),
-        ),
-        errorStyle: const TextStyle(color: AppColors.error),
-        helperText: helperText,
-        helperStyle: TextStyle(color: AppColors.textSecondary),
-      ),
-    );
-  }
-
-  Widget _buildRequiredDropdown({
-    required String label,
-    required String? value,
-    required List<String> items,
-    required Function(String?) onChanged,
     String? Function(String?)? validator,
   }) {
     return Column(
@@ -1738,30 +1666,58 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.9),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: value,
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(item),
-            );
-          }).toList(),
-          onChanged: onChanged,
-          validator: validator,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.inputBackground,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide.none,
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.grey[800]!,
+              width: 1,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
-          dropdownColor: Colors.grey[800],
-          style: const TextStyle(color: AppColors.textPrimary),
+          child: TextFormField(
+            controller: controller,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+            keyboardType: keyboardType,
+            readOnly: readOnly,
+            maxLines: maxLines,
+            onTap: onTap,
+            validator: validator,
+            decoration: InputDecoration(
+              hintText: 'Write here',
+              hintStyle: TextStyle(
+                color: Colors.white.withOpacity(0.4),
+                fontSize: 16,
+              ),
+              border: OutlineInputBorder(
+                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              helperText: helperText,
+              helperStyle: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 12,
+              ),
+              errorStyle: const TextStyle(
+                color: AppColors.error,
+                fontSize: 12,
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -1775,50 +1731,83 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return SwitchListTile(
       title: Text(
         title,
-        style: const TextStyle(color: AppColors.textPrimary),
+        style: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       value: value,
-      activeColor: AppColors.primaryBlue,
+      activeColor: AppColors.buttonBlue,
       onChanged: onChanged,
       contentPadding: EdgeInsets.zero,
     );
   }
 
-  // Build a dropdown field without required validation
+  // Helper method for building dropdowns with consistent styling
   Widget _buildDropdown({
     required String label,
     required String? value,
     required List<String> items,
     required Function(String?) onChanged,
+    bool isRequired = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
+          isRequired ? '$label *' : label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.9),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: value,
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(item),
-            );
-          }).toList(),
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.inputBackground,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide.none,
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.grey[800]!,
+              width: 1,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
-          dropdownColor: Colors.grey[800],
-          style: const TextStyle(color: AppColors.textPrimary),
+          child: DropdownButtonFormField<String>(
+            value: value,
+            items: items.map((String item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(
+                  item,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+            dropdownColor: const Color(0xFF1E1E1E),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+            icon: Icon(
+              Icons.arrow_drop_down,
+              color: Colors.white.withOpacity(0.7),
+            ),
+          ),
         ),
       ],
     );

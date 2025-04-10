@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/config.dart' as utils;
+import '../services/supabase_service.dart';
 
 class AuthService {
   final String baseUrl = '${utils.BASE_URL}';
@@ -9,6 +10,7 @@ class AuthService {
   static const String _lastLoginKey = 'last_login';
   static const String _userEmailKey = 'user_email';
   static const String _onboardingCompletedKey = 'onboarding_completed';
+  final SupabaseService _supabaseService = SupabaseService();
 
   // Login user and store token
   Future<bool> login(String email, String password) async {
@@ -175,55 +177,42 @@ class AuthService {
   Future<bool> hasCompletedOnboarding() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = await _getToken();
+      final userEmail = prefs.getString(_userEmailKey);
       
-      if (token == null) return false;
-
-      // First check if we have a cached result in local storage
-      final isCompletedLocally = prefs.getBool(_onboardingCompletedKey) ?? false;
-      if (isCompletedLocally) {
-        print('Onboarding completion confirmed from local storage');
-        return true;
+      if (userEmail == null) {
+        print('No user email found in preferences');
+        return false;
       }
 
-      // If not in local storage, verify with backend
-      final response = await http.get(
-        Uri.parse('$baseUrl/auth/profile'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final userData = jsonDecode(response.body);
-        print('Checking onboarding completion status for user profile: ${userData.keys}');
-        
-        // Check if user has completed all required onboarding fields
-        // These are the essential fields that indicate a complete profile
-        final hasCompleted = userData['university'] != null && 
-                           userData['age'] != null &&
-                           userData['budget_range'] != null &&
-                           userData['cleanliness_level'] != null &&
-                           userData['social_preference'] != null &&
-                           (userData['profile_picture'] != null && userData['profile_picture'].toString().isNotEmpty) &&
-                           userData['sleep_time'] != null &&
-                           userData['wake_time'] != null;
-        
-        print('Onboarding completion status: $hasCompleted');
-        
-        // Only save to local storage if completion is verified
-        if (hasCompleted) {
-          await prefs.setBool(_onboardingCompletedKey, true);
-        }
-        
-        return hasCompleted;
+      // Check Supabase for onboarding status
+      if (!_supabaseService.isInitialized) {
+        print('Supabase not initialized');
+        return false;
       }
+
+      final response = await _supabaseService.client
+          .from('users')
+          .select('onboarding_complete')
+          .eq('email', userEmail)
+          .single();
+
+      if (response == null) {
+        print('No user found in Supabase');
+        return false;
+      }
+
+      final isCompleted = response['onboarding_complete'] ?? false;
+      print('Onboarding status from Supabase: $isCompleted');
       
-      print('Failed to fetch profile data to check onboarding status');
-      return false;
+      // Cache the result in SharedPreferences
+      await prefs.setBool(_onboardingCompletedKey, isCompleted);
+      
+      return isCompleted;
     } catch (e) {
       print('Error checking onboarding status: $e');
-      return false;
+      // Fall back to local storage if Supabase check fails
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_onboardingCompletedKey) ?? false;
     }
   }
 
@@ -231,8 +220,27 @@ class AuthService {
   Future<void> markOnboardingCompleted() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final userEmail = prefs.getString(_userEmailKey);
+      
+      if (userEmail == null) {
+        print('No user email found in preferences');
+        return;
+      }
+
+      // Update Supabase
+      if (!_supabaseService.isInitialized) {
+        print('Supabase not initialized');
+        return;
+      }
+
+      await _supabaseService.client
+          .from('users')
+          .update({'onboarding_complete': true})
+          .eq('email', userEmail);
+
+      // Update local storage
       await prefs.setBool(_onboardingCompletedKey, true);
-      print('Onboarding marked as completed');
+      print('Onboarding marked as completed in both Supabase and local storage');
     } catch (e) {
       print('Error marking onboarding as completed: $e');
     }

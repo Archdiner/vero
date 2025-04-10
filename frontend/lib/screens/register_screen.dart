@@ -248,7 +248,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               "Register",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 24,
+                                fontSize: 28,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -266,7 +266,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: 24,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -275,7 +275,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       "Find your perfect roommate in just a few swipes!",
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.7),
-                        fontSize: 16,
+                        fontSize: 18,
                       ),
                     ),
                     const SizedBox(height: 48),
