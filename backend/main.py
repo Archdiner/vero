@@ -19,13 +19,13 @@ origins = [
     "http://localhost:52425",  # Flutter web frontend
     "http://localhost:52762",  # Add port from error message
     "http://127.0.0.1:52762",  # Also add with IP
-    # "https://your-production-domain.com"
+    "https://roomio.fly.dev"   # Add production domain
 ]
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Temporarily allow all origins for testing
+    allow_origins=origins,  # Use the origins list instead of "*"
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
