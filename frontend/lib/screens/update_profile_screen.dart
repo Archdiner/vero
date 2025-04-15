@@ -77,6 +77,16 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   Future<void> updateProfile() async {
     // Validate password change fields if new password is provided.
     if (newPasswordController.text.isNotEmpty) {
+      // Validate new password using the same requirements as the register screen.
+      final RegExp _passwordRegExp = RegExp(
+        r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$',
+      );
+      if (!_passwordRegExp.hasMatch(newPasswordController.text)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Password must be at least 8 characters with at least one letter and one number")),
+        );
+        return;
+      }
       if (oldPasswordController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Please enter your old password")),
