@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../utils/config.dart' as utils;
-import '../utils/themes.dart'; // Import our theme system
-// Import main.dart to access the global themeNotifier
+import '../utils/themes.dart';
 import '../main.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../widgets/furniture_pattern_background.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -25,7 +25,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize the local theme flag from the global themeNotifier.
     _isDarkTheme = themeNotifier.value == ThemeMode.dark;
     _fetchProfile();
   }
@@ -37,8 +36,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('access_token');
-
-    // If there's no token, redirect to login.
     if (token == null || token.isEmpty) {
       Navigator.pushReplacementNamed(context, '/login');
       return;
@@ -47,28 +44,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final response = await http.get(
         Uri.parse('${utils.BASE_URL}/profile'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+        headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
           _email = data['email'];
-          _username = data['fullname']; // Use full name here.
+          _username = data['fullname'];
           _profilePicture = data['profile_picture'];
         });
-        
-        // If profile picture isn't in the response, try to get it from SharedPreferences
         if (_profilePicture == null || _profilePicture!.isEmpty) {
           _profilePicture = prefs.getString('profile_image_url');
         }
-      } else {
-        if (response.statusCode == 401) {
-          await prefs.remove('access_token');
-          Navigator.pushReplacementNamed(context, '/login');
-        }
+      } else if (response.statusCode == 401) {
+        await prefs.remove('access_token');
+        Navigator.pushReplacementNamed(context, '/login');
       }
     } catch (e) {
       print('Exception while fetching profile: $e');
@@ -88,23 +79,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Use theme-aware background color.
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
+      backgroundColor: Color(0xFF0F1A24),
       appBar: AppBar(
-        // Use the theme’s appBarTheme background.
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
         title: const Text(
           'Profile',
           style: TextStyle(
             fontWeight: FontWeight.bold,
+            fontSize: 24,
           ),
         ),
-        // Let the theme set the icon colors.
-        elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildProfileBody(),
+      body: Stack(
+        children: [
+          const FurniturePatternBackground(
+            spacing: 70,
+            opacity: 0.2,
+            iconColor: Color(0xFF293542),
+          ),
+
+          // loader stays the same
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else
+            Padding(
+              // push below status bar + toolbar
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + kToolbarHeight,
+              ),
+              child: _buildProfileBody(),
+            ),
+        ],
+      ),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
@@ -123,19 +132,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Column(
         children: [
-          // TOP USER INFO CARD
           Container(
             padding: const EdgeInsets.all(16),
-            // Use a dark or light container color based on the current brightness.
             decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF1E1E1E)
+                  ? const Color(0xFF000A14)
                   : Colors.grey[200],
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
               children: [
-                // User avatar with profile picture
                 Hero(
                   tag: 'user-profile-picture',
                   child: Container(
@@ -143,7 +149,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     height: 60,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      // Use a theme-aware fallback color.
                       color: Theme.of(context).brightness == Brightness.dark
                           ? Colors.grey[800]
                           : Colors.grey[300],
@@ -170,7 +175,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Name & email
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +192,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _email ?? '',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onBackground
+                              .withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -198,23 +205,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 24),
-
-          // PROFILE SETTINGS SECTION
           _buildSectionHeader('Profile settings'),
           const SizedBox(height: 8),
           _buildSettingsItem(
             icon: Icons.person_outline,
             title: 'Personal information',
-            onTap: () {
-              Navigator.pushNamed(context, '/update_profile');
-            },
+            onTap: () => Navigator.pushNamed(context, '/update_profile'),
           ),
           _buildSettingsItem(
             icon: Icons.tune,
             title: 'Preferences',
-            onTap: () {
-              Navigator.pushNamed(context, '/update_preferences');
-            },
+            onTap: () => Navigator.pushNamed(context, '/update_preferences'),
           ),
           _buildSettingsItem(
             icon: Icons.notifications_none,
@@ -228,32 +229,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
           ),
-          _buildThemeToggleItem(),
-
+          // _buildThemeToggleItem(),
           const SizedBox(height: 24),
-
-          // SUPPORT SECTION
           _buildSectionHeader('Support'),
           const SizedBox(height: 8),
           _buildSettingsItem(
-  icon: Icons.mail_outline,
-  title: 'Email us',
-  onTap: () async {
-      final Uri emailLaunchUri = Uri(
-        scheme: 'mailto',
-        path: 'admin@gulfintelai.com',
-        query: Uri.encodeQueryComponent('subject=Contact Inquiry&body=Hello, I would like to get in touch with you.'),
-      );
-
-      // Check if the device can launch the email app
-      if (await canLaunchUrl(emailLaunchUri)) {
-        await launchUrl(emailLaunchUri);
-      } else {
-        // Handle error if email client cannot be opened
-        print('Could not launch email client');
-      }
-    },
-  ),
+            icon: Icons.mail_outline,
+            title: 'Email us',
+            onTap: () async {
+              final Uri emailLaunchUri = Uri(
+                scheme: 'mailto',
+                path: 'admin@gulfintelai.com',
+                query: Uri.encodeQueryComponent(
+                    'subject=Contact Inquiry&body=Hello, I would like to get in touch with you.'),
+              );
+              if (await canLaunchUrl(emailLaunchUri)) {
+                await launchUrl(emailLaunchUri);
+              } else {
+                print('Could not launch email client');
+              }
+            },
+          ),
           _buildSettingsItem(
             icon: Icons.star_border,
             title: 'Rate us',
@@ -266,10 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
           ),
-
           const SizedBox(height: 24),
-
-          // LEGAL SECTION
           _buildSectionHeader('Legal section'),
           const SizedBox(height: 8),
           _buildSettingsItem(
@@ -296,10 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
           ),
-
           const SizedBox(height: 24),
-
-          // LOGOUT
           _buildSettingsItem(
             icon: Icons.logout,
             iconColor: Colors.redAccent,
@@ -320,7 +310,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+          color: Theme.of(context)
+              .colorScheme
+              .onBackground
+              .withOpacity(0.7),
         ),
       ),
     );
@@ -341,9 +334,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          // Use a dark or light background based on current brightness.
           color: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF1E1E1E)
+              ? const Color(0xFF000A14)
               : Colors.grey[200],
           borderRadius: BorderRadius.circular(12),
         ),
@@ -360,63 +352,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            Icon(Icons.arrow_forward_ios, color: Theme.of(context).iconTheme.color?.withOpacity(0.4), size: 16),
+            Icon(Icons.arrow_forward_ios,
+                color: Theme.of(context).iconTheme.color?.withOpacity(0.4),
+                size: 16),
           ],
         ),
       ),
     );
   }
 
-Widget _buildThemeToggleItem() {
-  final brightness = Theme.of(context).brightness;
-  final colorScheme = Theme.of(context).colorScheme;
-  
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-    margin: const EdgeInsets.only(bottom: 8),
-    decoration: BoxDecoration(
-      // Match the same background logic you use in your other items:
-      color: brightness == Brightness.dark
-          ? const Color(0xFF1E1E1E) // or AppColors.surface
-          : Colors.grey[200],       // or a light color from themes.dart
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Row(
-      children: [
-        // Use theme’s icon color
-        Icon(Icons.brightness_4_outlined, color: Theme.of(context).iconTheme.color),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            'Theme',
-            // Use the theme's onSurface or onBackground color instead of white
-            style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+  Widget _buildThemeToggleItem() {
+    final brightness = Theme.of(context).brightness;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: brightness == Brightness.dark
+            ? const Color(0xFF1E1E1E)
+            : Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.brightness_4_outlined, color: Theme.of(context).iconTheme.color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Theme',
+              style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+            ),
           ),
-        ),
-        Text(
-          _isDarkTheme ? 'Dark' : 'Light',
-          // Same idea here — rely on theme color
-          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.7), fontSize: 14),
-        ),
-        const SizedBox(width: 8),
-        Switch(
-          activeColor: AppColors.primaryBlue,
-          value: _isDarkTheme,
-          onChanged: (val) async {
-            setState(() {
-              _isDarkTheme = val;
-            });
-            // Update global theme
-            themeNotifier.value = val ? ThemeMode.dark : ThemeMode.light;
-            // Persist the preference
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setBool('isDarkTheme', val);
-          },
-        ),
-      ],
-    ),
-  );
-}
+          Text(
+            _isDarkTheme ? 'Dark' : 'Light',
+            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.7), fontSize: 14),
+          ),
+          const SizedBox(width: 8),
+          Switch(
+            activeColor: AppColors.primaryBlue,
+            value: _isDarkTheme,
+            onChanged: (val) async {
+              setState(() {
+                _isDarkTheme = val;
+              });
+              themeNotifier.value = val ? ThemeMode.dark : ThemeMode.light;
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('isDarkTheme', val);
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildBottomNavBar() {
     return Container(
@@ -425,26 +413,17 @@ Widget _buildThemeToggleItem() {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Left: search icon to indicate current screen
           IconButton(
             icon: Icon(Icons.search, color: Theme.of(context).iconTheme.color, size: 28),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/swipe');
-            },
+            onPressed: () => Navigator.pushReplacementNamed(context, '/swipe'),
           ),
-          // Center: chat icon
           IconButton(
             icon: Icon(Icons.chat_bubble_outline, color: Theme.of(context).iconTheme.color, size: 26),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/matches');
-            },
+            onPressed: () => Navigator.pushReplacementNamed(context, '/matches'),
           ),
-          // Right: person icon (active)
           IconButton(
-            icon: Icon(Icons.person_outline, color: AppColors.primaryBlue, size: 28),
-            onPressed: () {
-              // Already on profile screen
-            },
+            icon: Icon(Icons.person, color: AppColors.primaryBlue, size: 28),
+            onPressed: () {},
           ),
         ],
       ),
