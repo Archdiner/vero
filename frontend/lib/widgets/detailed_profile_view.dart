@@ -5,451 +5,483 @@ import '../utils/themes.dart'; // Import the theme system
 
 class DetailedProfileView extends StatelessWidget {
   final UserProfile userProfile;
+  final Function(String) onInstagramTap;
   final Widget? actionButtons;
-  final Function(String)? onInstagramTap;
 
   const DetailedProfileView({
     Key? key,
     required this.userProfile,
+    required this.onInstagramTap,
     this.actionButtons,
-    this.onInstagramTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Determine brightness and define our text colors
-    final brightness = Theme.of(context).brightness;
-    final primaryTextColor = brightness == Brightness.dark ? Colors.white : Colors.black;
-    final secondaryTextColor = brightness == Brightness.dark ? Colors.white70 : Colors.black54;
-
     return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
+      initialChildSize: 0.9,
+      minChildSize: 0.6,
       maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) => SingleChildScrollView(
-        controller: scrollController,
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F1A24),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 20,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Profile header with image
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Profile image
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: Image.network(
-                      userProfile.profilePicture.isNotEmpty
-                          ? userProfile.profilePicture
-                          : 'https://via.placeholder.com/150?text=No+Image',
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 120,
-                          height: 120,
-                          color: brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[300],
-                          child: Icon(
-                            Icons.person,
-                            color: brightness == Brightness.dark ? Colors.white54 : Colors.black45,
-                            size: 40,
+              // Drag handle
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 16),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              
+              // Profile content
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  children: [
+                    // Header with image and basic info
+                    _buildProfileHeader(),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // About Me section
+                    if (userProfile.bio != null && userProfile.bio!.isNotEmpty)
+                      _buildSection(
+                        title: 'About Me',
+                        icon: Icons.person_outline,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.1),
+                              width: 1,
+                            ),
                           ),
-                        );
-                      },
+                          child: Text(
+                            userProfile.bio!,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Preferences & Lifestyle section
+                    _buildSection(
+                      title: 'Preferences & Lifestyle',
+                      icon: Icons.settings_outlined,
+                      child: Column(
+                        children: [
+                          // Cleanliness Level
+                          if (userProfile.cleanlinessLevel != null)
+                            _buildPreferenceItem(
+                              icon: Icons.cleaning_services_outlined,
+                              title: 'Cleanliness Level',
+                              value: '${userProfile.cleanlinessLevel}/10',
+                              color: _getScoreColor(userProfile.cleanlinessLevel! / 10),
+                            ),
+
+                          // Sleep Schedule
+                          if (userProfile.sleepTime != null && userProfile.wakeTime != null)
+                            _buildPreferenceItem(
+                              icon: Icons.bedtime_outlined,
+                              title: 'Sleep Schedule',
+                              value: 'Sleep: ${userProfile.sleepTime} • Wake: ${userProfile.wakeTime}',
+                              color: Colors.blue[300]!,
+                            ),
+
+                          // Smoking
+                          if (userProfile.smokingPreference != null)
+                            _buildPreferenceItem(
+                              icon: Icons.smoke_free,
+                              title: 'Smoking',
+                              value: userProfile.smokingPreference! ? 'Yes' : 'No',
+                              color: Colors.red[300]!,
+                            ),
+
+                          // Drinking
+                          if (userProfile.drinkingPreference != null)
+                            _buildPreferenceItem(
+                              icon: Icons.local_bar_outlined,
+                              title: 'Drinking',
+                              value: userProfile.drinkingPreference! ? 'Yes' : 'No',
+                              color: Colors.amber[300]!,
+                            ),
+
+                          // Pets
+                          if (userProfile.petPreference != null)
+                            _buildPreferenceItem(
+                              icon: Icons.pets_outlined,
+                              title: 'Pets',
+                              value: userProfile.petPreference! ? 'Yes' : 'No',
+                              color: Colors.orange[300]!,
+                            ),
+
+                          // Guest Policy
+                          if (userProfile.guestPolicy != null)
+                            _buildPreferenceItem(
+                              icon: Icons.group_outlined,
+                              title: 'Guest Policy',
+                              value: userProfile.guestPolicy!,
+                              color: Colors.purple[300]!,
+                            ),
+
+                          // Room Type
+                          if (userProfile.roomTypePreference != null)
+                            _buildPreferenceItem(
+                              icon: Icons.door_front_door_outlined,
+                              title: 'Room Type',
+                              value: userProfile.roomTypePreference!,
+                              color: Colors.green[300]!,
+                            ),
+
+                          // Budget Range
+                          if (userProfile.budgetRange != null)
+                            _buildPreferenceItem(
+                              icon: Icons.attach_money,
+                              title: 'Budget Range',
+                              value: '\$${userProfile.budgetRange}',
+                              color: Colors.teal[300]!,
+                            ),
+                        ],
+                      ),
                     ),
+
+                    const SizedBox(height: 24),
+
+                    // Social Media section
+                    if (userProfile.instagramUsername != null && userProfile.instagramUsername!.isNotEmpty)
+                      _buildSection(
+                        title: 'Social Media',
+                        icon: Icons.share_outlined,
+                        child: _buildSocialButton(
+                          icon: Icons.camera_alt_outlined,
+                          label: '@${userProfile.instagramUsername}',
+                          onTap: () => onInstagramTap(userProfile.instagramUsername!),
+                        ),
+                      ),
+
+                    if (actionButtons != null) ...[
+                      const SizedBox(height: 24),
+                      actionButtons!,
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProfileHeader() {
+    return Column(
+      children: [
+        // Profile Image
+        Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(60),
+            border: Border.all(
+              color: AppColors.primaryBlue,
+              width: 3,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryBlue.withOpacity(0.3),
+                blurRadius: 20,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(60),
+            child: Image.network(
+              userProfile.profilePicture,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => const Icon(
+                Icons.person,
+                size: 60,
+                color: Colors.white54,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        // Name and Age
+        Text(
+          '${userProfile.fullName}, ${userProfile.age}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        
+        // University and Year
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryBlue.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.school,
+                    color: Colors.white,
+                    size: 16,
                   ),
-                  const SizedBox(width: 16),
-                  // Name, age, university details
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "${userProfile.fullName}, ${userProfile.age}",
-                          style: TextStyle(
-                            color: primaryTextColor,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          userProfile.university ?? 'Unknown University',
-                          style: TextStyle(
-                            color: secondaryTextColor,
-                            fontSize: 16,
-                          ),
-                        ),
-                        if (userProfile.yearOfStudy != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            "Year ${userProfile.yearOfStudy}",
-                            style: TextStyle(
-                              color: secondaryTextColor,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                        if (userProfile.major != null && userProfile.major!.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            userProfile.major!,
-                            style: TextStyle(
-                              color: secondaryTextColor,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                        // Display compatibility score
-                        if (userProfile.compatibilityScore != null) ...[
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.favorite,
-                                color: AppColors.primaryBlue,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${userProfile.compatibilityScore!.toInt()}% Compatible',
-                                style: TextStyle(
-                                  color: AppColors.primaryBlue,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
+                  const SizedBox(width: 6),
+                  Text(
+                    userProfile.university,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
-              
-              const SizedBox(height: 24),
-              
-              // Bio section
-              if (userProfile.bio != null && userProfile.bio!.isNotEmpty) ...[
-                Text(
-                  "About Me",
-                  style: TextStyle(
-                    color: primaryTextColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+            ),
+            if (userProfile.yearOfStudy != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Year ${userProfile.yearOfStudy}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 8),
+              ),
+            ],
+          ],
+        ),
+        
+        // Compatibility Score
+        if (userProfile.compatibilityScore != null) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white24,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.favorite,
+                  color: _getScoreColor(userProfile.compatibilityScore! / 100),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
                 Text(
-                  userProfile.bio!,
-                  style: TextStyle(
-                    color: secondaryTextColor,
-                    fontSize: 15,
+                  '${userProfile.compatibilityScore!.toInt()}% Compatible',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 24),
               ],
-              
-              // Contact Options
-              if (userProfile.instagramUsername != null && userProfile.instagramUsername!.isNotEmpty) ...[
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSection({
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              icon,
+              color: Colors.white70,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        child,
+      ],
+    );
+  }
+
+  Widget _buildPreferenceItem({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  "Contact Options",
+                  title,
                   style: TextStyle(
-                    color: primaryTextColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 14,
                   ),
                 ),
-                const SizedBox(height: 12),
-                // Instagram option
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(
-                    Icons.photo_camera,
-                    color: AppColors.primaryBlue,
-                  ),
-                  title: Text(
-                    'Instagram',
-                    style: TextStyle(color: primaryTextColor),
-                  ),
-                  subtitle: Text(
-                    '@${userProfile.instagramUsername}',
-                    style: TextStyle(color: secondaryTextColor),
-                  ),
-                  onTap: () {
-                    if (onInstagramTap != null) {
-                      onInstagramTap!(userProfile.instagramUsername!);
-                    } else {
-                      _launchInstagram(userProfile.instagramUsername!, context);
-                    }
-                  },
-                ),
-                const SizedBox(height: 24),
-              ],
-              
-              // Action buttons (like/dislike or unmatch)
-              if (actionButtons != null) actionButtons!,
-              
-              // Preferences & Lifestyle section - only show if we have at least some preference data
-              if (_hasAnyPreferenceData(userProfile)) ...[
-                const SizedBox(height: 24),
+                const SizedBox(height: 4),
                 Text(
-                  "Preferences & Lifestyle",
-                  style: TextStyle(
-                    color: primaryTextColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 16),
-                
-                // Display available preferences
-                if (userProfile.cleanlinessLevel != null)
-                  _buildPreferenceItem(
-                    'Cleanliness Level',
-                    '${userProfile.cleanlinessLevel}/10',
-                    Icons.cleaning_services,
-                    primaryTextColor,
-                    secondaryTextColor,
-                  ),
-                  
-                if (userProfile.cleanlinessLevel != null)
-                  const SizedBox(height: 12),
-                
-                if (userProfile.sleepTime != null || userProfile.wakeTime != null)
-                  _buildPreferenceItem(
-                    'Sleep Schedule',
-                    _formatSleepSchedule(userProfile.sleepTime, userProfile.wakeTime),
-                    Icons.bedtime,
-                    primaryTextColor,
-                    secondaryTextColor,
-                  ),
-                  
-                if (userProfile.sleepTime != null || userProfile.wakeTime != null)
-                  const SizedBox(height: 12),
-                
-                if (userProfile.smokingPreference != null)
-                  _buildPreferenceItem(
-                    'Smoking',
-                    userProfile.smokingPreference! ? 'Smoker' : 'Non-smoker',
-                    Icons.smoking_rooms,
-                    primaryTextColor,
-                    secondaryTextColor,
-                  ),
-                  
-                if (userProfile.smokingPreference != null)
-                  const SizedBox(height: 12),
-                
-                if (userProfile.drinkingPreference != null)
-                  _buildPreferenceItem(
-                    'Drinking',
-                    userProfile.drinkingPreference! ? 'Drinker' : 'Non-drinker',
-                    Icons.local_bar,
-                    primaryTextColor,
-                    secondaryTextColor,
-                  ),
-                  
-                if (userProfile.drinkingPreference != null)
-                  const SizedBox(height: 12),
-                
-                if (userProfile.petPreference != null)
-                  _buildPreferenceItem(
-                    'Pets',
-                    userProfile.petPreference! ? 'Pet friendly' : 'No pets',
-                    Icons.pets,
-                    primaryTextColor,
-                    secondaryTextColor,
-                  ),
-                  
-                if (userProfile.petPreference != null)
-                  const SizedBox(height: 12),
-                
-                if (userProfile.musicPreference != null)
-                  _buildPreferenceItem(
-                    'Music',
-                    userProfile.musicPreference! ? 'Enjoys music' : 'Prefers quiet',
-                    Icons.music_note,
-                    primaryTextColor,
-                    secondaryTextColor,
-                  ),
-                  
-                if (userProfile.musicPreference != null)
-                  const SizedBox(height: 12),
-                
-                if (userProfile.socialPreference != null)
-                  _buildPreferenceItem(
-                    'Social Type',
-                    _capitalizeSocialPreference(userProfile.socialPreference!),
-                    Icons.people,
-                    primaryTextColor,
-                    secondaryTextColor,
-                  ),
-                  
-                if (userProfile.socialPreference != null)
-                  const SizedBox(height: 12),
-                
-                if (userProfile.guestPolicy != null && userProfile.guestPolicy!.isNotEmpty)
-                  _buildPreferenceItem(
-                    'Guest Policy',
-                    userProfile.guestPolicy!,
-                    Icons.group_add,
-                    primaryTextColor,
-                    secondaryTextColor,
-                  ),
-                  
-                if (userProfile.guestPolicy != null && userProfile.guestPolicy!.isNotEmpty)
-                  const SizedBox(height: 12),
-                
-                if (userProfile.roomTypePreference != null && userProfile.roomTypePreference!.isNotEmpty)
-                  _buildPreferenceItem(
-                    'Room Type',
-                    userProfile.roomTypePreference!,
-                    Icons.bedroom_parent,
-                    primaryTextColor,
-                    secondaryTextColor,
-                  ),
-                  
-                if (userProfile.roomTypePreference != null && userProfile.roomTypePreference!.isNotEmpty)
-                  const SizedBox(height: 12),
-                
-                if (userProfile.religiousPreference != null && userProfile.religiousPreference!.isNotEmpty)
-                  _buildPreferenceItem(
-                    'Religious Preference',
-                    userProfile.religiousPreference!,
-                    Icons.church,
-                    primaryTextColor,
-                    secondaryTextColor,
-                  ),
-                  
-                if (userProfile.religiousPreference != null && userProfile.religiousPreference!.isNotEmpty)
-                  const SizedBox(height: 12),
-                
-                if (userProfile.dietaryRestrictions != null && userProfile.dietaryRestrictions!.isNotEmpty)
-                  _buildPreferenceItem(
-                    'Dietary Restrictions',
-                    userProfile.dietaryRestrictions!,
-                    Icons.restaurant,
-                    primaryTextColor,
-                    secondaryTextColor,
-                  ),
-                  
-                if (userProfile.dietaryRestrictions != null && userProfile.dietaryRestrictions!.isNotEmpty)
-                  const SizedBox(height: 12),
-                
-                if (userProfile.budgetRange != null)
-                  _buildPreferenceItem(
-                    'Budget',
-                    '\$${userProfile.budgetRange}',
-                    Icons.attach_money,
-                    primaryTextColor,
-                    secondaryTextColor,
-                  ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSocialButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.pink.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.pink[300],
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white54,
+                size: 16,
+              ),
             ],
           ),
         ),
       ),
     );
   }
-  
-  // Helper method to check if the profile has any preference data to display
-  bool _hasAnyPreferenceData(UserProfile profile) {
-    return profile.cleanlinessLevel != null ||
-        profile.sleepTime != null ||
-        profile.wakeTime != null ||
-        profile.smokingPreference != null ||
-        profile.drinkingPreference != null ||
-        profile.petPreference != null ||
-        profile.musicPreference != null ||
-        profile.socialPreference != null ||
-        (profile.guestPolicy != null && profile.guestPolicy!.isNotEmpty) ||
-        (profile.roomTypePreference != null && profile.roomTypePreference!.isNotEmpty) ||
-        (profile.religiousPreference != null && profile.religiousPreference!.isNotEmpty) ||
-        (profile.dietaryRestrictions != null && profile.dietaryRestrictions!.isNotEmpty) ||
-        profile.budgetRange != null;
-  }
-  
-  // Helper method to format sleep and wake times
-  String _formatSleepSchedule(String? sleepTime, String? wakeTime) {
-    String schedule = '';
-    
-    if (sleepTime != null && sleepTime.isNotEmpty) {
-      schedule += 'Sleep: $sleepTime';
-    }
-    
-    if (wakeTime != null && wakeTime.isNotEmpty) {
-      if (schedule.isNotEmpty) {
-        schedule += ' • ';
-      }
-      schedule += 'Wake: $wakeTime';
-    }
-    
-    return schedule.isNotEmpty ? schedule : 'Not specified';
-  }
-  
-  // Helper method to capitalize social preference
-  String _capitalizeSocialPreference(String value) {
-    if (value.isEmpty) return '';
-    return value[0].toUpperCase() + value.substring(1);
-  }
-  
-  // Helper method to build a preference item
-  Widget _buildPreferenceItem(String label, String value, IconData icon, Color primaryTextColor, Color secondaryTextColor) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          color: AppColors.primaryBlue,
-          size: 18,
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: secondaryTextColor,
-                  fontSize: 12,
-                ),
-              ),
-              Text(
-                value,
-                style: TextStyle(
-                  color: primaryTextColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-  
-  // Helper method to launch Instagram
-  void _launchInstagram(String username, BuildContext context) async {
-    try {
-      final instagramUrl = 'https://instagram.com/$username';
-      final Uri uri = Uri.parse(instagramUrl);
-      
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        throw 'Could not launch $instagramUrl';
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not open Instagram'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+
+  Color _getScoreColor(double score) {
+    if (score >= 0.7) return const Color(0xFF4CAF50); // Green
+    if (score >= 0.5) return const Color(0xFFFFA726); // Orange
+    return const Color(0xFFEF5350); // Red
   }
 }

@@ -8,6 +8,7 @@ import '../models/user_profile.dart';
 import '../services/roommate_service.dart';
 import '../widgets/detailed_profile_view.dart';
 import '../utils/themes.dart'; // Import our theme
+import '../widgets/furniture_pattern_background.dart';
 
 class SwipeScreen extends StatefulWidget {
   const SwipeScreen({Key? key}) : super(key: key);
@@ -362,221 +363,229 @@ class _SwipeScreenState extends State<SwipeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ADDED: Obtain brightness for dynamic colors
-    final brightness = Theme.of(context).brightness;
     return Scaffold(
-      backgroundColor: brightness == Brightness.dark ? Colors.black : Colors.white, // CHANGED
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ===== TOP BAR (Avatar, "Hello [name]!", location) =====
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                children: [
-                  // User's avatar 
-                  GestureDetector(
-                    onTap: () => Navigator.pushNamed(context, '/profile'),
-                    child: _currentUserProfile.isEmpty
-                      ? Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[800],
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white54,
+      backgroundColor: const Color(0xFF0F1A24), // Dark blue background
+      body: Stack(
+        children: [
+          // Background Pattern
+          const FurniturePatternBackground(
+            spacing: 70,
+            opacity: 0.2,
+            iconColor: Color(0xFF293542),
+          ),
+          
+          // Main Content
+          SafeArea(
+            child: Column(
+              children: [
+                // ===== TOP BAR (Avatar, "Hello [name]!", location) =====
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Row(
+                    children: [
+                      // User's avatar 
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/profile'),
+                        child: _currentUserProfile.isEmpty
+                          ? Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                shape: BoxShape.circle,
                               ),
-                            ),
-                          ),
-                        )
-                      : Hero(
-                          tag: 'user-profile-picture',
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[800],
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.primaryBlue,
-                                width: 2,
-                              ),
-                              image: _currentUserProfile['profile_picture'] != null && 
-                                     _currentUserProfile['profile_picture'].toString().isNotEmpty
-                                ? DecorationImage(
-                                    image: NetworkImage(_currentUserProfile['profile_picture']),
-                                    fit: BoxFit.cover,
-                                    onError: (exception, stackTrace) {
-                                      print('Error loading profile image: $exception');
-                                    })
-                                : null,
-                            ),
-                            child: _currentUserProfile['profile_picture'] == null || 
-                                  _currentUserProfile['profile_picture'].toString().isEmpty
-                                ? Icon(Icons.person, color: brightness == Brightness.dark ? Colors.white : Colors.black)
-                                : null,
-                          ),
-                        ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Greeting & university
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _userName.isEmpty 
-                            ? "Hello there!" 
-                            : "Hello ${_userName.split(' ').first}!",
-                          style: TextStyle(
-                            color: brightness == Brightness.dark ? Colors.white : Colors.black, // CHANGED
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _currentUserProfile['university'] ?? "Find your roommate",
-                          style: TextStyle(
-                            color: brightness == Brightness.dark ? Colors.white54 : Colors.black54, // CHANGED
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Notification icon
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(Icons.notifications_none, color: brightness == Brightness.dark ? Colors.white : Colors.black), // CHANGED
-                  ),
-                ],
-              ),
-            ),
-
-            // ===== SWIPE STACK =====
-            Expanded(
-              child: _potentialMatches.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _isFetching
-                                ? const CircularProgressIndicator(color: AppColors.primaryBlue)
-                                : Icon(
-                                    Icons.search_off,
-                                    size: 64,
-                                    color: brightness == Brightness.dark ? Colors.white54 : Colors.black54,
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white54,
                                   ),
-                            const SizedBox(height: 24),
+                                ),
+                              ),
+                            )
+                          : Hero(
+                              tag: 'user-profile-picture',
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.primaryBlue,
+                                    width: 2,
+                                  ),
+                                  image: _currentUserProfile['profile_picture'] != null && 
+                                         _currentUserProfile['profile_picture'].toString().isNotEmpty
+                                    ? DecorationImage(
+                                        image: NetworkImage(_currentUserProfile['profile_picture']),
+                                        fit: BoxFit.cover,
+                                        onError: (exception, stackTrace) {
+                                          print('Error loading profile image: $exception');
+                                        })
+                                    : null,
+                                ),
+                                child: _currentUserProfile['profile_picture'] == null || 
+                                      _currentUserProfile['profile_picture'].toString().isEmpty
+                                  ? const Icon(Icons.person, color: Colors.white)
+                                  : null,
+                              ),
+                            ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Greeting & university
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              _isFetching 
-                                  ? "Finding roommates..." 
-                                  : _offset > 0
-                                      ? "No more profiles to show"
-                                      : "No profiles available",
-                              style: TextStyle(
-                                color: brightness == Brightness.dark ? Colors.white : Colors.black,
-                                fontSize: 20,
+                              _userName.isEmpty 
+                                ? "Hello there!" 
+                                : "Hello ${_userName.split(' ').first}!",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
-                              textAlign: TextAlign.center,
                             ),
-                            if (!_isFetching) ...[
-                              const SizedBox(height: 16),
-                              Text(
-                                _offset > 0
-                                    ? "You've seen all available roommates. Check back later for new matches!"
-                                    : "There are no potential roommates matching your criteria at this time.",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: brightness == Brightness.dark ? Colors.white70 : Colors.black54,
-                                  fontSize: 15,
-                                  height: 1.4,
-                                ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _currentUserProfile['university'] ?? "Find your roommate",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 12,
                               ),
-                              const SizedBox(height: 32),
-                              SizedBox(
-                                width: min(200, MediaQuery.of(context).size.width * 0.5),
-                                child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    // Try to fetch again
-                                    _offset = 0;
-                                    _potentialMatches = [];
-                                    _fetchPotentialMatches();
-                                  },
-                                  icon: const Icon(Icons.refresh, size: 20),
-                                  label: const Text("Try Again"),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primaryBlue,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(25),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ],
                         ),
                       ),
-                    )
-                  : SwipableStack(
-                      controller: _controller,
-                      itemCount: _potentialMatches.length,
-                      onSwipeCompleted: _onSwipeCompleted,
-                      builder: (context, index, constraints) {
-                        final userProfile = _potentialMatches[index];
-                        return _buildUserProfileCard(context, constraints, userProfile);
-                      },
-                    ),
-            ),
+                      // Notification icon
+                      IconButton(
+                        onPressed: () {},
+                        icon: const Icon(Icons.notifications_none, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
 
-            // ===== BOTTOM NAVIGATION (3 icons) =====
-            Container(
-              color: Colors.transparent,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  // Left: search icon (blue) to indicate current screen
-                  IconButton(
-                    icon: const Icon(Icons.search, color: AppColors.primaryBlue, size: 28),
-                    onPressed: () {
-                      // Already on search screen
-                    },
+                // ===== SWIPE STACK =====
+                Expanded(
+                  child: _potentialMatches.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _isFetching
+                                    ? const CircularProgressIndicator(color: AppColors.primaryBlue)
+                                    : const Icon(
+                                        Icons.search_off,
+                                        size: 64,
+                                        color: Colors.white54,
+                                      ),
+                                const SizedBox(height: 24),
+                                Text(
+                                  _isFetching 
+                                      ? "Finding roommates..." 
+                                      : _offset > 0
+                                          ? "No more profiles to show"
+                                          : "No profiles available",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                if (!_isFetching) ...[
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    _offset > 0
+                                        ? "You've seen all available roommates. Check back later for new matches!"
+                                        : "There are no potential roommates matching your criteria at this time.",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 15,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 32),
+                                  SizedBox(
+                                    width: min(200, MediaQuery.of(context).size.width * 0.5),
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        _offset = 0;
+                                        _potentialMatches = [];
+                                        _fetchPotentialMatches();
+                                      },
+                                      icon: const Icon(Icons.refresh, size: 20),
+                                      label: const Text("Try Again"),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.buttonBlue,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        )
+                      : SwipableStack(
+                          controller: _controller,
+                          itemCount: _potentialMatches.length,
+                          onSwipeCompleted: _onSwipeCompleted,
+                          builder: (context, index, constraints) {
+                            final userProfile = _potentialMatches[index];
+                            return _buildUserProfileCard(context, constraints, userProfile);
+                          },
+                        ),
+                ),
+
+                // ===== BOTTOM NAVIGATION (3 icons) =====
+                Container(
+                  color: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Left: search icon (blue) to indicate current screen
+                      IconButton(
+                        icon: const Icon(Icons.search, color: AppColors.primaryBlue, size: 28),
+                        onPressed: () {
+                          // Already on search screen
+                        },
+                      ),
+                      // Center: chat icon
+                      IconButton(
+                        icon: const Icon(Icons.chat_bubble_outline, color: Colors.white54, size: 26),
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, '/matches');
+                        },
+                      ),
+                      // Right: person icon (gray)
+                      IconButton(
+                        icon: const Icon(Icons.person_outline, color: Colors.white54, size: 28),
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, '/profile');
+                        },
+                      ),
+                    ],
                   ),
-                  // Center: chat icon
-                  IconButton(
-                    icon: Icon(Icons.chat_bubble_outline, color: brightness == Brightness.dark ? Colors.white54 : Colors.black54, size: 26), // CHANGED
-                    onPressed: () {
-                      // Navigate to matches screen
-                      Navigator.pushReplacementNamed(context, '/matches');
-                    },
-                  ),
-                  // Right: person icon (gray)
-                  IconButton(
-                    icon: Icon(Icons.person_outline, color: brightness == Brightness.dark ? Colors.white54 : Colors.black54, size: 28), // CHANGED
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/profile');
-                    },
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -586,273 +595,360 @@ class _SwipeScreenState extends State<SwipeScreen> {
     BoxConstraints constraints,
     UserProfile userProfile,
   ) {
-    // Adjusted card size to better fill the available space after removing the search bar
-    final cardWidth = constraints.maxWidth * 0.9;
-    final cardHeight = constraints.maxHeight * 0.90;
-    final brightness = Theme.of(context).brightness;
+    final cardWidth = constraints.maxWidth * 0.92;
+    final cardHeight = constraints.maxHeight * 0.85;
 
     return Align(
-      // Changed alignment to topCenter so the card sits higher with less white space above
       alignment: Alignment.topCenter,
-      child: Stack(
-        clipBehavior: Clip.none, // allow buttons to overflow
-        children: [
-          // Main card with gradient
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              width: cardWidth,
-              height: cardHeight,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: userProfile.profilePicture.isNotEmpty
-                      ? NetworkImage(userProfile.profilePicture)
-                      : const NetworkImage('https://via.placeholder.com/600x800?text=No+Image'),
-                  fit: BoxFit.cover,
-                  // Add error handler for images
-                  onError: (exception, stackTrace) => print('Error loading profile image: $exception'),
+      child: Container(
+        margin: const EdgeInsets.only(top: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryBlue.withOpacity(0.15),
+              blurRadius: 20,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Main card with gradient
+            ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                width: cardWidth,
+                height: cardHeight,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: userProfile.profilePicture.isNotEmpty
+                        ? NetworkImage(userProfile.profilePicture)
+                        : const NetworkImage('https://via.placeholder.com/600x800?text=No+Image'),
+                    fit: BoxFit.cover,
+                    onError: (exception, stackTrace) => print('Error loading profile image: $exception'),
+                  ),
                 ),
-              ),
-              child: Stack(
-                children: [
-                  // Dark gradient overlay for readability
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [
-                            Colors.black.withOpacity(0.9),  // Stronger black at bottom
-                            Colors.black.withOpacity(0.5),  // Medium opacity in middle
-                            Colors.black.withOpacity(0.3),  // Subtle overlay at top
-                            Colors.transparent,
-                          ],
-                          stops: const [0.0, 0.4, 0.75, 1.0],
+                child: Stack(
+                  children: [
+                    // Gradient overlays for better readability
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.85),
+                              Colors.black.withOpacity(0.5),
+                              Colors.transparent,
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.35, 0.7, 1.0],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-
-                  // User info at the bottom
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 80, // space for the buttons
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // University chip - add null check
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryBlue,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            userProfile.university,
-                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                    // Top gradient for info button area
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 100,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.4),
+                              Colors.transparent,
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 10),
+                      ),
+                    ),
 
-                        // Name and Age
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                "${userProfile.fullName}, ${userProfile.age}",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.bold,
+                    // User info at the bottom
+                    Positioned(
+                      left: 20,
+                      right: 20,
+                      bottom: 85,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // University chip with icon
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryBlue.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 4),
-                        
-                        // Year of Study (if available)
-                        if (userProfile.yearOfStudy != null)
-                          Text(
-                            "Year ${userProfile.yearOfStudy}",
-                            style: const TextStyle(color: Colors.white, fontSize: 16),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.school,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  userProfile.university,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(height: 12),
 
-                        // Bio (if available)
-                        if (userProfile.bio != null && userProfile.bio!.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            userProfile.bio!,
-                            style: const TextStyle(color: Colors.white70, fontSize: 14),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                        
-                        // Add compatibility score if available
-                        if (userProfile.compatibilityScore != null) ...[
-                          const SizedBox(height: 12),
+                          // Name and Age with enhanced typography
                           Row(
                             children: [
-                              const Icon(
-                                Icons.favorite,
-                                color: AppColors.primaryBlue,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${userProfile.compatibilityScore!.toInt()}% Compatible',
-                                style: const TextStyle(
-                                  color: AppColors.primaryBlue,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: Text(
+                                  "${userProfile.fullName}, ${userProfile.age}",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: -0.5,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black45,
+                                        blurRadius: 4,
+                                      ),
+                                    ],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
                           ),
+                          
+                          const SizedBox(height: 4),
+                          
+                          // Year of Study with icon
+                          if (userProfile.yearOfStudy != null)
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.calendar_today,
+                                  color: Colors.white70,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  "Year ${userProfile.yearOfStudy}",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                          // Bio with styled typography
+                          if (userProfile.bio != null && userProfile.bio!.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              userProfile.bio!,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 15,
+                                height: 1.4,
+                                shadows: const [
+                                  Shadow(
+                                    color: Colors.black26,
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          
+                          // Enhanced compatibility score
+                          if (userProfile.compatibilityScore != null) ...[
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white24,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.favorite,
+                                    color: _getCompatibilityColor(userProfile.compatibilityScore!),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${userProfile.compatibilityScore!.toInt()}% Compatible',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Enhanced action buttons
+            Positioned(
+              bottom: -25,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // NOPE Button
+                  _buildActionButton(
+                    onTap: () => _controller.next(swipeDirection: SwipeDirection.left),
+                    icon: Icons.close,
+                    label: "NOPE",
+                    backgroundColor: const Color(0xFF2C2C2C),
+                    textColor: AppColors.primaryBlue,
+                    iconColor: AppColors.primaryBlue,
+                  ),
+                  const SizedBox(width: 16),
+                  // LIKE Button
+                  _buildActionButton(
+                    onTap: () => _controller.next(swipeDirection: SwipeDirection.right),
+                    icon: Icons.favorite,
+                    label: "LIKE",
+                    backgroundColor: AppColors.primaryBlue,
+                    textColor: Colors.white,
+                    iconColor: Colors.white,
                   ),
                 ],
               ),
             ),
-          ),
-
-          // ===== "Nope" & "Like" Buttons =====
-          Positioned(
-            bottom: -20, // overlap the card
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // NOPE Button (dark pill)
-                InkWell(
-                  onTap: () {
-                    _controller.next(swipeDirection: SwipeDirection.left);
-                  },
-                  child: Container(
-                    width: 130,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: brightness == Brightness.dark ? const Color(0xFF2C2C2C) : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+            
+            // Enhanced info button
+            Positioned(
+              top: 16,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => _showDetailedProfile(context, userProfile),
+                child: Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(23),
+                    border: Border.all(
+                      color: Colors.white38,
+                      width: 1.5,
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.close, color: AppColors.primaryBlue, size: 28),
-                        SizedBox(width: 8),
-                        Text(
-                          "NOPE",
-                          style: TextStyle(
-                            color: AppColors.primaryBlue,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
-                ),
-
-                // LIKE Button (orange pill)
-                InkWell(
-                  onTap: () {
-                    _controller.next(swipeDirection: SwipeDirection.right);
-                  },
-                  child: Container(
-                    width: 130,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryBlue,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.favorite, color: Colors.white, size: 26),
-                        SizedBox(width: 8),
-                        Text(
-                          "LIKE",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: const Icon(
+                    Icons.info_outline,
+                    color: Colors.white,
+                    size: 26,
                   ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Info button (top-right)
-          Positioned(
-            top: 16,
-            right: 16,
-            child: GestureDetector(
-              onTap: () {
-                // Show more detailed profile info
-                _showDetailedProfile(context, userProfile);
-              },
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: brightness == Brightness.dark ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: brightness == Brightness.dark ? Colors.white : Colors.black, width: 1.5),
-                ),
-                child: Icon(
-                  Icons.info_outline,
-                  color: brightness == Brightness.dark ? Colors.white : Colors.black,
-                  size: 24,
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTag(String tag) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white24,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        tag,
-        style: const TextStyle(color: Colors.white, fontSize: 12),
+  // Helper method for action buttons
+  Widget _buildActionButton({
+    required VoidCallback onTap,
+    required IconData icon,
+    required String label,
+    required Color backgroundColor,
+    required Color textColor,
+    required Color iconColor,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          width: 135,
+          height: 52,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(26),
+            boxShadow: [
+              BoxShadow(
+                color: backgroundColor.withOpacity(0.3),
+                blurRadius: 12,
+                spreadRadius: 2,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: iconColor, size: 26),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
-  
+
+  Color _getCompatibilityColor(double score) {
+    if (score >= 70) return const Color(0xFF4CAF50); // Green
+    if (score >= 50) return const Color(0xFFFFA726); // Orange
+    return const Color(0xFFEF5350); // Red
+  }
+
   void _showDetailedProfile(BuildContext context, UserProfile userProfile) {
     final brightness = Theme.of(context).brightness;
     
