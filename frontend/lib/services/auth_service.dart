@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/config.dart' as utils;
 import '../services/supabase_service.dart';
+import 'dart:io';
 
 class AuthService {
   final String baseUrl = '${utils.BASE_URL}';
@@ -16,14 +17,29 @@ class AuthService {
   Future<bool> login(String email, String password) async {
     try {
       print('Attempting login for email: $email');
-      final response = await http.post(
+      print('Making request to: $baseUrl/login');
+      print('Request headers: Content-Type: application/json');
+      
+      // Create HTTP client with timeout
+      final client = http.Client();
+      
+      final response = await client.post(
         Uri.parse('$baseUrl/login'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
         body: jsonEncode({
           'email': email,
           'password': password,
         }),
-      );
+      ).timeout(Duration(seconds: 30));
+      
+      client.close();
+      
+      print('Response status code: ${response.statusCode}');
+      print('Response headers: ${response.headers}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -45,6 +61,15 @@ class AuthService {
       return false;
     } catch (e) {
       print('Login error: $e');
+      print('Error type: ${e.runtimeType}');
+      if (e.toString().contains('Failed to fetch')) {
+        print('This is a network connectivity issue. Possible causes:');
+        print('1. CORS policy blocking the request');
+        print('2. Network connectivity issues');
+        print('3. Backend server not responding');
+        print('4. Flutter web security policies');
+        print('5. Content Security Policy blocking the request');
+      }
       return false;
     }
   }

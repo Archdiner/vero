@@ -130,7 +130,7 @@ class AppTheme {
           foregroundColor: AppColors.primaryBlue,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.cardBackground,
         elevation: 4,
         shape: RoundedRectangleBorder(
