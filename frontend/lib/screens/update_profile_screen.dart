@@ -79,7 +79,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     if (newPasswordController.text.isNotEmpty) {
       // Validate new password using the same requirements as the register screen.
       final RegExp _passwordRegExp = RegExp(
-        r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$',
+        r'^(?=.*[A-Za-z])(?=.*\d).{8,}$',
       );
       if (!_passwordRegExp.hasMatch(newPasswordController.text)) {
         ScaffoldMessenger.of(context).showSnackBar(

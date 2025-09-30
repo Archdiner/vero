@@ -32,7 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // Password validation: at least 8 characters with at least one letter and one number
   final RegExp _passwordRegExp = RegExp(
-    r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$',
+    r'^(?=.*[A-Za-z])(?=.*\d).{8,}$',
   );
 
   String? _validateEmail(String email) {
