@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func
 from models import User, RoommateMatch, MatchStatus, UserPreferences
 from datetime import datetime, timedelta
+from .cache_utils import cached_compatibility_score
 
+@cached_compatibility_score
 def compute_compatibility_score(user1: User, user2: User) -> float:
     """
     Calculate a compatibility score between two users based on their profiles.
