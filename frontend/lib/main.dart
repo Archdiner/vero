@@ -41,7 +41,7 @@ Future<void> main() async {
     _initializeSupabaseInBackground();
 
     // Run the main app.
-    runApp(const TinderForRestaurants());
+    runApp(const RoomioApp());
   });
 }
 
@@ -63,14 +63,14 @@ Future<void> _initializeSupabaseInBackground() async {
   }
 }
 
-class TinderForRestaurants extends StatefulWidget {
-  const TinderForRestaurants({super.key});
+class RoomioApp extends StatefulWidget {
+  const RoomioApp({super.key});
 
   @override
-  _TinderForRestaurantsState createState() => _TinderForRestaurantsState();
+  _RoomioAppState createState() => _RoomioAppState();
 }
 
-class _TinderForRestaurantsState extends State<TinderForRestaurants> {
+class _RoomioAppState extends State<RoomioApp> {
   // Navigator key for better control over transitions.
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
@@ -89,7 +89,7 @@ class _TinderForRestaurantsState extends State<TinderForRestaurants> {
       builder: (context, currentMode, child) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Tinder for Restaurants',
+          title: 'Roomio',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: currentMode,

@@ -1,7 +1,7 @@
 # Theme System Documentation
 
 ## Overview
-This document outlines the theming system for the Vero restaurant app. The system has been designed to provide a consistent color scheme and styling across all screens, making it easy to change the app's appearance globally.
+This document outlines the theming system for the Roomio roommate matching app. The system has been designed to provide a consistent color scheme and styling across all screens, making it easy to change the app's appearance globally.
 
 ## Key Components
 
