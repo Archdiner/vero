@@ -63,7 +63,7 @@ class AuthScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16), // Reduced from 24
                     Text(
-                      'Welcome to Roomly',
+                      'Welcome to Roomio',
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,

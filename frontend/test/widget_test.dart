@@ -13,7 +13,7 @@ import 'package:frontend/main.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(TinderForRestaurants());
+    await tester.pumpWidget(RoomioApp());
 
 
     // Verify that our counter starts at 0.
